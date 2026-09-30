@@ -33,3 +33,8 @@ python -m unittest discover -s tests -v
 ```
 
 All service-specific values in `contracts/examples/` are **synthetic E2 examples**, not claims that BuildChecker/EChecker are already implemented.
+
+## E4
+
+The BuildChecker environment template is under `services/buildchecker/`. See
+[`docs/E4/README.md`](docs/E4/README.md) for the setup and `make all` workflow.
