@@ -1,0 +1,30 @@
+{
+  "provenance": "MANUAL_ORACLE",
+  "basis": "E3课程样例、人工源码检查、构建行为对照与Linux原始跟踪",
+  "scope": "main.o的项目内文件依赖；不包含系统头文件",
+  "source_snapshot": "linux-trace-2UnSx0/source",
+  "source_sha256": {
+    "main.c": "bfa1c2d1abeb70ba92e60c414923265296dafa0cc98bee068251b0301e6da197",
+    "config.h": "69973c572daaea0005b15535dffa2f73cfac069a6f179fbca2ed88737355cd9b",
+    "unused.h": "1e4315549ec63325a22265e33a27e3cff8940d3ceec9756d7d193e9e51b966c9",
+    "Makefile": "fd1dcd76a0bd9678351a1503941a5a875351455d4a6879e76af0af0b6c64772f"
+  },
+  "build_command": "make",
+  "compiler_command": "cc -c main.c -o main.o",
+  "declared_rule": "main.o: main.c unused.h",
+  "findings": [
+    {
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "config.h",
+      "reason": "源码包含且编译器打开该头文件，但规则未声明它"
+    },
+    {
+      "type": "REDUNDANT",
+      "target": "main.o",
+      "dependency": "unused.h",
+      "reason": "规则声明该头文件，但本样例源码未使用它；更新时间戳触发多余编译"
+    }
+  ],
+  "trace_evidence": "linux-trace-2UnSx0/relevant-accesses.txt"
+}

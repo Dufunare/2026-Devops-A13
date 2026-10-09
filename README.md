@@ -34,6 +34,18 @@ python -m unittest discover -s tests -v
 
 All service-specific values in `contracts/examples/` are **synthetic E2 examples**, not claims that BuildChecker/EChecker are already implemented.
 
+## E3
+
+See [`docs/E3/README.md`](docs/E3/README.md) for A13's test baselines,
+commit history, manual expected findings, Linux traces and submission materials.
+The evidence prepared by member 241870063 includes the original C0/C1/C2
+experiments and a supplemental compiler-command experiment whose incremental
+and clean-build outputs differ. These are sample observations and manual
+oracles, not completed BuildChecker/EChecker implementations.
+
+Group review and submission status are recorded in
+[`docs/E3/REVIEW.md`](docs/E3/REVIEW.md).
+
 ## E4
 
 The BuildChecker environment template is under `services/buildchecker/`. See

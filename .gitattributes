@@ -1,0 +1,7 @@
+# Preserve E3 source snapshots, logs, bundles and checksum inputs byte-for-byte.
+.gitattributes text eol=lf
+evidence/E3/** -text
+docs/E3/** text eol=lf
+# These raw tool outputs contain original trailing spaces / blank lines.
+evidence/E3/**/c0-compiler.txt -whitespace
+evidence/E3/**/make-database.txt -whitespace
