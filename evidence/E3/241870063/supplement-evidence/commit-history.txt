@@ -1,0 +1,5 @@
+f72547c269a6fbdd5c5b143c3c2af0bd2765aef0 241870063 E3 C0: add baseline with correct dependencies
+3d272ac863c07570b2f1f189085103f85fb3793c 241870063 E3 C1: add include without declaring its dependency
+746c642bec52c86b2b965b42b5e0c0bf2b22890a 241870063 E3 C2: change compiler optimization from O0 to O2
+3d7d36aca7487c2668ae56c7f4ee9242fe257a3b 241870063 E3 supplement: support MODE with default zero
+5a94d5c0d9aa65f07cb7e8cbbfc0af30a8dc7d67 241870063 E3 supplement: set MODE to 7 through compiler flags
