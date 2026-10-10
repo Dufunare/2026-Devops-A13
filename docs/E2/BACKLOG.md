@@ -1,14 +1,13 @@
 # A13 E2 Backlog
 
-| ID | 工作 | 产物 | 验收条件 | 状态 |
-|---|---|---|---|---|
-| A13-E2-01 | B13 契约审查 | B13_DELIVERY.md | 逐项回复 8 个问题 | 草案完成 |
-| A13-E2-02 | FULL_CHECK 契约 | Schema + examples | valid 通过；缺字段拒绝 | 草案完成 |
-| A13-E2-03 | INCREMENTAL 契约 | Schema + examples | 缺 baseline/commit/config mismatch 拒绝 | 草案完成 |
-| A13-E2-04 | finding report | Schema + sample | MD/RD/commit/config/location/evidence 可表达 | 草案完成 |
-| A13-E2-05 | Artifact 互读 | pair-review evidence | 双方实际读取 | 待 B13 |
-| A13-E2-06 | DRAFT 环境冻结 | pair-review | 镜像/root/命令/跟踪权限一致 | 待 B13/实测 |
-| A13-E2-07 | Patch recheck | pair-review | patch 绑定 base commit/config | 待 B13 |
-| A13-E2-08 | BuildChecker 复现 | code + evidence | 固定项目产生真实 graph/report | 后续 |
-| A13-E2-09 | EChecker 复现 | code + evidence | C0/C1/C2 增量实验可复现 | 后续 |
-| A13-E2-10 | 个人贡献 | Issue/commit/PR/review | 真实可追溯 | 待全员 |
+| ID | 工作 | 验收条件 | 状态 |
+|---|---|---|---|
+| A13-E2-01 | 公共 Job/FULL/INCREMENTAL 契约 | 正反例、baseline 检查 | 已完成 |
+| A13-E2-02 | B13 读取 A13 v1 synthetic artifacts | 固定 commit、互读与消费检查 | 已完成：B13 16/16 |
+| A13-E2-03 | 处理 B13 2026-09-29 回复 | A13 仓库不再显示“待 B13 回复” | 已完成 |
+| A13-E2-04 | Pair13 finding-report 2.0 candidate | Schema + valid/invalid + validator/tests | 已完成候选 |
+| A13-E2-05 | B13 对 v2 candidate 互读 | 固定 commit + SHA-256 | 待 B13 |
+| A13-E2-06 | A13 对 B13 v2 REPAIR/report 互读 | 固定 commit + SHA-256 | 等 B13 v2 |
+| A13-E2-07 | ptrace/E4 环境能力 | 实际环境确认 | E4 已验证 SYS_PTRACE 路线 |
+| A13-E2-08 | 最终 v2 freeze | 双方写入同一组 commit | 待双方 |
+| A13-E2-09 | BuildChecker/EChecker 真实输出 | 后续论文复现 | 后续实验 |
