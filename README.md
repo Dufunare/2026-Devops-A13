@@ -56,3 +56,6 @@ The BuildChecker environment template is under `services/buildchecker/`. See
 The 2026-10-20 teaching reference and A13 adaptations are recorded in
 [`docs/E5/source-manifest.json`](docs/E5/source-manifest.json).
 Run the cloud entry point in `scripts/lab_cloud.py` with a personal image tag.
+
+E5 reproduction report: [`docs/E5/实验报告.md`](docs/E5/实验报告.md).
+The report identifies the exact source SHA, image ID and raw evidence paths.
