@@ -1,7 +1,7 @@
 {
   "analysis_mode": "manual",
   "source_sha": "cf898e29e57b0b6637d2bba6be9f0a9b6b445c36",
-  "evidence_root": "work/e5-01/evidence",
+  "evidence_root": "evidence/E5/241830088/e5-01/evidence",
   "actual": {
     "main.o": [
       "main.c",
@@ -35,80 +35,82 @@
   ],
   "trace_refs": [
     {
-      "path": "work/e5-01/evidence/trace/t.14",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.14",
       "line": 55,
       "text": "clone(child_stack=0x7f882c2abff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 15"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.14",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.14",
       "line": 66,
       "text": "clone(child_stack=0x7f882c2abff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 18"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.15",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.15",
       "line": 64,
       "text": "clone(child_stack=0x7fddeae7cff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 16"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.15",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.15",
       "line": 84,
       "text": "clone(child_stack=0x7fddeae7cff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 17"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.16",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.16",
       "line": 67,
       "text": "openat(AT_FDCWD, \"main.c\", O_RDONLY|O_NOCTTY) = 3"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.16",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.16",
       "line": 580,
       "text": "openat(AT_FDCWD, \"config.h\", O_RDONLY|O_NOCTTY) = 4"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.17",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.17",
       "line": 23,
       "text": "openat(AT_FDCWD, \"main.o\", O_RDWR|O_CREAT|O_TRUNC, 0666) = 3"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.18",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.18",
       "line": 129,
       "text": "clone(child_stack=0x7f9fca9b6ff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 19"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.19",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.19",
       "line": 96,
       "text": "clone(child_stack=0x7fe608d43ff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 20"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.20",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.20",
       "line": 71,
       "text": "openat(AT_FDCWD, \"app\", O_RDWR|O_CREAT|O_TRUNC, 0666) = 3"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.20",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.20",
       "line": 82,
       "text": "openat(AT_FDCWD, \"main.o\", O_RDONLY)    = 7"
     },
     {
-      "path": "work/e5-01/evidence/trace/t.14",
+      "path": "evidence/E5/241830088/e5-01/evidence/trace/t.14",
       "line": 46,
       "text": "newfstatat(AT_FDCWD, \"unused.h\", {st_mode=S_IFREG|0644, st_size=43, ...}, 0) = 0"
     },
     {
-      "path": "work/e5-01/evidence/make-db.txt",
+      "path": "evidence/E5/241830088/e5-01/evidence/make-db.txt",
       "line": 609,
       "text": "app: main.o"
     },
     {
-      "path": "work/e5-01/evidence/make-db.txt",
+      "path": "evidence/E5/241830088/e5-01/evidence/make-db.txt",
       "line": 1061,
       "text": "main.o: main.c unused.h"
     },
     {
-      "path": "work/e5-01/evidence/Makefile",
+      "path": "evidence/E5/241830088/e5-01/evidence/Makefile",
       "line": 6,
       "text": "main.o: main.c unused.h"
     }
   ],
-  "note": "Manually annotated E5 evidence, not output of the E6 full-check detector."
+  "note": "Manually annotated E5 evidence, not output of the E6 full-check detector.",
+  "original_evidence_root": "work/e5-01/evidence",
+  "publication_note": "Paths refer to repository-hosted E5 evidence; raw trace bytes and line numbers are preserved."
 }

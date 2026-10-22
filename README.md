@@ -59,3 +59,6 @@ Run the cloud entry point in `scripts/lab_cloud.py` with a personal image tag.
 
 E5 reproduction report: [`docs/E5/实验报告.md`](docs/E5/实验报告.md).
 The report identifies the exact source SHA, image ID and raw evidence paths.
+
+A13 → B13 E5 handoff: [`docs/E5/B13_HANDOFF.md`](docs/E5/B13_HANDOFF.md),
+with repository-hosted raw traces and SHA256 checksums.

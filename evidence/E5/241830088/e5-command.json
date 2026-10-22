@@ -1,0 +1,15 @@
+{
+  "command": [
+    "python3",
+    "scripts/lab_cloud.py",
+    "e5",
+    "--image",
+    "sha256:7d83619e4dd3277d1024ff74c6c835e99fd5d526f9b5b97588ff7712d3d6c104",
+    "--out",
+    "work/e5-01"
+  ],
+  "exit_code": 0,
+  "time_utc": "2026-10-22T06:50:36.512780+00:00",
+  "source_sha": "cf898e29e57b0b6637d2bba6be9f0a9b6b445c36",
+  "image_id": "sha256:7d83619e4dd3277d1024ff74c6c835e99fd5d526f9b5b97588ff7712d3d6c104"
+}

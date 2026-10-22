@@ -1,0 +1,7 @@
+PASS full-check.request.json
+PASS incremental-check.request.json
+EXPECTED REJECTION incremental-without-baseline.json
+EXPECTED REJECTION incremental-config-mismatch.json
+PASS contracts/artifacts/job-full-a13-001/md-report.json
+PASS contracts/artifacts/job-incremental-a13-001/md-report.json
+All A13 E2 semantic checks passed.
