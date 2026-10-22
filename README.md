@@ -50,3 +50,9 @@ Group review and submission status are recorded in
 
 The BuildChecker environment template is under `services/buildchecker/`. See
 [`docs/E4/README.md`](docs/E4/README.md) for the setup and `make all` workflow.
+
+## E5
+
+The 2026-10-20 teaching reference and A13 adaptations are recorded in
+[`docs/E5/source-manifest.json`](docs/E5/source-manifest.json).
+Run the cloud entry point in `scripts/lab_cloud.py` with a personal image tag.
