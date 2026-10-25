@@ -19,46 +19,33 @@ Key files:
 - `scripts/validate_e2.py`: offline semantic validator.
 - `tests/test_e2_contracts.py`: contract tests.
 
-Pinned B13 proposal reviewed by A13:
+Pinned B13 proposal: `ma058/2026-Devops-B13` at commit `af194c40ffd1394fb56cc9f5b2367b7feffb5a3b`.
 
-- Repository: `ma058/2026-Devops-B13`
-- Branch: `main`
-- Commit: `af194c40ffd1394fb56cc9f5b2367b7feffb5a3b`
-
-Run:
-
-```bash
-python scripts/validate_e2.py
-python -m unittest discover -s tests -v
-```
-
-All service-specific values in `contracts/examples/` are **synthetic E2 examples**, not claims that BuildChecker/EChecker are already implemented.
+E2 examples are **synthetic contract fixtures** and not evidence that all production services have been reproduced.
 
 ## E3
 
-See [`docs/E3/README.md`](docs/E3/README.md) for A13's test baselines,
-commit history, manual expected findings, Linux traces and submission materials.
-The evidence prepared by member 241870063 includes the original C0/C1/C2
-experiments and a supplemental compiler-command experiment whose incremental
-and clean-build outputs differ. These are sample observations and manual
-oracles, not completed BuildChecker/EChecker implementations.
-
-Group review and submission status are recorded in
-[`docs/E3/REVIEW.md`](docs/E3/REVIEW.md).
+See [E3 README](docs/E3/README.md) for the C0/C1/C2 test baselines and evidence, and [review](docs/E3/REVIEW.md) for current review/acceptance status.
 
 ## E4
 
-The BuildChecker environment template is under `services/buildchecker/`. See
-[`docs/E4/README.md`](docs/E4/README.md) for the setup and `make all` workflow.
+See [E4 README](docs/E4/README.md) for the BuildChecker environment template, `make all` workflow, and isolated evidence.
 
 ## E5
 
-The 2026-10-20 teaching reference and A13 adaptations are recorded in
-[`docs/E5/source-manifest.json`](docs/E5/source-manifest.json).
-Run the cloud entry point in `scripts/lab_cloud.py` with a personal image tag.
+The 2026-10-20 teaching reference and adaptations are recorded in [E5 source manifest](docs/E5/source-manifest.json). The [E5 report](docs/E5/实验报告.md) identifies member 241830088's real runtime SHA and trace. An [A13 → B13 handoff](docs/E5/B13_HANDOFF.md) and [raw evidence](evidence/E5/241830088/README.md) are retained.
 
-E5 reproduction report: [`docs/E5/实验报告.md`](docs/E5/实验报告.md).
-The report identifies the exact source SHA, image ID and raw evidence paths.
+## E7 — BuildChecker validation
 
-A13 → B13 E5 handoff: [`docs/E5/B13_HANDOFF.md`](docs/E5/B13_HANDOFF.md),
-with repository-hosted raw traces and SHA256 checksums.
+Responsible study branch: `e7/241830217-reproduction` (student ID 241830217).
+
+- [E7 status and run commands](docs/E7/README.md)
+- [E7 experimental submission report](docs/E7/实验提交报告.md)
+- [E7 acceptance matrix](docs/E7/验收记录.csv)
+- [GitHub Actions evidence index](evidence/E7/241830217/ci-40154562661/README.md)
+- [Team handoff and pending collaboration](docs/E7/组内交接与后续安排.md)
+- [Course-server environment compliance confirmation](docs/E7/课程云服务器环境合规确认.md)
+
+On GitHub-hosted `ubuntu-24.04`, [CI run #40154562661](https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661) at `76a8f004e61560edc3f1d77a6c51fb2113413cc4` passed 15 service tests, 11 independent tests, all 8 E7 scenarios, and the saved-evidence audit. **This is not a claim of execution on the assigned course cloud server.** Course-server substitution is pending teacher confirmation, and protected-branch rejection/recovery PR evidence is still pending.
+
+The large `docs/tmp-references/` teaching/reference upload has been removed from the **current E7 tree**. Its source identities and E7 applicability are summarized in [course source index](docs/E7/课程材料来源索引.md); pre-cleanup Git history has not been rewritten.

@@ -1,14 +1,19 @@
 item,expected,status,evidence
-A13_E5_baseline,真实E5材料导入且保留来源,PASS,docs/E5/实验报告.md
-E7_offline_oracles,11个独立单测通过,PASS,GitHub Actions 40154393144 中 Oracle Tests 步骤
-E7_secret_scan,源文件和Git历史检查通过,PENDING,需核对修复后的新 Actions run
-E7_service_build,构建镜像和镜像扫描,PENDING,需核对新 Actions run
-E7_server_env,课程云服务器 Docker/strace 环境检查,PENDING,待云服务器执行
-E7_server_gate,8个真实门禁场景全通过 exit 0,PENDING,待云服务器执行
-E7_raw_evidence_audit,JSON CSV traces hash 行号全通过,PENDING,待真实 gate evidence
-E7_ci_gate,最新提交的自动化全流程成功,PENDING,等待最终 Actions run
-E7_ci_artifact,含 commit.txt 的 artifacts 归档并核对,PENDING,等待最终 Actions run
-E7_main_branch_protection,main required check strict admin,PENDING,需管理员在正常CI后配置
-E7_rejection_demo,错误预言PR阻止合并并保存证据,PENDING,需要真实PR验证
-E7_recovery_demo,同一PR修正后CI通过且合并,PENDING,需要真实PR验证
-E7_report,实验报告与论文步骤对照及全部原始证据,PENDING,待实测后填写
+A13_E5_baseline,组员E5源码与真实材料按来源整合,PASS,docs/E5/实验报告.md; E7 merge 7bbab16
+E7_offline_oracles,六项原oracle与五项新增负例共11项通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; evidence/E7/241830217/ci-40154562661/oracle-tests.log
+E7_service_unit_tests,教学服务15项pytest通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; artifact gate/unit-tests/stdout.log
+E7_secret_scan,Git跟踪源及完整历史和镜像均通过扫描,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; artifact source-scan.log image-scan.log
+E7_service_build,固定OCI摘要镜像构建与扫描通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; image sha256:eec09476303ed04737eba511368138e574ec0c21cb534175a4bbdbb8e1ae2103
+E7_repeated_original,三次相同MD/RD且各自不同trace_id,PASS,evidence/E7/241830217/ci-40154562661/gate-result.json; raw artifact
+E7_fixed,修复后findings为空且仅Makefile哈希变化,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; evidence-audit.log
+E7_faults,构建失败多输出超时按预期状态识别,PASS,evidence/E7/241830217/ci-40154562661/results.csv
+E7_ci_gate,八项真实门禁全通过且整体CI success,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; commit 76a8f004e61560edc3f1d77a6c51fb2113413cc4
+E7_raw_evidence_audit,原始trace声明图输入hash等一致,PASS,evidence/E7/241830217/ci-40154562661/evidence-audit.log
+E7_ci_artifact,原始Artifact已下载核对SHA256并建立仓库索引,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661/artifacts/12583718152; evidence/E7/241830217/ci-40154562661/run-manifest.json
+E7_course_server_run,在A13指定课程云服务器单独执行E7,PENDING,未执行; 当前真实运行在GitHub-hosted ubuntu-24.04
+E7_course_cloud_compliance,教师确认GitHub runner是否满足课程环境要求,PENDING,docs/E7/课程云服务器环境合规确认.md
+E7_main_branch_protection,main必需检查与严格分支保护已核实,PENDING,GitHub连接读取分支保护403; 需管理员核对
+E7_rejection_demo,错误预言PR在main保护下确实被拒合并,PENDING,尚无本组拒绝合并PR记录
+E7_recovery_demo,同一PR修复预言后最新CI通过并合并,PENDING,尚无本组恢复与合并记录
+E6_independent_handoff,E6负责人完整前后证据独立归档,PENDING,待E6负责人提供; 不属于E7已完成证明
+E7_report,实验提交报告组内交接和来源文件已编写,PASS,docs/E7/实验提交报告.md; docs/E7/组内交接与后续安排.md
