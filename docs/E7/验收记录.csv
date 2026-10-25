@@ -1,0 +1,14 @@
+item,expected,status,evidence
+A13_E5_baseline,真实E5材料导入且保留来源,PASS,docs/E5/实验报告.md
+E7_offline_oracles,11个独立单测通过,PASS,GitHub Actions 40154393144 中 Oracle Tests 步骤
+E7_secret_scan,源文件和Git历史检查通过,PENDING,需核对修复后的新 Actions run
+E7_service_build,构建镜像和镜像扫描,PENDING,需核对新 Actions run
+E7_server_env,课程云服务器 Docker/strace 环境检查,PENDING,待云服务器执行
+E7_server_gate,8个真实门禁场景全通过 exit 0,PENDING,待云服务器执行
+E7_raw_evidence_audit,JSON CSV traces hash 行号全通过,PENDING,待真实 gate evidence
+E7_ci_gate,最新提交的自动化全流程成功,PENDING,等待最终 Actions run
+E7_ci_artifact,含 commit.txt 的 artifacts 归档并核对,PENDING,等待最终 Actions run
+E7_main_branch_protection,main required check strict admin,PENDING,需管理员在正常CI后配置
+E7_rejection_demo,错误预言PR阻止合并并保存证据,PENDING,需要真实PR验证
+E7_recovery_demo,同一PR修正后CI通过且合并,PENDING,需要真实PR验证
+E7_report,实验报告与论文步骤对照及全部原始证据,PENDING,待实测后填写
