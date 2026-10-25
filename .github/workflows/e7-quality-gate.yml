@@ -59,7 +59,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker build --progress=plain -f services/buildchecker/Dockerfile -t "$IMAGE" . 2>&1 | tee work/ci/build.log
+          # A13 E4/E5 uses a DaoCloud mirror on its course server.
+          # GitHub-hosted Ubuntu must resolve the identical pinned OCI digest
+          # via canonical Docker Hub; do not alter the Dockerfile or digest.
+          PINNED_BASE=$(sed -n 's/^ARG BASE_IMAGE=//p' services/buildchecker/Dockerfile)
+          test -n "$PINNED_BASE"
+          CANONICAL_BASE="${PINNED_BASE/m.daocloud.io\/docker.io\//docker.io\/}"
+          printf '%s\n' "$CANONICAL_BASE" > work/ci/base-image-source.txt
+          docker build --progress=plain --build-arg BASE_IMAGE="$CANONICAL_BASE" -f services/buildchecker/Dockerfile -t "$IMAGE" . 2>&1 | tee work/ci/build.log
           docker image inspect "$IMAGE" > work/ci/service-image-inspect.json
 
       - name: Scan service image
