@@ -1,0 +1,6 @@
+--- teaching/doctor.py
++++ A13/doctor.py
+@@ -18 +18,2 @@
+-MIN = {"cpus": 2, "mem_gib": 4, "disk_gib": 40}        # 最低
++# A 组容器限制为 1 GiB；小规格云主机的 MemTotal 可能只报告约 3.5 GiB。
++MIN = {"cpus": 2, "mem_gib": 3.5, "disk_gib": 40}      # 最低可见资源

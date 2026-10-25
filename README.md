@@ -50,3 +50,15 @@ Group review and submission status are recorded in
 
 The BuildChecker environment template is under `services/buildchecker/`. See
 [`docs/E4/README.md`](docs/E4/README.md) for the setup and `make all` workflow.
+
+## E5
+
+The 2026-10-20 teaching reference and A13 adaptations are recorded in
+[`docs/E5/source-manifest.json`](docs/E5/source-manifest.json).
+Run the cloud entry point in `scripts/lab_cloud.py` with a personal image tag.
+
+E5 reproduction report: [`docs/E5/实验报告.md`](docs/E5/实验报告.md).
+The report identifies the exact source SHA, image ID and raw evidence paths.
+
+A13 → B13 E5 handoff: [`docs/E5/B13_HANDOFF.md`](docs/E5/B13_HANDOFF.md),
+with repository-hosted raw traces and SHA256 checksums.

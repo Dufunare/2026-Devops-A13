@@ -1,0 +1,19 @@
+test_commit_mismatch (test_e2_contracts.Tests) ... ok
+test_config_mismatch (test_e2_contracts.Tests) ... ok
+test_full (test_e2_contracts.Tests) ... ok
+test_incremental (test_e2_contracts.Tests) ... ok
+test_no_baseline (test_e2_contracts.Tests) ... ok
+test_report (test_e2_contracts.Tests) ... ok
+test_report_commit_mismatch (test_e2_contracts.Tests) ... ok
+test_empty_evidence (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_optional_commit_matches (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_tool_job (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_unknown_core (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_unresolved_path (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_unsafe_path (test_e2_v2_contracts.Pair13V2Tests) ... ok
+test_valid (test_e2_v2_contracts.Pair13V2Tests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK
