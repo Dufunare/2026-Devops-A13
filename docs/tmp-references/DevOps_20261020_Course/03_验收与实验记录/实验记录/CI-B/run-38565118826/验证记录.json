@@ -1,0 +1,22 @@
+{
+  "repository": "Scout7666/devops-20261020-draft",
+  "branch": "e7-b-validation",
+  "commit": "fbdcb1aa5149dc1182e011d43ac0b2e11f94bcd0",
+  "run_id": 38565118826,
+  "run_url": "https://github.com/Scout7666/devops-20261020-draft/actions/runs/38565118826",
+  "job_id": 115855716789,
+  "conclusion": "success",
+  "case_results": {
+    "success": "PASS",
+    "wrong-output": "PASS",
+    "invalid-candidate": "PASS",
+    "build-failed": "PASS",
+    "runtime-timeout": "PASS"
+  },
+  "artifact_id": 11895145527,
+  "artifact_name": "e7-b-evidence-38565118826-1",
+  "artifact_size_bytes": 67014,
+  "artifact_digest": "sha256:9fa2b4769b122af4ff901cc819405837d5d22ac8771ebca182b9eeb3a2542331",
+  "verification_source": "GitHub API job status and decoded job log checked on 2026-10-14",
+  "pending": ["Pull request checks", "Protected main branch", "Deliberately failing PR merge rejection", "A-track cloud CI"]
+}

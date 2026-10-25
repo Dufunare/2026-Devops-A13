@@ -1,0 +1,11 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network",
+  "none",
+  "--cidfile",
+  "/home/runner/work/DevOps/DevOps/work/ci/gate/unit-tests/container-id.txt",
+  "e7-buildchecker:ci",
+  "pytest"
+]

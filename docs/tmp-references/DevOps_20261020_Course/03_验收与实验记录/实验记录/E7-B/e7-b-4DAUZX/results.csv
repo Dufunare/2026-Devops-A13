@@ -1,0 +1,7 @@
+case,passed,exit_code,workflow_status,trace_id,error
+unit-tests,True,0,,,
+success,True,0,SUCCEEDED,e6-b-83b06d32511a4e05a9ebe6d891404507,
+wrong-output,True,1,FAILED,e6-b-b4e91e4d27d147f0b717ebc7074f8771,
+invalid-candidate,True,1,FAILED,,
+build-failed,True,1,FAILED,e6-b-cefb89215d974082ac32d3d950b2e7c4,
+runtime-timeout,False,1,,,Candidate build failed before runtime fault could be tested

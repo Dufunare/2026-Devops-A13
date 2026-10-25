@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "image": "e7-draft:ta1020001",
+  "cases": [
+    {
+      "case": "unit-tests",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "runtime-timeout",
+      "passed": true,
+      "exit_code": 1,
+      "workflow_status": "TIMED_OUT",
+      "trace_id": "e6-b-8efd5cad207b47dcae848ce4685819e0"
+    }
+  ],
+  "intentional_failure": false,
+  "selected_cases": [
+    "runtime-timeout"
+  ],
+  "build_timeout_seconds": 300,
+  "scope": "Recorded candidate replay for selected real workflow cases; not model generation or a three-project benchmark"
+}

@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "image": "e7-draft:ta1020001",
+  "cases": [
+    {
+      "case": "unit-tests",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "runtime-timeout",
+      "passed": false,
+      "exit_code": 1,
+      "error": "Candidate BUILD timed out before runtime fault could be tested; inspect downloads and build budget"
+    }
+  ],
+  "intentional_failure": false,
+  "selected_cases": [
+    "runtime-timeout"
+  ],
+  "build_timeout_seconds": 1200,
+  "scope": "Recorded candidate replay for selected real workflow cases; not model generation or a three-project benchmark"
+}

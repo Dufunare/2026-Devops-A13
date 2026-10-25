@@ -1,0 +1,27 @@
+[unit-tests] Running service tests...
+{
+  "passed": false,
+  "image": "e7-draft:ci",
+  "cases": [
+    {
+      "case": "unit-tests",
+      "passed": false,
+      "exit_code": 1
+    },
+    {
+      "case": "runner",
+      "passed": false,
+      "error": "Service unit tests failed"
+    }
+  ],
+  "intentional_failure": false,
+  "selected_cases": [
+    "success",
+    "wrong-output",
+    "invalid-candidate",
+    "build-failed",
+    "runtime-timeout"
+  ],
+  "build_timeout_seconds": 300,
+  "scope": "Recorded candidate replay for selected real workflow cases; not model generation or a three-project benchmark"
+}

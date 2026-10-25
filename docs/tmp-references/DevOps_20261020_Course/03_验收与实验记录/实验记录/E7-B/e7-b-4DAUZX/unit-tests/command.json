@@ -1,0 +1,11 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network",
+  "none",
+  "--cidfile",
+  "/home/hello/devops-course/20261020/B-draft/work/e7-b-4DAUZX/unit-tests/service-container-id.txt",
+  "e7-draft:ta1020001",
+  "pytest"
+]

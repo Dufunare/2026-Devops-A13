@@ -1,0 +1,9 @@
+case,passed,exit_code,detector_status,trace_id,error
+unit-tests,True,0,,,
+original-1,True,1,SUCCEEDED,e6-64793d6abee041b194919a3be3ad2775,
+original-2,True,1,SUCCEEDED,e6-022d412a37eb4689a3a63bd3fc114c3c,
+original-3,True,1,SUCCEEDED,e6-dd0427be848f420eb264e92448444b26,
+fixed,False,0,,,Intentional failing oracle: repaired fixture was required to have a finding
+build-failed,True,1,FAILED,e6-51b65a4a4ed545acacc0ff5351b1835e,
+unsupported,True,1,FAILED,e6-b744c85e43ef460da84b73a65aa0e9eb,
+timeout,True,1,TIMED_OUT,e6-4ef87bf2975a43bfb351ab4f19f0c727,

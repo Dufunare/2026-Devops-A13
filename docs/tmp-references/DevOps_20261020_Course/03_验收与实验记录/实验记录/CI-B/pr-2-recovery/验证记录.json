@@ -1,0 +1,15 @@
+{
+  "repository": "Scout7666/devops-20261020-draft",
+  "pr_url": "https://github.com/Scout7666/devops-20261020-draft/pull/2",
+  "failed_head": "40d7112853e5f12d58a802cb448948de3d850f7f",
+  "failed_run_url": "https://github.com/Scout7666/devops-20261020-draft/actions/runs/38567115233",
+  "repaired_head": "257fbee52369704f331cf81b5d33efed09b8810d",
+  "repaired_run_id": 38580500838,
+  "repaired_run_url": "https://github.com/Scout7666/devops-20261020-draft/actions/runs/38580500838",
+  "repaired_run_conclusion": "success",
+  "pr_state": "OPEN",
+  "merge_state": "clean",
+  "correction": "Correct the deliberate test-oracle error to expect the documented zero success exit code; implementation and protection unchanged",
+  "verification_date": "2026-10-14",
+  "scope": "Same PR failed, was blocked, then became green and merge-eligible after oracle correction; merge not yet confirmed"
+}
