@@ -14,6 +14,11 @@ on:
 permissions:
   contents: read
 
+# Only the newest revision of a branch is authoritative for E7 acceptance.
+concurrency:
+  group: e7-a-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-gate:
     name: e7-a-quality-gate
