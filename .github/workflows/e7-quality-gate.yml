@@ -43,6 +43,23 @@ jobs:
           docker version > work/ci/docker-version.txt
           python3 -m compileall -q services/buildchecker/buildchecker scripts tests/e7
 
+      - name: Bundle exact-revision submission documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/ci/submission
+          cp docs/E7/实验提交报告.md work/ci/submission/E7-report.md
+          cp docs/E7/验收记录.csv work/ci/submission/E7-acceptance.csv
+          cp docs/E7/课程云服务器环境合规确认.md work/ci/submission/E7-course-environment.md
+
+      - name: Archive submission documents immediately
+        uses: actions/upload-artifact@v4
+        with:
+          name: e7-submission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: work/ci/submission/
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Test independent oracles and raw evidence audit
         shell: bash
         run: |
@@ -89,15 +106,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/verify_e7_a_evidence.py --gate-dir work/ci/gate 2>&1 | tee work/ci/evidence-audit.log
-
-      - name: Snapshot submission report alongside run evidence
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p work/ci/submission
-          cp docs/E7/实验提交报告.md work/ci/submission/E7-report.md
-          cp docs/E7/验收记录.csv work/ci/submission/E7-acceptance.csv
-          cp docs/E7/课程云服务器环境合规确认.md work/ci/submission/E7-course-environment.md
 
       - name: Archive evidence on success or failure
         if: always()
