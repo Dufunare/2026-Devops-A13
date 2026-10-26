@@ -1,0 +1,78 @@
+[unit-tests] Running existing service tests...
+[original-1] Running real build/check...
+[original-1] PASS; tool exit=1
+[original-2] Running real build/check...
+[original-2] PASS; tool exit=1
+[original-3] Running real build/check...
+[original-3] PASS; tool exit=1
+[fixed] Running real build/check...
+[fixed] PASS; tool exit=0
+[build-failed] Running real build/check...
+[build-failed] PASS; tool exit=1
+[unsupported] Running real build/check...
+[unsupported] PASS; tool exit=1
+[timeout] Running real build/check...
+[timeout] PASS; tool exit=1
+{
+  "passed": true,
+  "image": "course1020-buildchecker:241870063-e6b",
+  "cases": [
+    {
+      "case": "unit-tests",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "original-1",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "SUCCEEDED",
+      "trace_id": "e6-d30552ada3f74e938e9801951ee26662"
+    },
+    {
+      "case": "original-2",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "SUCCEEDED",
+      "trace_id": "e6-1c11606444b346f9ac9affbbf9e4a296"
+    },
+    {
+      "case": "original-3",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "SUCCEEDED",
+      "trace_id": "e6-59d306a68fea4369907d84bc679fd61c"
+    },
+    {
+      "case": "fixed",
+      "passed": true,
+      "exit_code": 0,
+      "detector_status": "SUCCEEDED",
+      "trace_id": "e6-7f619521051e4ede9246abea5349e124"
+    },
+    {
+      "case": "build-failed",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "FAILED",
+      "trace_id": "e6-b89e15735c1a45cdae668f1a9464e099"
+    },
+    {
+      "case": "unsupported",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "FAILED",
+      "trace_id": "e6-ec8b5b3ca1054717888ac0a72f3f0d81"
+    },
+    {
+      "case": "timeout",
+      "passed": true,
+      "exit_code": 1,
+      "detector_status": "TIMED_OUT",
+      "trace_id": "e6-5208a0a7d80f457ba68f6894e22af239"
+    }
+  ],
+  "oracle_scope": "Small explicit teaching fixtures; not full paper benchmark",
+  "repeated_original_cases": 3,
+  "intentional_failure": false
+}

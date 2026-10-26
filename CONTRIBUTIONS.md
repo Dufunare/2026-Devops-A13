@@ -9,6 +9,7 @@
 | Dufunare（提交作者 Chenyu Du） | 仓库初始化、论文及 README 整理；E2 BuildChecker/EChecker 契约与 B13 对齐，补充 Schema、样例、验证脚本及验证记录，并合并 PR #2 | [#1](https://github.com/Dufunare/2026-Devops-A13/issues/1)（原登记） | `f17b820`、`d0936e6`、`fd13722`、`f6296c5`、`bc1ed35`（完整链接见下表） | [#2](https://github.com/Dufunare/2026-Devops-A13/pull/2)，已合并 | 合并记录已核实；组员审查记录待补 | [E2 契约验证记录](evidence/E2/2026-09-26-contract-validation.md) |
 | 241830088 / zycAlmira | E4 BuildChecker 容器环境、Make 命令、环境自检、密钥扫描、冒烟检查与测试、MD/RD fixture；调整镜像构建使用的 Debian 软件源 | 待补 | `dc76e74`、`b755aff`（已进入 main，完整链接见下表） | 待补 | 待补 | [E4 环境与运行说明](docs/E4/README.md)；个人实际运行日志待补 |
 | 241870063 / Mikasa-79（王宣昊） | E3 MD/RD、C0/C1/C2、MODE 补充实验、Linux 跟踪、独立副本自检及材料汇总；通过 E3 分支提交审阅 | 未建 | [实验提交链](evidence/E3/241870063/supplement-evidence/commit-history.txt)，保存在 Git bundle 中；[A13 汇总分支提交](https://github.com/Dufunare/2026-Devops-A13/commits/e3/241870063-materials) | 见 [E3 提交记录](docs/E3/REVIEW.md) | 本人独立副本自检已完成；[组内互查待记录](docs/E3/REVIEW.md) | [E3 材料入口](docs/E3/README.md) |
+| 241870063 / Mikasa-79（王宣昊） | E6：在课程云服务器运行 BuildChecker 自动检测与修复复检，补充一项路径过滤测试，整理 E6 证据与报告 | 未建 | `18d333e` 及 E6 文档提交（分支 `e6/241870063-mvp`） | 待开 | 待组员审查 | [E6 实验报告](docs/E6/实验报告.md)；[E6 证据](evidence/E6/241870063/README.md) |
 | 成员4 | 待分配 | 待补 | 待补 | 待补 | 待补 | 待补 |
 
 ## 已核实的主分支提交

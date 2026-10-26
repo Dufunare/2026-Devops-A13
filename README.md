@@ -62,3 +62,9 @@ The report identifies the exact source SHA, image ID and raw evidence paths.
 
 A13 → B13 E5 handoff: [`docs/E5/B13_HANDOFF.md`](docs/E5/B13_HANDOFF.md),
 with repository-hosted raw traces and SHA256 checksums.
+
+## E6
+
+Responsible branch: `e6/241870063-mvp` (student ID 241870063). On the A13 course server, `full-check` detected MD(`main.o`, `config.h`) and RD(`main.o`, `unused.h`) on the original `md-rd` fixture, and returned `findings=[]` after repairing only the Makefile in an isolated copy. One added service test (16 passed) and the A gate (8/8) were rerun on the rebuilt image.
+
+E6 report: [`docs/E6/实验报告.md`](docs/E6/实验报告.md); raw evidence: [`evidence/E6/241870063/`](evidence/E6/241870063/README.md).

@@ -9,3 +9,5 @@ evidence/E3/**/make-database.txt -whitespace
 evidence/E5/241830088/** -text
 evidence/E5/241830088/**/*.log -whitespace
 evidence/E5/241830088/**/make-db.txt -whitespace
+# Preserve the E6 run snapshot and original tool-output whitespace.
+evidence/E6/241870063/** -text -whitespace
