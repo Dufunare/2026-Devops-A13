@@ -1,0 +1,11 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network",
+  "none",
+  "--cidfile",
+  "/root/241830088/e7-integration/work/e7-course-01/gate/unit-tests/container-id.txt",
+  "course1020-buildchecker:241830088-integrated",
+  "pytest"
+]

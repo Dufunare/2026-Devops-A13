@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "cases": 8,
+  "unique_trace_ids": 7,
+  "original_runs": 3,
+  "fixed_changed_files": [
+    "Makefile"
+  ],
+  "scope": "Offline audit of an actual gate's saved reports and raw evidence"
+}
