@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-10-27T01:51:25.924137+08:00",
+  "pr": "https://github.com/Dufunare/2026-Devops-A13/pull/8",
+  "run_id": 40372248900,
+  "run_url": "https://github.com/Dufunare/2026-Devops-A13/actions/runs/40372248900",
+  "event": "pull_request",
+  "run_head_sha": "9d1712ae5a4feb57afe81943276492262307b1c0",
+  "actual_checkout_sha": "0ff02f5033b9b71a7d3863a512f8ca21aa64c4db",
+  "conclusion": "success",
+  "service_tests": 17,
+  "independent_tests": 17,
+  "gate_cases": 8,
+  "local_evidence_audit": {
+    "passed": true,
+    "cases": 8,
+    "unique_trace_ids": 7,
+    "original_runs": 3,
+    "fixed_changed_files": [
+      "Makefile"
+    ],
+    "scope": "Offline audit of an actual gate's saved reports and raw evidence"
+  },
+  "original_archives": [
+    {
+      "id": 12673855568,
+      "name": "e7-a-evidence-40372248900-1.zip",
+      "sha256": "7e30da85c4f4b80d50c6d452aa69102e2229bea7c06f58acaf90446e757a1121"
+    },
+    {
+      "id": 12672463750,
+      "name": "e7-submission-40372248900-1.zip",
+      "sha256": "9b82c2e2902706b221cfaedd0ba8e0e924678e795b498f462ba3b038b2319071"
+    }
+  ],
+  "excluded_binary_files": [
+    "gate/fixed/evidence/project/app",
+    "gate/fixed/evidence/project/main.o",
+    "gate/original-1/evidence/project/app",
+    "gate/original-1/evidence/project/main.o",
+    "gate/original-2/evidence/project/app",
+    "gate/original-2/evidence/project/main.o",
+    "gate/original-3/evidence/project/app",
+    "gate/original-3/evidence/project/main.o"
+  ],
+  "note": "Published text bytes are unchanged; complete original ZIPs including binaries are saved locally."
+}

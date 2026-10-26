@@ -1,0 +1,22 @@
+test_empty_broken_report_does_not_pass (test_e7_a_gate.OracleTests.test_empty_broken_report_does_not_pass) ... ok
+test_exact_errors_rejected_by_cli (test_e7_a_gate.OracleTests.test_exact_errors_rejected_by_cli) ... ok
+test_explicit_unsupported (test_e7_a_gate.OracleTests.test_explicit_unsupported) ... ok
+test_failed_build_not_counted_as_fixed (test_e7_a_gate.OracleTests.test_failed_build_not_counted_as_fixed) ... ok
+test_fixed_passes (test_e7_a_gate.OracleTests.test_fixed_passes) ... ok
+test_timeout_requires_failure_exit (test_e7_a_gate.OracleTests.test_timeout_requires_failure_exit) ... ok
+test_failed_syscall_not_accepted_as_input (test_e7_evidence_audit.EvidenceAuditTests.test_failed_syscall_not_accepted_as_input) ... ok
+test_findings_duplicates_rejected (test_e7_evidence_audit.EvidenceAuditTests.test_findings_duplicates_rejected) ... ok
+test_input_tampering_rejected (test_e7_evidence_audit.EvidenceAuditTests.test_input_tampering_rejected) ... ok
+test_make_declaration_must_match_raw_line (test_e7_evidence_audit.EvidenceAuditTests.test_make_declaration_must_match_raw_line) ... ok
+test_trace_traversal_rejected (test_e7_evidence_audit.EvidenceAuditTests.test_trace_traversal_rejected) ... ok
+test_failed_detector_run_cannot_be_exported_as_success (test_pair13_export.Pair13ExportTests.test_failed_detector_run_cannot_be_exported_as_success) ... ok
+test_locator_uses_immutable_source_snapshot_and_actual_file_hash (test_pair13_export.Pair13ExportTests.test_locator_uses_immutable_source_snapshot_and_actual_file_hash) ... ok
+test_real_before_report_preserves_findings_and_resolved_makefile (test_pair13_export.Pair13ExportTests.test_real_before_report_preserves_findings_and_resolved_makefile) ... ok
+test_real_fixed_report_is_empty_and_does_not_claim_a_fixed_git_commit (test_pair13_export.Pair13ExportTests.test_real_fixed_report_is_empty_and_does_not_claim_a_fixed_git_commit) ... ok
+test_short_commit_cannot_be_used_as_artifact_identity (test_pair13_export.Pair13ExportTests.test_short_commit_cannot_be_used_as_artifact_identity) ... ok
+test_tampered_input_is_rejected (test_pair13_export.Pair13ExportTests.test_tampered_input_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.028s
+
+OK

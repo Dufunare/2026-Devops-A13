@@ -1,0 +1,6 @@
+[
+  "docker",
+  "image",
+  "inspect",
+  "e7-buildchecker:ci"
+]

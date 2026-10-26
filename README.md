@@ -52,7 +52,7 @@ Responsible study branch: `e7/241830217-reproduction` (student ID 241830217).
 - [Team handoff and pending collaboration](docs/E7/组内交接与后续安排.md)
 - [Course-server environment compliance confirmation](docs/E7/课程云服务器环境合规确认.md)
 
-On GitHub-hosted `ubuntu-24.04`, [CI run #40154562661](https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661) at `76a8f004e61560edc3f1d77a6c51fb2113413cc4` passed 15 service tests, 11 independent tests, all 8 E7 scenarios, and the saved-evidence audit. **This is not a claim of execution on the assigned course cloud server.** Course-server substitution is pending teacher confirmation, and protected-branch rejection/recovery PR evidence is still pending.
+On GitHub-hosted `ubuntu-24.04`, [CI run #40154562661](https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661) at `76a8f004e61560edc3f1d77a6c51fb2113413cc4` passed 15 service tests, 11 independent tests, all 8 E7 scenarios, and the saved-evidence audit. **This is not a claim of execution on the assigned course cloud server.** This historical run was followed by the actual assigned-server run (source a887b57, 16/17/8), and PR #8 completed protected-branch rejection, recovery CI (17/17/8), and normal merge 99cc7e0 on 2026-10-27 (Asia/Shanghai). See the current report and evidence below.
 
 The large `docs/tmp-references/` teaching/reference upload has been removed from the **current E7 tree**. Its source identities and E7 applicability are summarized in [course source index](docs/E7/课程材料来源索引.md); pre-cleanup Git history has not been rewritten.
 
@@ -63,3 +63,14 @@ The integration branch is `e7/241830088-integration`. See the
 [real E6 candidate handoff for B13](docs/E6/B13_AUTOMATED_HANDOFF.md).
 The integrated baseline has 16 service tests and 17 independent tests;
 historical runs above retain their original counts and source identities.
+
+## E7 final acceptance (2026-10-27)
+
+[PR #8](https://github.com/Dufunare/2026-Devops-A13/pull/8) completed the same-PR rejection and recovery demonstration under active main ruleset 25888082 (required check e7-a-quality-gate/App15368, strict=true, zero bypass actors). The bad head96119b2 was rejected by ordinary merge after leaving draft. Repaired head9d1712a passed [PR Run40372248900](https://github.com/Dufunare/2026-Devops-A13/actions/runs/40372248900): 17 service tests, 17 independent tests, 8 gate cases, and raw-evidence audit. Normal merge commit: 99cc7e01d4562d2357470ed14585c0d587fb76df.
+
+- [Current submission report](docs/E7/实验提交报告.md) and [acceptance CSV](docs/E7/验收记录.csv)
+- [Actual merge rejection](evidence/E7/241830088/pr8-rejection-20261027/README.md)
+- [Recovery and final merge proof](evidence/E7/241830088/pr8-recovery-40372248900/README.md)
+- [Assigned course-server run](evidence/E7/241830088/course-20261026/README.md), retaining its separate 16/17/8 source identity and E4 resource adaptation
+
+B13 candidate consumption and joint schema freezing remain pending receiving-side confirmation; this is separate from completed E7 gate acceptance.

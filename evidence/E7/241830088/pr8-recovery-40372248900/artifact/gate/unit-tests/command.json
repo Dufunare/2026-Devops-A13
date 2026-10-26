@@ -1,0 +1,11 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network",
+  "none",
+  "--cidfile",
+  "/home/runner/work/2026-Devops-A13/2026-Devops-A13/work/ci/gate/unit-tests/container-id.txt",
+  "e7-buildchecker:ci",
+  "pytest"
+]

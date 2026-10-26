@@ -1,0 +1,9 @@
+case,passed,exit_code,detector_status,trace_id,error
+unit-tests,True,0,,,
+original-1,True,1,SUCCEEDED,e6-445434eafe2e4ebe9c94b559304b6140,
+original-2,True,1,SUCCEEDED,e6-3ff07a70a93f4ae5a43bb0422ba00c51,
+original-3,True,1,SUCCEEDED,e6-8b9516e6e2654c0491f4c00e1dc45280,
+fixed,True,0,SUCCEEDED,e6-fd26dce948d04694895ccacf1bee08c7,
+build-failed,True,1,FAILED,e6-5ac70cd1f88d41b984867b246c0833ef,
+unsupported,True,1,FAILED,e6-f7155c3ec509454d906bee5684a8da26,
+timeout,True,1,TIMED_OUT,e6-2fe92a5e3213404893f1e744bfbe367d,
