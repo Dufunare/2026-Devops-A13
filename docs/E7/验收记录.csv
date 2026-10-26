@@ -1,7 +1,7 @@
 item,expected,status,evidence
 A13_E5_baseline,组员E5源码与真实材料按来源整合,PASS,docs/E5/实验报告.md; E7 merge 7bbab16
-E7_offline_oracles,六项原oracle与五项新增负例共11项通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; evidence/E7/241830217/ci-40154562661/oracle-tests.log
-E7_service_unit_tests,教学服务15项pytest通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; artifact gate/unit-tests/stdout.log
+E7_offline_oracles,原oracle与审计及适配共17项通过,PASS,evidence/E7/241830088/course-20261026/course-provenance/oracle-tests.log; CI 40304725572
+E7_service_unit_tests,含E6新增测试的整合基线16项通过,PASS,evidence/E7/241830088/course-20261026/build-course-01/unit-tests/stdout.log; source a887b57
 E7_secret_scan,Git跟踪源及完整历史和镜像均通过扫描,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; artifact source-scan.log image-scan.log
 E7_service_build,固定OCI摘要镜像构建与扫描通过,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; image sha256:eec09476303ed04737eba511368138e574ec0c21cb534175a4bbdbb8e1ae2103
 E7_repeated_original,三次相同MD/RD且各自不同trace_id,PASS,evidence/E7/241830217/ci-40154562661/gate-result.json; raw artifact
@@ -10,10 +10,10 @@ E7_faults,构建失败多输出超时按预期状态识别,PASS,evidence/E7/2418
 E7_ci_gate,八项真实门禁全通过且整体CI success,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661; commit 76a8f004e61560edc3f1d77a6c51fb2113413cc4
 E7_raw_evidence_audit,原始trace声明图输入hash等一致,PASS,evidence/E7/241830217/ci-40154562661/evidence-audit.log
 E7_ci_artifact,原始Artifact已下载核对SHA256并建立仓库索引,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661/artifacts/12583718152; evidence/E7/241830217/ci-40154562661/run-manifest.json
-E7_course_server_run,在A13指定课程云服务器单独执行E7,PENDING,未执行; 当前真实运行在GitHub-hosted ubuntu-24.04
-E7_course_cloud_compliance,教师确认GitHub runner是否满足课程环境要求,PENDING,docs/E7/课程云服务器环境合规确认.md
-E7_main_branch_protection,main必需检查与严格分支保护已核实,PENDING,GitHub连接读取分支保护403; 需管理员核对
-E7_rejection_demo,错误预言PR在main保护下确实被拒合并,PENDING,尚无本组拒绝合并PR记录
-E7_recovery_demo,同一PR修复预言后最新CI通过并合并,PENDING,尚无本组恢复与合并记录
+E7_course_server_run,在A13指定课程云服务器单独执行整合E7,PASS,evidence/E7/241830088/course-20261026/; source a887b574a61524b967f731889ca5523f40684730; pipeline_exit=0
+E7_course_cloud_compliance,通过指定服务器实测满足环境要求,PASS,实际指定主机完成16/17/8及原始证据审计; 不依赖教师接受GitHub替代的反馈
+E7_main_branch_protection,main必需检查与严格分支保护已核实,PASS,evidence/E7/241830088/pr8-rejection-20261027/; active ruleset 25888082; e7-a-quality-gate App15368; strict=true; bypassActors=0
+E7_rejection_demo,同一错误PR在main保护下确实被拒合并,PASS,PR #8 ready; source 96119b2; merge exit=1; pr8-rejection-20261027/merge-rejection.log.stderr; PR仍OPEN
+E7_recovery_demo,同一PR修复后新CI通过并合并,PENDING,同一PR #8已修正version预期为0; 等待新提交CI及真实合并
 E6_independent_handoff,E6负责人完整前后证据独立归档,PASS,https://github.com/Dufunare/2026-Devops-A13/pull/6; E6 SHA 694d6cb2961698437cf8de581afcee515eb293b7; evidence/E6/241870063/; 272项哈希及前后原始证据已核验
 E7_report,实验提交报告组内交接和来源文件已编写,PASS,docs/E7/实验提交报告.md; docs/E7/组内交接与后续安排.md

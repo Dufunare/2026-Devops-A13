@@ -1,0 +1,51 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.00kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for m.daocloud.io/docker.io/library/python@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
+#2 DONE 1.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 106B done
+#3 DONE 0.0s
+
+#4 [1/8] FROM m.daocloud.io/docker.io/library/python@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
+#4 resolve m.daocloud.io/docker.io/library/python@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 35.71kB done
+#5 DONE 0.0s
+
+#6 [2/8] RUN sed -i 's@http://deb.debian.org/debian-security@https://mirrors.aliyun.com/debian-security@g; s@http://deb.debian.org/debian@https://mirrors.aliyun.com/debian@g' /etc/apt/sources.list.d/debian.sources  && apt-get update  && apt-get install -y --no-install-recommends gcc make libc6-dev strace git  && rm -rf /var/lib/apt/lists/*  && dpkg-query -W -f='${Package}=${Version}\n' gcc make libc6-dev strace git > /opt/toolchain.lock  && echo "python3=$(python3 -c 'import platform; print(platform.python_version())')" >> /opt/toolchain.lock  && echo "arch=$(dpkg --print-architecture)" >> /opt/toolchain.lock
+#6 CACHED
+
+#7 [3/8] COPY requirements-dev.lock /tmp/requirements-dev.lock
+#7 CACHED
+
+#8 [4/8] RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements-dev.lock  && pip freeze | sed 's/^/pip:/' >> /opt/toolchain.lock
+#8 CACHED
+
+#9 [5/8] RUN useradd --create-home --uid 10001 app && install -d -o app -g app /app
+#9 CACHED
+
+#10 [6/8] WORKDIR /app
+#10 CACHED
+
+#11 [7/8] COPY --chown=app:app services/buildchecker/ /app/
+#11 CACHED
+
+#12 [8/8] COPY --chown=app:app fixtures/ /app/fixtures/
+#12 CACHED
+
+#13 exporting to image
+#13 exporting layers done
+#13 exporting manifest sha256:e917ab51403f86d57c74852e496b01f75d78322cb7895b0a5a49eea450a8b592 done
+#13 exporting config sha256:7242776fb7e32b34bfff58dec6344fd677ee1adaf907d227b587fce15712d669 done
+#13 exporting attestation manifest sha256:e046bd255be2fdc3c8ade20f1f82e19176a0f2a65cbecf929475d2fb21c07af3 0.0s done
+#13 exporting manifest list sha256:33955dbda4aabccaea1f07370d7ea7b1d8fd7e82f517836b62aa111fc3580fe2 done
+#13 naming to docker.io/library/course1020-buildchecker:241830088-integrated done
+#13 unpacking to docker.io/library/course1020-buildchecker:241830088-integrated done
+#13 DONE 0.1s

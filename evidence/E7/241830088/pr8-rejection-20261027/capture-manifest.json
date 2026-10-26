@@ -1,0 +1,22 @@
+{
+  "run_id": 40339033967,
+  "head_sha": "96119b2c69052260b3b4de25532f7f2dae9c875b",
+  "conclusion": "failure",
+  "pr": "https://github.com/Dufunare/2026-Devops-A13/pull/8",
+  "pr_is_draft": true,
+  "main_protected_at_capture": false,
+  "protected_merge_rejection_verified": false,
+  "recovery_verified": false,
+  "artifacts": [
+    {
+      "id": 12658886167,
+      "file": "e7-submission-40339033967-1.zip",
+      "sha256": "1fce55982cfc13c2ded43ab6e4bf8fcc3f4d264b78ac53f930dbcb008032e56e"
+    },
+    {
+      "id": 12658557582,
+      "file": "e7-a-evidence-40339033967-1.zip",
+      "sha256": "1acd204036273c5369faf38e351d4486129906c1c300f3a80e04fb2ca57d6a2b"
+    }
+  ]
+}

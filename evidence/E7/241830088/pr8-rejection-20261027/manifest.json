@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-10-27T01:47:36.044512+08:00",
+  "pr": "https://github.com/Dufunare/2026-Devops-A13/pull/8",
+  "head_sha": "96119b2c69052260b3b4de25532f7f2dae9c875b",
+  "ruleset_id": 25888082,
+  "merge_exit": 1,
+  "merge_rejected": true,
+  "draft_at_attempt": false,
+  "state_after": "OPEN",
+  "required_check": "e7-a-quality-gate",
+  "strict": true,
+  "current_user_can_bypass": "never",
+  "admin_bypass_list_exposed": false,
+  "bypass_actor_count": 0,
+  "admin_bypass_verification": "GraphQL bypassActors.totalCount=0"
+}

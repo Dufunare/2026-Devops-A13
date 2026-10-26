@@ -1,0 +1,48 @@
+{
+  "kind": "ACTUAL_A13_COURSE_CLOUD_E7_RUN",
+  "student_id": "241830088",
+  "source_sha": "a887b574a61524b967f731889ca5523f40684730",
+  "source_status_clean": true,
+  "pipeline_exit_code": 0,
+  "service_tests": 16,
+  "independent_tests": 17,
+  "gate_cases": 8,
+  "evidence_audit": {
+    "passed": true,
+    "cases": 8,
+    "unique_trace_ids": 7,
+    "original_runs": 3,
+    "fixed_changed_files": [
+      "Makefile"
+    ],
+    "scope": "Offline audit of an actual gate's saved reports and raw evidence"
+  },
+  "image_id": "sha256:33955dbda4aabccaea1f07370d7ea7b1d8fd7e82f517836b62aa111fc3580fe2",
+  "original_archive_sha256": "ee512ff81ef4b5bebe8b976bad3a31327396055bdd32a8d17db5b6f97bbbd078",
+  "published_files": 209,
+  "excluded_binary_files": [
+    "e7-course-01/gate/fixed/evidence/project/app",
+    "e7-course-01/gate/fixed/evidence/project/main.o",
+    "e7-course-01/gate/original-1/evidence/project/app",
+    "e7-course-01/gate/original-1/evidence/project/main.o",
+    "e7-course-01/gate/original-2/evidence/project/app",
+    "e7-course-01/gate/original-2/evidence/project/main.o",
+    "e7-course-01/gate/original-3/evidence/project/app",
+    "e7-course-01/gate/original-3/evidence/project/main.o"
+  ],
+  "transformations": [
+    {
+      "path": "course-provenance/doctor.log",
+      "original_sha256": "1da6df301aafdc0d40affa139f7789d1a6408c75d2d6400851ce679270068fcc",
+      "published_sha256": "f126e9af99b8147b6db8431c1db7b302a2593724028624ba01e690a72fc0a8e2",
+      "change": "course hostname replaced"
+    },
+    {
+      "path": "course-provenance/env.json",
+      "original_sha256": "8adb51aab3b1bd886a68b227ce2df3ab3b45ff7a57d467035d552000aca0d55b",
+      "published_sha256": "ba9496e0efe1f4acdceb1d2512f67412c688e72c45d10a9b7d8d8cf34fbaafff",
+      "change": "course hostname replaced"
+    }
+  ],
+  "note": "Run performed on the assigned A13 Ubuntu course server; E4 memory/mirror adaptations remain explicitly recorded."
+}
