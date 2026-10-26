@@ -12,9 +12,9 @@
 
 ## 当前收尾
 
-管理员需将 `e7-a-quality-gate` 设置为 main 必需检查，启用 strict、enforce_admins 和 PR 合并。配置见 [main-protection-required.json](main-protection-required.json)。当前账号没有 admin 权限，不能单方面完成该设置。
+2026-10-27 已核实 active main 规则集 25888082：必需检查 `e7-a-quality-gate` / App 15368，strict=true，要求通过 PR；GraphQL `bypassActors.totalCount=0`，没有管理员例外，当前账号不可绕过。
 
-独立 `e7/241830088-protected-demo` PR 将保留同一 PR 的故意错误版本预期、失败 CI、普通合并被保护规则拒绝、修复后新 CI 和正常合并记录。在记录真实拒绝之前，相关验收项保持 PENDING；故意错误仅用于课程门禁演示，修复后版本返回码断言应为 0。
+[PR #8](https://github.com/Dufunare/2026-Devops-A13/pull/8) 首次失败源码 `96119b2c69052260b3b4de25532f7f2dae9c875b` 的普通合并已实际被拒（exit=1），且当时不是草稿。[原始拒绝证据](../../evidence/E7/241830088/pr8-rejection-20261027/README.md) 已归档。现已在同一 PR 将 version 成功返回码预期修正为 0，恢复 CI 与正常合并仍待其实际结果。
 
 ## 复跑和接收检查
 

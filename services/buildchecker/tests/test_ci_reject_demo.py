@@ -1,10 +1,11 @@
-"""Course-required protected-PR rejection demonstration.
+"""Regression for the successful version command.
 
-This deliberately incorrect oracle is repaired in the same PR after recording
-the failed CI run and actual protected-main merge rejection.
+PR #8 first used an intentionally wrong expected exit code of 1 to demonstrate
+protected-main rejection. After recording that rejection, restore the correct
+expected value of 0; the command implementation is unchanged.
 """
 from buildchecker.cli import main
 
 
 def test_version_command_success_exit_code():
-    assert main(["version"]) == 1
+    assert main(["version"]) == 0

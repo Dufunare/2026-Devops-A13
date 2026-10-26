@@ -12,8 +12,8 @@ E7_raw_evidence_audit,原始trace声明图输入hash等一致,PASS,evidence/E7/2
 E7_ci_artifact,原始Artifact已下载核对SHA256并建立仓库索引,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661/artifacts/12583718152; evidence/E7/241830217/ci-40154562661/run-manifest.json
 E7_course_server_run,在A13指定课程云服务器单独执行整合E7,PASS,evidence/E7/241830088/course-20261026/; source a887b574a61524b967f731889ca5523f40684730; pipeline_exit=0
 E7_course_cloud_compliance,通过指定服务器实测满足环境要求,PASS,实际指定主机完成16/17/8及原始证据审计; 不依赖教师接受GitHub替代的反馈
-E7_main_branch_protection,main必需检查与严格分支保护已核实,PENDING,当前账号write非admin; PUT/GET保护接口404; 待管理员应用 main-protection-required.json
-E7_rejection_demo,同一错误PR在main保护下确实被拒合并,PENDING,独立 protected-demo PR准备中; 尚未获得真实规则拒绝日志
-E7_recovery_demo,同一PR修复后新CI通过并合并,PENDING,等待保护启用及失败合并被拒的真实证据
+E7_main_branch_protection,main必需检查与严格分支保护已核实,PASS,evidence/E7/241830088/pr8-rejection-20261027/; active ruleset 25888082; e7-a-quality-gate App15368; strict=true; bypassActors=0
+E7_rejection_demo,同一错误PR在main保护下确实被拒合并,PASS,PR #8 ready; source 96119b2; merge exit=1; pr8-rejection-20261027/merge-rejection.log.stderr; PR仍OPEN
+E7_recovery_demo,同一PR修复后新CI通过并合并,PENDING,同一PR #8已修正version预期为0; 等待新提交CI及真实合并
 E6_independent_handoff,E6负责人完整前后证据独立归档,PASS,https://github.com/Dufunare/2026-Devops-A13/pull/6; E6 SHA 694d6cb2961698437cf8de581afcee515eb293b7; evidence/E6/241870063/; 272项哈希及前后原始证据已核验
 E7_report,实验提交报告组内交接和来源文件已编写,PASS,docs/E7/实验提交报告.md; docs/E7/组内交接与后续安排.md
