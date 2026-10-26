@@ -1,0 +1,40 @@
+{
+  "sha": "0ff02f5033b9b71a7d3863a512f8ca21aa64c4db",
+  "node_id": "C_kwDOUiA6L9oAKDBmZjAyZjUwMzNiOWI3MWE3ZDM4NjNhNTEyZjhjYTIxYWE2NGM0ZGI",
+  "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/git/commits/0ff02f5033b9b71a7d3863a512f8ca21aa64c4db",
+  "html_url": "https://github.com/Dufunare/2026-Devops-A13/commit/0ff02f5033b9b71a7d3863a512f8ca21aa64c4db",
+  "author": {
+    "name": "Almira",
+    "email": "617603924@qq.com",
+    "date": "2026-10-26T17:49:37Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2026-10-26T17:49:37Z"
+  },
+  "tree": {
+    "sha": "11d4743f0dc6a102f2c9e4930d88bfe8b11cca05",
+    "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/git/trees/11d4743f0dc6a102f2c9e4930d88bfe8b11cca05"
+  },
+  "message": "Merge 9d1712ae5a4feb57afe81943276492262307b1c0 into 5770c424b3f15e55c2668216c53a7fef7a0fcfbb",
+  "parents": [
+    {
+      "sha": "5770c424b3f15e55c2668216c53a7fef7a0fcfbb",
+      "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/git/commits/5770c424b3f15e55c2668216c53a7fef7a0fcfbb",
+      "html_url": "https://github.com/Dufunare/2026-Devops-A13/commit/5770c424b3f15e55c2668216c53a7fef7a0fcfbb"
+    },
+    {
+      "sha": "9d1712ae5a4feb57afe81943276492262307b1c0",
+      "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/git/commits/9d1712ae5a4feb57afe81943276492262307b1c0",
+      "html_url": "https://github.com/Dufunare/2026-Devops-A13/commit/9d1712ae5a4feb57afe81943276492262307b1c0"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJq35KxCRC1aQ7uu5UhlAAAdTsQACg/N+6P4E4Z9oxZwOHL0QRB\nrWJ2mr39oq6l+noAEIjtleSGyRgo8ltuLuUkLDHFKmqssBr9fOgOY0FURf588wWw\nx62Vv2J5T/WinPDijJtGJG7xMhz1N3azlk+fNi9l54HyFAVNReIbndkVVHPwqALy\nnc7NyXbQqOdX1X7TWvukuGCcjP1hndZjP2kDvSU3LhmR734BKQfvGoXipCVzy//h\nHGucTHveYM3iU7NZgKaTnd7PfpmINjgGxMcCbfewGEP6QjzgZOLgIEcHb6vfXlBz\n7hC0rXuTiNpcACiEkvZnP/23h7gaDyQKgR9equ+0riD1SVQR57Jlprb5rh7Nzs/1\n51E0d4ZLCnWsBhtmubWzgR3ekAYbM60+xU1ju2eD9l8JagoO9dnFkOF7BFuMx02o\nVB47luY24ZPwCgCUqv2qzsbWdH5j+3T26BWSA1aT0MWGUMeG60FXImYS77fWOOgJ\npfgI05cWTYTisLNF7tyKZ8lpU0knwf6IZGd7aoQTFmfujQ5xmkm+XKdgzD5bLuYX\n/IJMIPf/vjy1Dlv0uDHByGAXFxm1HPrADJqZfZi5upN7NFhAOkvWquufVeN19Nkp\nFUadd+JZkcrh+c1GSQT0alQe/gEJAbRUTOEZFwb9PA7bmY0UYudzUi+mXzqAOC4z\nOtZ28nWOBMHPwwViy2JB\n=+L8w\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree 11d4743f0dc6a102f2c9e4930d88bfe8b11cca05\nparent 5770c424b3f15e55c2668216c53a7fef7a0fcfbb\nparent 9d1712ae5a4feb57afe81943276492262307b1c0\nauthor Almira <617603924@qq.com> 1793036977 +0000\ncommitter GitHub <noreply@github.com> 1793036977 +0000\n\nMerge 9d1712ae5a4feb57afe81943276492262307b1c0 into 5770c424b3f15e55c2668216c53a7fef7a0fcfbb\n",
+    "verified_at": "2026-10-26T17:49:38Z"
+  }
+}

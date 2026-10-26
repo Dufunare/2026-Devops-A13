@@ -1,6 +1,6 @@
 # A13 E7：整合验证与收尾
 
-更新日期：2026-10-26。E5：241830088；E6：241870063；E7 原始验证：241830217；整合和课程云主机验证：241830088。
+更新日期：2026-10-27。E5：241830088；E6：241870063；E7 原始验证：241830217；整合和课程云主机验证：241830088。
 
 ## 已完成
 
@@ -14,7 +14,7 @@
 
 2026-10-27 已核实 active main 规则集 25888082：必需检查 `e7-a-quality-gate` / App 15368，strict=true，要求通过 PR；GraphQL `bypassActors.totalCount=0`，没有管理员例外，当前账号不可绕过。
 
-[PR #8](https://github.com/Dufunare/2026-Devops-A13/pull/8) 首次失败源码 `96119b2c69052260b3b4de25532f7f2dae9c875b` 的普通合并已实际被拒（exit=1），且当时不是草稿。[原始拒绝证据](../../evidence/E7/241830088/pr8-rejection-20261027/README.md) 已归档。现已在同一 PR 将 version 成功返回码预期修正为 0，恢复 CI 与正常合并仍待其实际结果。
+[PR #8](https://github.com/Dufunare/2026-Devops-A13/pull/8) 首次失败源码 `96119b2c69052260b3b4de25532f7f2dae9c875b` 的普通合并已实际被拒（exit=1），且当时不是草稿。[原始拒绝证据](../../evidence/E7/241830088/pr8-rejection-20261027/README.md) 已归档。同一 PR 已将 version 成功返回码预期修正为 0，修复源码9d1712a的PR Run40372248900与push Run40372238651均成功：服务17项、独立17项、门禁8项及原始审计通过。随后普通合并为99cc7e01d4562d2357470ed14585c0d587fb76df；[恢复与最终合并证据](../../evidence/E7/241830088/pr8-recovery-40372248900/README.md) 已归档。
 
 ## 复跑和接收检查
 
@@ -34,6 +34,7 @@ python3 scripts/verify_e7_a_evidence.py --gate-dir work/recheck-gate/gate
 
 - [整合收尾与实际版本](INTEGRATION_20261026.md)
 - [逐项验收 CSV](验收记录.csv)
-- [原始实验提交报告](实验提交报告.md)
+- [当前实验提交报告](实验提交报告.md)
+- [241830217历史实验报告](实验提交报告_241830217_20261025.md)
 - [原始 README](README_241830217_20261025.md)
 - [原始 CI 证据索引](../../evidence/E7/241830217/ci-40154562661/README.md)

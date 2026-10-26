@@ -1,0 +1,45 @@
+{
+  "total_count": 2,
+  "artifacts": [
+    {
+      "id": 12673855568,
+      "node_id": "MDg6QXJ0aWZhY3QxMjY3Mzg1NTU2OA==",
+      "name": "e7-a-evidence-40372248900-1",
+      "size_in_bytes": 153633,
+      "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/actions/artifacts/12673855568",
+      "archive_download_url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/actions/artifacts/12673855568/zip",
+      "expired": false,
+      "digest": "sha256:7e30da85c4f4b80d50c6d452aa69102e2229bea7c06f58acaf90446e757a1121",
+      "created_at": "2026-10-26T17:50:41Z",
+      "updated_at": "2026-10-26T17:50:41Z",
+      "expires_at": "2026-11-09T17:50:40Z",
+      "workflow_run": {
+        "id": 40372248900,
+        "repository_id": 1377843759,
+        "head_repository_id": 1377843759,
+        "head_branch": "e7/241830088-protected-demo",
+        "head_sha": "9d1712ae5a4feb57afe81943276492262307b1c0"
+      }
+    },
+    {
+      "id": 12672463750,
+      "node_id": "MDg6QXJ0aWZhY3QxMjY3MjQ2Mzc1MA==",
+      "name": "e7-submission-40372248900-1",
+      "size_in_bytes": 10719,
+      "url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/actions/artifacts/12672463750",
+      "archive_download_url": "https://api.github.com/repos/Dufunare/2026-Devops-A13/actions/artifacts/12672463750/zip",
+      "expired": false,
+      "digest": "sha256:9b82c2e2902706b221cfaedd0ba8e0e924678e795b498f462ba3b038b2319071",
+      "created_at": "2026-10-26T17:49:45Z",
+      "updated_at": "2026-10-26T17:49:45Z",
+      "expires_at": "2026-11-09T17:49:45Z",
+      "workflow_run": {
+        "id": 40372248900,
+        "repository_id": 1377843759,
+        "head_repository_id": 1377843759,
+        "head_branch": "e7/241830088-protected-demo",
+        "head_sha": "9d1712ae5a4feb57afe81943276492262307b1c0"
+      }
+    }
+  ]
+}
