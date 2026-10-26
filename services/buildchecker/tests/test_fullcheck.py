@@ -104,6 +104,16 @@ class TestFullCheck(unittest.TestCase):
         self.assertEqual({(x["type"], x["target"], x["dependency"]) for x in result["findings"]},
                          {("MISSING", "unit.o", "needed.h"), ("REDUNDANT", "unit.o", "unused.h")})
 
+    def test_make_own_reads_and_directory_opens_are_not_dependencies(self):
+        self.traces(reader_extra='openat(AT_FDCWD, ".", O_RDONLY|O_DIRECTORY) = 6\n')
+        self.write("t.10", 'execve("/usr/bin/make", ["make", "app"], []) = 0\n'
+                   'openat(AT_FDCWD, "Makefile", O_RDONLY) = 3\n'
+                   'openat(AT_FDCWD, "stale.h", O_RDONLY) = 4\n'
+                   'clone(child_stack=NULL, flags=SIGCHLD) = 11\n')
+        targets, processes = execution_graph(self.folder, self.root)
+        self.assertEqual(set(targets["unit.o"]["dependencies"]), {"unit.c", "needed.h"})
+        self.assertIsNone(next(p for p in processes if p["pid"] == 10)["job_pid"])
+
     def test_make_database_without_files_section_is_not_an_empty_success(self):
         db=self.write("db.txt", 'unit.o: unit.c needed.h\n')
         with self.assertRaisesRegex(Unsupported, "Files section"):
