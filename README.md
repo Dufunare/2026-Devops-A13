@@ -55,3 +55,11 @@ Responsible study branch: `e7/241830217-reproduction` (student ID 241830217).
 On GitHub-hosted `ubuntu-24.04`, [CI run #40154562661](https://github.com/Dufunare/2026-Devops-A13/actions/runs/40154562661) at `76a8f004e61560edc3f1d77a6c51fb2113413cc4` passed 15 service tests, 11 independent tests, all 8 E7 scenarios, and the saved-evidence audit. **This is not a claim of execution on the assigned course cloud server.** Course-server substitution is pending teacher confirmation, and protected-branch rejection/recovery PR evidence is still pending.
 
 The large `docs/tmp-references/` teaching/reference upload has been removed from the **current E7 tree**. Its source identities and E7 applicability are summarized in [course source index](docs/E7/课程材料来源索引.md); pre-cleanup Git history has not been rewritten.
+
+## E5/E6/E7 integration (2026-10-26)
+
+The integration branch is `e7/241830088-integration`. See the
+[integration record](docs/E7/INTEGRATION_20261026.md) and
+[real E6 candidate handoff for B13](docs/E6/B13_AUTOMATED_HANDOFF.md).
+The integrated baseline has 16 service tests and 17 independent tests;
+historical runs above retain their original counts and source identities.

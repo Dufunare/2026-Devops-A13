@@ -1,0 +1,13 @@
+{
+  "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+  "source_commit": "202555aea6092d0e54105403f4402baa9e3c40ec",
+  "evidence_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+  "configuration_id": "a13-e6-md-rd-linux-amd64-gcc14",
+  "environment": {
+    "os": "linux",
+    "arch": "amd64",
+    "make_version": "GNU Make package 4.4.1-2",
+    "cc_version": "gcc package 4:14.2.0-1 (see toolchain.lock)",
+    "image_ref": "sha256:61f247d2a32cb84afcae4acd51d5eff31fa844d64ed5f03ed946aee957885e83"
+  }
+}

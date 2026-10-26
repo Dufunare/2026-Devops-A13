@@ -1,0 +1,7 @@
+{
+  "after/producer-registration.json": "018cfecd999266781115b5da011d8918252f2eee8f25009162a890e25710853a",
+  "after/report-v2.json": "793cfa5f86d0a5c0651be32a8bbc47d86199c5e7ac913bc7161eca0bed6634cf",
+  "before/producer-registration.json": "8ae4e3d83f7ae12fd64f32ffb5cba68c5adcb8aa2e6ec5fc3db7d3a4b67bc0c4",
+  "before/report-v2.json": "d0bf097cf103c3f46c147c959797a9a18d6e15d30e1fea15dcc250da0c876572",
+  "export-context.json": "289838177f9667c5f1729b7fc69bac5a96f3a0427d2b3e221684107356bd4407"
+}

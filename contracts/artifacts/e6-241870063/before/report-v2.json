@@ -1,0 +1,90 @@
+{
+  "schema_version": "2.0",
+  "report_id": "pair13-cli-e6-67c41e3c4a6942eda5204e68352910ea",
+  "repository": {
+    "url": "https://github.com/Dufunare/2026-Devops-A13.git",
+    "commit": "202555aea6092d0e54105403f4402baa9e3c40ec"
+  },
+  "configuration_id": "a13-e6-md-rd-linux-amd64-gcc14",
+  "environment": {
+    "os": "linux",
+    "arch": "amd64",
+    "make_version": "GNU Make package 4.4.1-2",
+    "cc_version": "gcc package 4:14.2.0-1 (see toolchain.lock)",
+    "image_ref": "sha256:61f247d2a32cb84afcae4acd51d5eff31fa844d64ed5f03ed946aee957885e83"
+  },
+  "detector": "BUILDCHECKER",
+  "producer_job_id": "job-cli-e6-67c41e3c4a6942eda5204e68352910ea",
+  "provenance": "Adapted from an audited real BuildChecker teaching CLI execution; the persisted producer registration aliases its existing trace_id, not an HTTP Job API.",
+  "findings": [
+    {
+      "finding_id": "e6-67c41e3c4a6942eda5204e68352910ea-1",
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "config.h",
+      "location": {
+        "status": "RESOLVED",
+        "path": "Makefile",
+        "line": 6,
+        "declaration": "main.o: main.c unused.h"
+      },
+      "evidence": [
+        {
+          "kind": "SYSTEM_CALL",
+          "detail": "trace/t.14:579 PID 14: openat(AT_FDCWD, \"config.h\", O_RDONLY|O_NOCTTY) = 4",
+          "uri": "artifact://pair13/job-cli-e6-67c41e3c4a6942eda5204e68352910ea/trace/t.14"
+        },
+        {
+          "kind": "SYSTEM_CALL",
+          "detail": "trace/t.15:23 PID 15: openat(AT_FDCWD, \"main.o\", O_RDWR|O_CREAT|O_TRUNC, 0666) = 3",
+          "uri": "artifact://pair13/job-cli-e6-67c41e3c4a6942eda5204e68352910ea/trace/t.15"
+        },
+        {
+          "kind": "DECLARATION_ABSENCE",
+          "detail": "Declared prerequisites: main.c, unused.h"
+        }
+      ]
+    },
+    {
+      "finding_id": "e6-67c41e3c4a6942eda5204e68352910ea-2",
+      "type": "REDUNDANT",
+      "target": "main.o",
+      "dependency": "unused.h",
+      "location": {
+        "status": "RESOLVED",
+        "path": "Makefile",
+        "line": 6,
+        "declaration": "main.o: main.c unused.h"
+      },
+      "evidence": [
+        {
+          "kind": "MAKE_DATABASE",
+          "detail": "make-db.txt:1053: main.o: main.c unused.h",
+          "uri": "artifact://pair13/job-cli-e6-67c41e3c4a6942eda5204e68352910ea/make-db.txt"
+        },
+        {
+          "kind": "EXECUTION_ABSENCE",
+          "detail": "Not observed in this recipe job under this build configuration"
+        }
+      ]
+    }
+  ],
+  "artifact_locator": {
+    "uri": "artifact://pair13/job-cli-e6-67c41e3c4a6942eda5204e68352910ea/findings.json",
+    "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+    "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+    "repository_path": "evidence/E6/241870063/e6-before/evidence/findings.json",
+    "sha256": "90b93fd2f3728ae2c9935ead7803f07b145e9602877b87dfaa96925958c6bee6"
+  },
+  "extensions": {
+    "pair13.contract_status": "PROPOSED_PENDING_B13_REVIEW",
+    "a13.source_trace_id": "e6-67c41e3c4a6942eda5204e68352910ea",
+    "a13.input_sha256": {
+      "Makefile": "fd1dcd76a0bd9678351a1503941a5a875351455d4a6879e76af0af0b6c64772f",
+      "config.h": "ac32a92f4af359517c993d6e8583ea2d9b053c2ad171b4c602bc242894bd9696",
+      "main.c": "bfa1c2d1abeb70ba92e60c414923265296dafa0cc98bee068251b0301e6da197",
+      "unused.h": "1e4315549ec63325a22265e33a27e3cff8940d3ceec9756d7d193e9e51b966c9"
+    },
+    "a13.source_worktree": "The Git commit denotes the base revision; the isolated input snapshot, including any repaired Makefile, is identified by input hashes."
+  }
+}
