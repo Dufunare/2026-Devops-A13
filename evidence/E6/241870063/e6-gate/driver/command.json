@@ -1,0 +1,8 @@
+[
+  "/usr/bin/python3",
+  "scripts/run_e7_a_gate.py",
+  "--image",
+  "course1020-buildchecker:241870063-e6b",
+  "--out",
+  "/root/241870063/e6-buildchecker/work/e6-gate/gate"
+]
