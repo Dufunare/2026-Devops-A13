@@ -1,0 +1,124 @@
+name: E7 A quality gate
+
+on:
+  push:
+    branches: [main, 'e7/**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fail_demo:
+        description: Deliberately fail the repaired oracle
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Only the newest revision of a branch is authoritative for E7 acceptance.
+concurrency:
+  group: e7-a-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: e7-a-quality-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      IMAGE: e7-buildchecker:ci
+      FAIL_DEMO: ${{ inputs.fail_demo }}
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare provenance and syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/ci
+          git rev-parse HEAD > work/ci/commit.txt
+          docker version > work/ci/docker-version.txt
+          python3 -m compileall -q services/buildchecker/buildchecker scripts tests/e7
+
+      - name: Bundle exact-revision submission documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/ci/submission
+          cp docs/E7/实验提交报告.md work/ci/submission/E7-report.md
+          cp docs/E7/验收记录.csv work/ci/submission/E7-acceptance.csv
+          cp docs/E7/课程云服务器环境合规确认.md work/ci/submission/E7-course-environment.md
+
+      - name: Archive submission documents immediately
+        uses: actions/upload-artifact@v4
+        with:
+          name: e7-submission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: work/ci/submission/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Test independent oracles and raw evidence audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests/e7 -v 2>&1 | tee work/ci/oracle-tests.log
+
+      - name: Verify real Pair13 candidate delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify_pair13_delivery.py 2>&1 | tee work/ci/pair13-delivery-check.log
+
+      - name: Scan source and history
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/secret_scan.py . --history 2>&1 | tee work/ci/source-scan.log
+
+      - name: Build service image
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A13 E4/E5 uses a DaoCloud mirror on its course server.
+          # GitHub-hosted Ubuntu must resolve the identical pinned OCI digest
+          # via canonical Docker Hub; do not alter the Dockerfile or digest.
+          PINNED_BASE=$(sed -n 's/^ARG BASE_IMAGE=//p' services/buildchecker/Dockerfile)
+          test -n "$PINNED_BASE"
+          CANONICAL_BASE="${PINNED_BASE/m.daocloud.io\/docker.io\//docker.io\/}"
+          printf '%s\n' "$CANONICAL_BASE" > work/ci/base-image-source.txt
+          docker build --progress=plain --build-arg BASE_IMAGE="$CANONICAL_BASE" -f services/buildchecker/Dockerfile -t "$IMAGE" . 2>&1 | tee work/ci/build.log
+          docker image inspect "$IMAGE" > work/ci/service-image-inspect.json
+
+      - name: Scan service image
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/secret_scan.py . --image "$IMAGE" 2>&1 | tee work/ci/image-scan.log
+
+      - name: Run real component and fault-injection gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "$FAIL_DEMO" == "true" ]]; then args+=(--inject-bad-oracle); fi
+          python3 scripts/run_e7_a_gate.py --image "$IMAGE" --out work/ci/gate "${args[@]}" 2>&1 | tee work/ci/gate-console.log
+
+      - name: Audit gate evidence and provenance
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verify_e7_a_evidence.py --gate-dir work/ci/gate 2>&1 | tee work/ci/evidence-audit.log
+
+      - name: Archive evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e7-a-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: work/ci/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

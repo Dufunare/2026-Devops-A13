@@ -1,0 +1,13 @@
+{
+  "student_id": "241830088",
+  "group": "A13",
+  "repository": "https://github.com/Dufunare/2026-Devops-A13.git",
+  "branch": "e5/241830088-reproduction",
+  "source_sha": "cf898e29e57b0b6637d2bba6be9f0a9b6b445c36",
+  "source_tree": "a725938cef0c24695adcb0a4f7179fe2eeab5283",
+  "git_status": "",
+  "time_utc": "2026-10-22T06:49:50.869535+00:00",
+  "image_tag": "course1020-buildchecker:241830088-e5",
+  "package_sha256": "4068d3bf98dc8218cc80c6a0f09674d9ed54289b3fcac5cb86eda327fb0cd688",
+  "dockerfile_sha256": "4dd144ed6c7d43e91361aedf93887ffeee8ac8bda211de42dbca80ad87915e2f"
+}

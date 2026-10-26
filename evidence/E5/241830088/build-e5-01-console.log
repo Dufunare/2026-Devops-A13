@@ -1,0 +1,76 @@
+EVIDENCE_DIR=/root/241830088/e5-buildchecker/work/build-e5-01
+
+
+#5 [internal] load build context
+#5 transferring context: 35.03kB done
+#5 DONE 0.0s
+
+#6 [5/8] RUN useradd --create-home --uid 10001 app && install -d -o app -g app /app
+#6 CACHED
+
+#7 [3/8] COPY requirements-dev.lock /tmp/requirements-dev.lock
+#7 CACHED
+
+#8 [2/8] RUN sed -i 's@http://deb.debian.org/debian-security@https://mirrors.aliyun.com/debian-security@g; s@http://deb.debian.org/debian@https://mirrors.aliyun.com/debian@g' /etc/apt/sources.list.d/debian.sources  && apt-get update  && apt-get install -y --no-install-recommends gcc make libc6-dev strace git  && rm -rf /var/lib/apt/lists/*  && dpkg-query -W -f='${Package}=${Version}\n' gcc make libc6-dev strace git > /opt/toolchain.lock  && echo "python3=$(python3 -c 'import platform; print(platform.python_version())')" >> /opt/toolchain.lock  && echo "arch=$(dpkg --print-architecture)" >> /opt/toolchain.lock
+#8 CACHED
+
+#9 [4/8] RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements-dev.lock  && pip freeze | sed 's/^/pip:/' >> /opt/toolchain.lock
+#9 CACHED
+
+#10 [6/8] WORKDIR /app
+#10 CACHED
+
+#11 [7/8] COPY --chown=app:app services/buildchecker/ /app/
+#11 DONE 0.0s
+
+#12 [8/8] COPY --chown=app:app fixtures/ /app/fixtures/
+#12 DONE 0.0s
+
+#13 exporting to image
+#13 exporting layers 0.1s done
+#13 exporting manifest sha256:9898bcd3de047150970a3358e5538b31896d6b59561e3146bbcf50a0e86a78f7 done
+#13 exporting config sha256:199a6564a66418239ace98047089e02f22b2d6f7c6a8f39a93ffffba950ffce2 done
+#13 exporting attestation manifest sha256:900c811e96c89bae8d88f51045b4105e924e5396b365e4a1c179e6056b4b457b 0.0s done
+#13 exporting manifest list sha256:7d83619e4dd3277d1024ff74c6c835e99fd5d526f9b5b97588ff7712d3d6c104 done
+#13 naming to docker.io/library/course1020-buildchecker:241830088-e5 done
+#13 unpacking to docker.io/library/course1020-buildchecker:241830088-e5 0.0s done
+#13 DONE 0.1s
+                "buildchecker",
+                "--help"
+            ],
+            "WorkingDir": "/app",
+            "ArgsEscaped": true
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 164855198,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:f4f8b983b714f130e2cff99176baa26352db6a55d3622e10ada40f2b4720a4eb",
+                "sha256:7ef9ddba6965cfcb2dcd5bf24e61737a0031c2d9be2b3377339111ab1ad3f0f2",
+                "sha256:ef9f8c7c1d6b6b918d5e93cba9a7de4c837e3047ca733296bd396d9a413ae64f",
+                "sha256:fde42b5dd2510411f5cd411982dd5fa72f546553ccba3e5260f33a3da21bbf8f",
+                "sha256:351ca096ae17d62b03ed079a1c4fe9f7e0bb76ba679ba94dd818d03a905a61d1",
+                "sha256:6bba61939403a1ef1158efa01edc11a8a1e9f0270166cfaf9a72f88404e60172",
+                "sha256:6bdfad4aac0a14a7598cceb6bbbb678fe01d4dc76b305fb8184fd4ab457dadae",
+                "sha256:ed9b914e632ed65bca9ed263b35954ee10899aa9761b1920f744044f4e45b143",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+                "sha256:95dcafdae156c257751199a7560956bb3cc48b682825b188d2a62e13b54269d4",
+                "sha256:c485a49833d6c6d6395ddbf87e5e53cb92cc8fa28a5dfba6843956e4f5ae3885"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-22T06:49:51.310742031Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:7d83619e4dd3277d1024ff74c6c835e99fd5d526f9b5b97588ff7712d3d6c104",
+            "size": 856
+        }
+    }
+]
+
+...............                                                          [100%]
+15 passed in 0.04s
+

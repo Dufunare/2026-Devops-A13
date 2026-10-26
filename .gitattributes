@@ -5,3 +5,9 @@ docs/E3/** text eol=lf
 # These raw tool outputs contain original trailing spaces / blank lines.
 evidence/E3/**/c0-compiler.txt -whitespace
 evidence/E3/**/make-database.txt -whitespace
+# Preserve the E5 handoff snapshot and original tool-output whitespace.
+evidence/E5/241830088/** -text
+evidence/E5/241830088/**/*.log -whitespace
+evidence/E5/241830088/**/make-db.txt -whitespace
+# Preserve the E6 run snapshot and original tool-output whitespace.
+evidence/E6/241870063/** -text -whitespace

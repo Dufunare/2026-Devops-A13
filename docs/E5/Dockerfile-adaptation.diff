@@ -1,0 +1,12 @@
+--- teaching/Dockerfile
++++ A13/Dockerfile
+@@ -1 +0,0 @@
+-# syntax=docker/dockerfile:1
+@@ -7 +6,2 @@
+-ARG BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
++# 此镜像站提供与 Docker Hub 相同的 OCI 索引摘要；供无法直连 Docker Hub 的 ECS 使用。
++ARG BASE_IMAGE=m.daocloud.io/docker.io/library/python@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74
+@@ -15 +15,2 @@
+-RUN apt-get update \
++RUN sed -i 's@http://deb.debian.org/debian-security@https://mirrors.aliyun.com/debian-security@g; s@http://deb.debian.org/debian@https://mirrors.aliyun.com/debian@g' /etc/apt/sources.list.d/debian.sources \
++ && apt-get update \

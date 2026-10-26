@@ -1,0 +1,150 @@
+{
+  "kind": "COMPLETED_CLI_PRODUCER_REGISTRATION",
+  "producer_job_id": "job-cli-e6-14f583f927764972b4074818d4ece4c3",
+  "recorded_source_trace_id": "e6-14f583f927764972b4074818d4ece4c3",
+  "http_job_api_deployed": false,
+  "source_code_commit": "202555aea6092d0e54105403f4402baa9e3c40ec",
+  "configuration_id": "a13-e6-md-rd-linux-amd64-gcc14",
+  "source_report": {
+    "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/findings.json",
+    "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+    "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+    "repository_path": "evidence/E6/241870063/e6-after/evidence/findings.json",
+    "sha256": "52d454253f3faac4089925d3b1df29abf73324fea58f0e101a4b6d1f47ab315f"
+  },
+  "artifacts": {
+    "actual-graph.json": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/actual-graph.json",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/actual-graph.json",
+      "sha256": "6bd6c0050e6399f8803fe896c0678a716101a2b92b93de7519879a1059fb8780"
+    },
+    "build-stderr.log": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/build-stderr.log",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/build-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean-stderr.log": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/clean-stderr.log",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/clean-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean.log": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/clean.log",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/clean.log",
+      "sha256": "e8c7e66be43b85d24c902b7dae69ffc7ad7d50a66b76830b4acb3bd1844f1a72"
+    },
+    "declared-graph.json": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/declared-graph.json",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/declared-graph.json",
+      "sha256": "06ba24089f0b517a0fa256a4f678096a22cad6d7fc81058241a32892a27aede4"
+    },
+    "findings.json": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/findings.json",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/findings.json",
+      "sha256": "52d454253f3faac4089925d3b1df29abf73324fea58f0e101a4b6d1f47ab315f"
+    },
+    "make-db.txt": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/make-db.txt",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/make-db.txt",
+      "sha256": "4a6a7760833c42ee5260fe9f166f7b1759225a9b197223b77479243140d576ee"
+    },
+    "processes.json": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/processes.json",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/processes.json",
+      "sha256": "f9bbfd2b0a79478872f9b65a65c2669a112593a26f2787d274f88a2fc6f485f3"
+    },
+    "project/Makefile": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/project/Makefile",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/project/Makefile",
+      "sha256": "128069c949b0239e3377f320d51498c2b37a317c602d8755d573a283e1f400ae"
+    },
+    "project/config.h": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/project/config.h",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/project/config.h",
+      "sha256": "ac32a92f4af359517c993d6e8583ea2d9b053c2ad171b4c602bc242894bd9696"
+    },
+    "project/main.c": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/project/main.c",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/project/main.c",
+      "sha256": "bfa1c2d1abeb70ba92e60c414923265296dafa0cc98bee068251b0301e6da197"
+    },
+    "project/unused.h": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/project/unused.h",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/project/unused.h",
+      "sha256": "1e4315549ec63325a22265e33a27e3cff8940d3ceec9756d7d193e9e51b966c9"
+    },
+    "trace/t.12": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.12",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.12",
+      "sha256": "cb0cbee9cf79a4d74d860deceb9728400026d3f9cb20b1c92cd5edb156fa053a"
+    },
+    "trace/t.13": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.13",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.13",
+      "sha256": "0515bbe0630c30438e728bf8f35883d4adebabdc5683a63c3f5f40b83bfbd164"
+    },
+    "trace/t.14": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.14",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.14",
+      "sha256": "59784fdd8a677915bb29b30fabd31ecd17a598c080801ce638b751f6cd0fb702"
+    },
+    "trace/t.15": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.15",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.15",
+      "sha256": "564d59a2cb9bd345b46b583d40822e603c78b8bf26217cadd590360e57c2df59"
+    },
+    "trace/t.16": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.16",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.16",
+      "sha256": "a8355c479692dc316356e32d23cd79e7a16e9a2543bb0556fab34a37b4eafbbc"
+    },
+    "trace/t.17": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.17",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.17",
+      "sha256": "100284520bb2dc476c5c68a138fb621f823c505ae68919c3c043dd34ae892775"
+    },
+    "trace/t.18": {
+      "uri": "artifact://pair13/job-cli-e6-14f583f927764972b4074818d4ece4c3/trace/t.18",
+      "repository_url": "https://github.com/Dufunare/2026-Devops-A13.git",
+      "repository_commit": "694d6cb2961698437cf8de581afcee515eb293b7",
+      "repository_path": "evidence/E6/241870063/e6-after/evidence/trace/t.18",
+      "sha256": "60e11afa666039b04f3057af4ce086cc05910358c4e76bfd8b1f628e98639150"
+    }
+  }
+}

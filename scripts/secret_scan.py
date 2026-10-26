@@ -45,9 +45,13 @@ def git(root, *args):
 
 
 def files(root):
-    p = git(root, "ls-files")
+    # NUL-delimited names preserve non-ASCII paths and avoid Git's core.quotePath
+    # escaping. Quoted paths otherwise disguise ".env.example" as ".env".
+    p = subprocess.run(["git", "-C", str(root), "ls-files", "-z"],
+                       capture_output=True)
     if p.returncode == 0:
-        return [root / f for f in p.stdout.splitlines()], True
+        names = [os.fsdecode(name) for name in p.stdout.split(b"\0") if name]
+        return [root / name for name in names], True
     out = []
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
