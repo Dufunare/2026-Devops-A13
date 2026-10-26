@@ -1,0 +1,11 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--network",
+  "none",
+  "--cidfile",
+  "/root/241870063/e6-buildchecker/work/e6-gate/gate/unit-tests/container-id.txt",
+  "course1020-buildchecker:241870063-e6b",
+  "pytest"
+]

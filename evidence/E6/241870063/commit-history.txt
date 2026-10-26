@@ -1,0 +1,3 @@
+18d333e test(e6): Make-owned reads and directory opens are not dependencies
+202555a E5: publish B13 handoff and checksum-verifiable raw evidence
+bf45399 E5: document trace-backed MD/RD reproduction for 241830088

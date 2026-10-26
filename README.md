@@ -35,6 +35,12 @@ See [E4 README](docs/E4/README.md) for the BuildChecker environment template, `m
 
 The 2026-10-20 teaching reference and adaptations are recorded in [E5 source manifest](docs/E5/source-manifest.json). The [E5 report](docs/E5/实验报告.md) identifies member 241830088's real runtime SHA and trace. An [A13 → B13 handoff](docs/E5/B13_HANDOFF.md) and [raw evidence](evidence/E5/241830088/README.md) are retained.
 
+## E6
+
+Responsible branch: `e6/241870063-mvp` (student ID 241870063). On the A13 course server, `full-check` detected MD(`main.o`, `config.h`) and RD(`main.o`, `unused.h`) on the original `md-rd` fixture, and returned `findings=[]` after repairing only the Makefile in an isolated copy. One added service test (16 passed) and the A gate (8/8) were rerun on the rebuilt image.
+
+E6 report: [`docs/E6/实验报告.md`](docs/E6/实验报告.md); raw evidence: [`evidence/E6/241870063/`](evidence/E6/241870063/README.md).
+
 ## E7 — BuildChecker validation
 
 Responsible study branch: `e7/241830217-reproduction` (student ID 241830217).

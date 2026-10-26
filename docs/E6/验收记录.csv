@@ -1,0 +1,7 @@
+编号,轨道,阶段,项目,状态,证据路径或URL,说明
+C01,共同,环境,云主机与Docker,PASS,evidence/E6/241870063/build-e6-01/,A13课程云服务器；镜像构建与15项单测通过
+C03,共同,E6,输入哈希报告日志,PASS,evidence/E6/241870063/e6-before/; evidence/E6/241870063/e6-after/,输入副本fixture/、input_sha256、findings.json、trace、make-db与runner日志齐全
+A01,A,E6,MD/RD精确证据与修复,PASS,evidence/E6/241870063/e6-verify.json,修复前MD(main.o;config.h)+RD(main.o;unused.h)；仅Makefile变化后findings=[]
+C04,共同,E6,自主补充测试,PASS,services/buildchecker/tests/test_fullcheck.py; evidence/E6/241870063/build-e6-02/,提交18d333e；16 passed
+E6_gate_after_test,A,E6,新测试后运行A门禁,PASS,evidence/E6/241870063/e6-gate/gate/results.csv,8个场景全部通过
+E6_secret_scan,共同,E6,密钥扫描,PASS,evidence/E6/241870063/secret-scan.txt,含Git历史未发现问题
