@@ -1,0 +1,12 @@
+{
+  "case": "transitive",
+  "n": 5,
+  "inc_median_s": 0.009852195158600807,
+  "full_median_s": 0.009829244576394558,
+  "inc_min_s": 0.009730397257953882,
+  "inc_max_s": 0.010126842185854912,
+  "full_min_s": 0.009743807837367058,
+  "full_max_s": 0.009915031027048826,
+  "full_over_inc": 0.9976705108012184,
+  "scope": "scan includes Git/compiler identity and gcc -MM; excludes clean build"
+}

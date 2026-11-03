@@ -31,6 +31,27 @@ jobs:
               docker run --rm --network none --cap-add SYS_PTRACE --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/course" -w /course course-e8e10:ci python3 labs/e8e10/lab.py "$stage" --track "$track" --out "/course/work/$track-$stage"
             done
           done
+      - name: Validate A13 independent transitive-header case
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --cap-add SYS_PTRACE \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e PYTHONPATH=/course/labs/e8e10:/app \
+            -v "$PWD:/course" -w /course course-e8e10:ci \
+            python3 scripts/e8e10/run_extension_241830088.py /course/work/ci/A13-transitive
+      - name: Audit archived A13 course-server evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          CLOUD=evidence/E8-E10/241830088/cloud
+          python3 scripts/e8e10/verify_a_241830088.py \
+            --e8 "$CLOUD/e8-A-manual.2CB9OL" \
+            --e9 "$CLOUD/e9-A-manual.ov6Rix" \
+            --e10 "$CLOUD/e10-A-manual.Og3Upd" \
+            --extension "$CLOUD/e10-A-transitive-20261103-102412" \
+            --out work/ci/A13-cloud-audit
+          sha256sum -c evidence/E8-E10/241830088/SHA256SUMS
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:

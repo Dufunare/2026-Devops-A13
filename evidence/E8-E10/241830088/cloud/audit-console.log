@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "source_sha": "11b733e7d47512fb51562d5ee08c2de1f347048e",
+  "image_id": "sha256:07f74398c6ff03699c9d9cb03a3f06914b64175b230e36a153a4c36a74ef1370",
+  "matrix_pairs": 30,
+  "extension_pairs": 5,
+  "dynamic_crosschecks": 3,
+  "e9_commits": {
+    "baseline": "fffe4cb0aa716647ec23ea06df5812d1f6c3200f",
+    "C1": "d3b844f1a7176cb92a3c5ee3c14a6e5a6066f1d8",
+    "C2": "46a8b0bfc7bc5aa1ec785645f8e9d3d52511cbe9",
+    "C3": "b2c650e6a5b6fdf612f1fc0745efcb6243c790ab"
+  },
+  "successful_header_reads": {
+    "e8": [
+      {
+        "file": "work/e8-A-manual.2CB9OL/buildchecker/trace/t.14",
+        "line": 579,
+        "syscall": "openat(AT_FDCWD, \"config.h\", O_RDONLY|O_NOCTTY) = 4"
+      }
+    ],
+    "e10": [
+      {
+        "file": "work/e10-A-manual.Og3Upd/matrix/final-buildchecker/trace/t.15",
+        "line": 596,
+        "syscall": "openat(AT_FDCWD, \"config.h\", O_RDONLY|O_NOCTTY) = 4"
+      }
+    ],
+    "extension": [
+      {
+        "file": "work/e10-A-transitive-20261103-102412/extension/final-buildchecker/trace/t.94",
+        "line": 579,
+        "syscall": "openat(AT_FDCWD, \"config.h\", O_RDONLY|O_NOCTTY) = 4"
+      }
+    ]
+  },
+  "audit": "explicit expected edge sets; scan() not imported"
+}

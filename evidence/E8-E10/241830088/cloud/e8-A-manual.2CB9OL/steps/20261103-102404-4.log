@@ -1,0 +1,2 @@
+REUSE_PASS ['main.o', 'helper.o'] []
+STEP_EXIT_CODE=0

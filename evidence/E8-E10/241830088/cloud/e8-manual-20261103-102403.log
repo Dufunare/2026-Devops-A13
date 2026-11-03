@@ -1,0 +1,232 @@
+仓库=/root/devops-students/241830088/buildchecker
+学号=241830088
+镜像=course-e8e10:241830088
+本次证据目录=work/e8-A-manual.2CB9OL
+
+MANUAL_BLOCK=1
+CREATED work/e8-A-manual.2CB9OL/project
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=2
+/root/devops-students/241830088/buildchecker
+11b733e7d47512fb51562d5ee08c2de1f347048e
+CFLAGS = -O0
+app: main.o helper.o
+	gcc main.o helper.o -o app
+main.o: main.c unused.h
+	gcc $(CFLAGS) -c main.c -o main.o
+helper.o: helper.c
+	gcc $(CFLAGS) -c helper.c -o helper.o
+.PHONY: clean
+clean:
+	rm -f main.o helper.o app
+#include <stdio.h>
+#include "config.h"
+int helper(void);
+int main(void){printf("%d\n",VALUE+helper());return 0;}
+#define VALUE 1
+int helper(void){return 0;}
+a2344e0 C0 baseline
+
+MANUAL_BLOCK=3
+actual = {'main.o': ['config.h', 'main.c'], 'helper.o': ['helper.c']}
+declared = {'main.o': ['main.c', 'unused.h'], 'helper.o': ['helper.c']}
+findings = [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}, {'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+BASELINE_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=4
+BUILDCHECKER_BASELINE_PASS {'main.o': ['config.h', 'main.c'], 'helper.o': ['helper.c']}
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=5
+{
+  "status": "SUCCEEDED",
+  "detector": "BUILDCHECKER_TEACHING",
+  "detector_version": "0.2.0-teaching",
+  "trace_id": "e6-6a1367042ae04eac821340046a1ba0c6",
+  "findings": [
+    {
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "config.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.14",
+          "line": 579,
+          "pid": 14,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.15",
+          "line": 23,
+          "pid": 15,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "main.c",
+        "unused.h"
+      ]
+    },
+    {
+      "type": "REDUNDANT",
+      "target": "main.o",
+      "dependency": "unused.h",
+      "evidence": [
+        {
+          "source": "make_database",
+          "artifact": "make-db.txt",
+          "line": 1044,
+          "declaration": "main.o: main.c unused.h"
+        }
+      ],
+      "scope": "Not observed in this recipe job under this build configuration"
+    }
+  ],
+  "scope": "Single Make process; one final output per recipe job; successful read-open observations",
+  "build_command": [
+    "make",
+    "app"
+  ],
+  "clean_command": [
+    "make",
+    "clean"
+  ],
+  "input_sha256": {
+    ".gitignore": "d7bfd39146ded6c9700eb81300e82345464db46cda1e775b8a114a811311bafe",
+    "Makefile": "9206301c23ce4cb93c3fc1434037e475cf69f53e132dc541f6028d05e30258b2",
+    "config.h": "ac32a92f4af359517c993d6e8583ea2d9b053c2ad171b4c602bc242894bd9696",
+    "extra.h": "5e20ae92639ee989af5638bd0308a6a86e71bdb4345f60b962ba9db7265e4f7c",
+    "helper.c": "90a60f959d215b0b91807c6dd2c94acf6684a9fe26629dc1591e9b2ea773d78c",
+    "main.c": "0da2f94ca7b27cfeae51e4842a4a39f527929b28a82f40b3796d308cc72c1379",
+    "unused.h": "3f7fec0991b34d614462e29b450c76638f07171936a12df337c578c2d1481b37"
+  },
+  "clean_exit_code": 0,
+  "trace_command": [
+    "strace",
+    "-ff",
+    "-s",
+    "4096",
+    "-o",
+    "/course/work/e8-A-manual.2CB9OL/buildchecker/trace/t",
+    "-e",
+    "trace=%file,%process",
+    "make",
+    "-p",
+    "app"
+  ],
+  "build_exit_code": 0,
+  "observed_targets": [
+    "app",
+    "helper.o",
+    "main.o"
+  ],
+  "artifacts": {
+    "actual_graph": "actual-graph.json",
+    "declared_graph": "declared-graph.json",
+    "processes": "processes.json",
+    "make_database": "make-db.txt",
+    "trace_directory": "trace"
+  },
+  "elapsed_ms": 131
+}
+1044:main.o: main.c unused.h
+work/e8-A-manual.2CB9OL/buildchecker/trace/t.14:579:openat(AT_FDCWD, "config.h", O_RDONLY|O_NOCTTY) = 4
+{
+    "schema_version": "e8e10-1",
+    "profile": "GCC_LOCAL_HEADERS_EXPLICIT_MAKE",
+    "commit": "a2344e0c4d9f4dc179944298120498e6877ae78c",
+    "key": {
+        "directives": {
+            "config.h": [
+                "#define VALUE 1"
+            ],
+            "extra.h": [
+                "#define EXTRA 0"
+            ],
+            "helper.c": [],
+            "main.c": [
+                "#include <stdio.h>",
+                "#include \"config.h\""
+            ],
+            "unused.h": []
+        },
+        "recipes": [
+            "\tgcc main.o helper.o -o app",
+            "\tgcc $(CFLAGS) -c main.c -o main.o",
+            "\tgcc $(CFLAGS) -c helper.c -o helper.o",
+            "\trm -f main.o helper.o app"
+        ],
+        "flags": "-O0",
+        "compiler": "gcc (Debian 14.2.0-19) 14.2.0"
+    },
+    "actual": {
+        "main.o": [
+            "config.h",
+            "main.c"
+        ],
+        "helper.o": [
+            "helper.c"
+        ]
+    },
+    "declared": {
+        "main.o": [
+            "main.c",
+            "unused.h"
+        ],
+        "helper.o": [
+            "helper.c"
+        ]
+    },
+    "findings": [
+        {
+            "type": "MISSING",
+            "target": "main.o",
+            "dependency": "config.h"
+        },
+        {
+            "type": "REDUNDANT",
+            "target": "main.o",
+            "dependency": "unused.h"
+        }
+    ],
+    "added": [
+        [
+            "MISSING",
+            "main.o",
+            "config.h"
+        ],
+        [
+            "REDUNDANT",
+            "main.o",
+            "unused.h"
+        ]
+    ],
+    "resolved": [],
+    "refreshed": [
+        "main.o",
+        "helper.o"
+    ],
+    "reused": [],
+    "elapsed_s": 0.010926083195954561,
+    "baseline_source": "BuildChecker actual-graph.json projected to object targets"
+}
+
+MANUAL_BLOCK=6
+REUSE_PASS ['main.o', 'helper.o'] []
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=7
+A E8：main.o缺config.h，冗余unused.h；历史图来源为本次BuildChecker；未变化时两个目标复用。
+baseline.json
+buildchecker
+environment-image-id.txt
+incremental.json
+project
+steps
+student-source-commit.txt
+结论.txt
+STAGE_COMPLETE=e8 OUT=work/e8-A-manual.2CB9OL

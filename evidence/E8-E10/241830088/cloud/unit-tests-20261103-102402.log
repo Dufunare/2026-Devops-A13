@@ -1,0 +1,18 @@
+test_include_added_invalidates_cache (test_profile.ProfileTests.test_include_added_invalidates_cache) ... ok
+test_independent_known_edges (test_profile.ProfileTests.test_independent_known_edges) ... ok
+test_old_report_rejected (test_profile.ProfileTests.test_old_report_rejected) ... ok
+test_patch_preserves_redundant_dependency (test_profile.ProfileTests.test_patch_preserves_redundant_dependency) ... ok
+test_unchanged_reuses_both_targets (test_profile.ProfileTests.test_unchanged_reuses_both_targets) ... ok
+test_unsafe_dependency_rejected (test_profile.ProfileTests.test_unsafe_dependency_rejected) ... ok
+test_unsupported_configuration_rejected (test_profile.ProfileTests.test_unsupported_configuration_rejected) ... ok
+test_e10_deleted_source_fails_instead_of_reusing_cache (test_profile.Student241830088Tests.test_e10_deleted_source_fails_instead_of_reusing_cache) ... ok
+test_e10_equal_finding_counts_do_not_hide_changed_edges (test_profile.Student241830088Tests.test_e10_equal_finding_counts_do_not_hide_changed_edges) ... ok
+test_e8_removing_include_resolves_old_missing_edge (test_profile.Student241830088Tests.test_e8_removing_include_resolves_old_missing_edge) ... ok
+test_e8_two_hop_header_addition_refreshes_history (test_profile.Student241830088Tests.test_e8_two_hop_header_addition_refreshes_history) ... ok
+test_e9_partial_declaration_repair_keeps_other_missing_edge (test_profile.Student241830088Tests.test_e9_partial_declaration_repair_keeps_other_missing_edge) ... ok
+test_e9_supported_define_activates_conditional_include (test_profile.Student241830088Tests.test_e9_supported_define_activates_conditional_include) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.399s
+
+OK

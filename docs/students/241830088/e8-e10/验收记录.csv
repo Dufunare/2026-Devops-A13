@@ -1,0 +1,9 @@
+阶段,检查项,结果,证据
+E8,真实历史图与不变输入复用,PASS,evidence/E8-E10/241830088/cloud/e8-A-manual.2CB9OL
+E9,C0-C3新增与消除及构建日志,PASS,evidence/E8-E10/241830088/cloud/e9-A-manual.ov6Rix
+E10,六类五次完整集合一致30对,PASS,evidence/E8-E10/241830088/cloud/e10-A-manual.Og3Upd/matrix
+E10扩展,两跳间接包含五次及真实重检,PASS,evidence/E8-E10/241830088/cloud/e10-A-transitive-20261103-102412/extension
+单测,原7项加个人6项共13项,PASS,evidence/E8-E10/241830088/cloud/unit-tests-20261103-102402.log
+证据审计,明确边集与35对报告及3次动态核对,PASS,evidence/E8-E10/241830088/cloud/audit-A-20261103-102554
+扫描,源码历史及镜像,PASS,evidence/E8-E10/241830088/cloud/secret-scan.log
+源码CI,实验执行源码11b733e对应运行,PASS,https://github.com/Dufunare/2026-Devops-A13/actions/runs/41565814767
