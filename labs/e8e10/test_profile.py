@@ -156,4 +156,45 @@ class Student241830088Tests(unittest.TestCase):
 
 
 
+# Student 241870063: independent expectations for the restricted A profile.
+class Student241870063Tests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.p=Path(self.tmp.name)/'sample';fixture(self.p)
+
+    def _edges(self,report):
+        return {(f['type'],f['target'],f['dependency']) for f in report['findings']}
+
+    def test_e8_body_change_reuses_history(self):
+        old=scan(self.p)
+        (self.p/'helper.c').write_text('int helper(void){return 7;}\n')
+        commit(self.p,'student E8: helper body change')
+        r=scan(self.p,old)
+        self.assertEqual(r['actual'],old['actual'])
+        self.assertEqual(r['reused'],['main.o','helper.o'])
+        self.assertEqual(r['refreshed'],[])
+        self.assertEqual(self._edges(r),{('MISSING','main.o','config.h'),('REDUNDANT','main.o','unused.h')})
+
+    def test_e9_actually_using_unused_header_clears_redundant(self):
+        old=scan(self.p)
+        (self.p/'main.c').write_text('#include "unused.h"\n'+(self.p/'main.c').read_text())
+        commit(self.p,'student E9: use unused header')
+        r=scan(self.p,old)
+        self.assertEqual(r['actual']['main.o'],['config.h','main.c','unused.h'])
+        self.assertEqual(set(r['refreshed']),{'main.o','helper.o'})
+        self.assertEqual(r['resolved'],[['REDUNDANT','main.o','unused.h']])
+        self.assertEqual(self._edges(r),{('MISSING','main.o','config.h')})
+
+    def test_e10_new_flag_signature_refreshes_and_matches_full(self):
+        old=scan(self.p)
+        makefile=self.p/'Makefile'
+        makefile.write_text(makefile.read_text().replace('CFLAGS = -O0','CFLAGS = -O0 -DMODE=1'))
+        commit(self.p,'student E10: add MODE flag')
+        for _ in range(5):
+            inc=scan(self.p,old); full=scan(self.p)
+            for key in ('actual','declared','findings'):
+                self.assertEqual(inc[key],full[key],key)
+            self.assertEqual(inc['reused'],[])
+            self.assertEqual(set(inc['refreshed']),{'main.o','helper.o'})
+
 if __name__=='__main__':unittest.main()

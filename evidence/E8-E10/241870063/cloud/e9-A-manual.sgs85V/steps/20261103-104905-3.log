@@ -1,0 +1,5 @@
+C1 7e7d2f3db7684029b8d9fe5fa2773539145efc1e
+gcc -O0 -c main.c -o main.o
+gcc main.o helper.o -o app
+
+STEP_EXIT_CODE=0

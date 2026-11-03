@@ -1,0 +1,22 @@
+{
+  "archive": "e8e10-241870063-evidence.tar.gz",
+  "sha256": "87c96065c57dff75aaa682c344452994b93940008c14fde4b503a4223798b36a",
+  "server_archive": "/root/241870063/e8e10-241870063-evidence.tar.gz",
+  "source_repo": "/root/241870063/buildchecker",
+  "source_sha": "0eda87a05e98e18f615c4f82b8a0cecbab469105",
+  "image": "course-e8e10:241870063",
+  "image_id": "sha256:a7de9d2cec0d34cdeb905e6179851814eff7c81238b09a273ae3f3ae89306330",
+  "note": "Git 跟踪文本输入、原始 trace、make 数据库、JSON、日志与 CSV；可执行产物与内层 project/.git 未提交，内层提交历史保存在各 OUT 的 input-history.bundle 中。",
+  "omitted_from_git": [
+    "project/.git",
+    "buildchecker/project/main.o",
+    "buildchecker/project/helper.o",
+    "buildchecker/project/app",
+    "project/main.o",
+    "project/helper.o",
+    "project/app",
+    "matrix/final-buildchecker/project/main.o",
+    "matrix/final-buildchecker/project/helper.o",
+    "matrix/final-buildchecker/project/app"
+  ]
+}
