@@ -1,0 +1,13 @@
+C3 bc4f6e56c4fd97fab4ec788ab8b9b43600b6b2cf
+CFLAGS = -O0
+app: main.o helper.o
+	gcc main.o helper.o -o app
+main.o: main.c unused.h config.h extra.h
+	gcc $(CFLAGS) -c main.c -o main.o
+helper.o: helper.c
+	gcc $(CFLAGS) -c helper.c -o helper.o
+.PHONY: clean
+clean:
+	rm -f main.o helper.o app
+
+STEP_EXIT_CODE=0

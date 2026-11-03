@@ -1,0 +1,1 @@
+A E10：六类各五次，完整actual/declared/findings对照；性能为本机扫描耗时，最终另做BuildChecker对象目标交叉核对。
