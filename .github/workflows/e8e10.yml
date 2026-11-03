@@ -10,7 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Build teaching environment
-        run: docker build -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Match the E7 runner adaptation: keep the pinned digest, use Docker Hub in CI.
+          PINNED_BASE=$(sed -n 's/^ARG BASE_IMAGE=//p' labs/e8e10/environment/services/buildchecker/Dockerfile)
+          test -n "$PINNED_BASE"
+          CANONICAL_BASE="${PINNED_BASE/m.daocloud.io\/docker.io\//docker.io\/}"
+          mkdir -p work/ci
+          git rev-parse HEAD > work/ci/commit.txt
+          printf '%s\n' "$CANONICAL_BASE" > work/ci/base-image-source.txt
+          docker build --build-arg BASE_IMAGE="$CANONICAL_BASE" -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
       - name: Validate both tracks
         shell: bash
         run: |
