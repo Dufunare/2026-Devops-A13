@@ -22,6 +22,6 @@
 
 - 服务器仓库：`/root/241870063/buildchecker`，镜像 `course-e8e10:241870063`（ID 见个人报告）。
 - E8：`work/e8-A-manual.mWtztX`，依次得到 `BASELINE_PASS`、`BUILDCHECKER_BASELINE_PASS`、`REUSE_PASS`。
-- E9：`work/e9-A-manual.*`，内部提交 C0→C1→C2→C3；C1 复用、C2 刷新并新增 `MISSING extra.h`、C3 消除两条 MD。
+- E9：`work/e9-A-manual.sgs85V`，内部提交 C0→C1→C2→C3；C1 复用、C2 刷新并新增 `MISSING extra.h`、C3 消除两条 MD。
 - E10：`work/e10-A-manual.xez3qv`，30 行矩阵全部 `equal=True`，`gate.json` 的 `passed=True`，最终 BuildChecker 无 `MISSING`。
 - 单测：`python3 -m unittest discover -s labs/e8e10 -p test_profile.py -v`，结果见个人报告。
