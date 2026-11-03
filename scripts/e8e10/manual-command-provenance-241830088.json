@@ -1,0 +1,26 @@
+[
+  {
+    "stage": "e8",
+    "source": "DevOps_E8_E10/02_操作手册/8_E8_A组.md",
+    "source_sha256": "589f474818bf47220a41fc623e1d16be1bb7d6ff5038eb00ac1ed7548c6a60a2",
+    "generated": "E8_E10执行_20261103/执行脚本/e8-A-manual.sh",
+    "bash_blocks": 7,
+    "note": "课堂手册非交互执行：替换学号与起始目录，保留后续全部 Bash 代码块；不重复一键路线。"
+  },
+  {
+    "stage": "e9",
+    "source": "DevOps_E8_E10/02_操作手册/9_E9_A组.md",
+    "source_sha256": "122604049bfc828119c525bf960585ab86f054eeda4060bfd6a3fc6a722c8019",
+    "generated": "E8_E10执行_20261103/执行脚本/e9-A-manual.sh",
+    "bash_blocks": 10,
+    "note": "课堂手册非交互执行：替换学号与起始目录，保留后续全部 Bash 代码块；不重复一键路线。"
+  },
+  {
+    "stage": "e10",
+    "source": "DevOps_E8_E10/02_操作手册/10_E10_A组.md",
+    "source_sha256": "6c44c9ce91472081f5b221060d5b12ce8290149af2c3f7a3b1d6818f2fa8d329",
+    "generated": "E8_E10执行_20261103/执行脚本/e10-A-manual.sh",
+    "bash_blocks": 13,
+    "note": "课堂手册非交互执行：替换学号与起始目录，保留后续全部 Bash 代码块；不重复一键路线。"
+  }
+]

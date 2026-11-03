@@ -1,0 +1,2 @@
+BUILDCHECKER_BASELINE_PASS {'main.o': ['config.h', 'main.c'], 'helper.o': ['helper.c']}
+STEP_EXIT_CODE=0

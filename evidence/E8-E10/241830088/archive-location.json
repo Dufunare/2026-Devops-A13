@@ -1,0 +1,26 @@
+{
+  "archive": "cloud-evidence-A13.tar.gz",
+  "sha256": "cb86929033233b8e4af792463f99e7da530c87b2348e9372b9cacfd11de159d1",
+  "server_archive": "/root/241830088/e8e10-import-20261103/cloud-evidence-A13.tar.gz",
+  "source_repo": "/root/devops-students/241830088/buildchecker",
+  "source_sha": "11b733e7d47512fb51562d5ee08c2de1f347048e",
+  "note": "Git跟踪文本输入、原始trace、数据库、JSON、日志与CSV；可执行产物和四个样例Git bundle保留在云端及本机完整归档。",
+  "omitted_from_git": [
+    "e10-A-transitive-20261103-102412/extension/input-history.bundle",
+    "e10-A-transitive-20261103-102412/extension/final-buildchecker/project/main.o",
+    "e10-A-transitive-20261103-102412/extension/final-buildchecker/project/helper.o",
+    "e10-A-transitive-20261103-102412/extension/final-buildchecker/project/app",
+    "e10-A-manual.Og3Upd/matrix/input-history.bundle",
+    "e10-A-manual.Og3Upd/matrix/final-buildchecker/project/main.o",
+    "e10-A-manual.Og3Upd/matrix/final-buildchecker/project/helper.o",
+    "e10-A-manual.Og3Upd/matrix/final-buildchecker/project/app",
+    "e9-A-manual.ov6Rix/input-history.bundle",
+    "e9-A-manual.ov6Rix/project/main.o",
+    "e9-A-manual.ov6Rix/project/helper.o",
+    "e9-A-manual.ov6Rix/project/app",
+    "e8-A-manual.2CB9OL/input-history.bundle",
+    "e8-A-manual.2CB9OL/buildchecker/project/main.o",
+    "e8-A-manual.2CB9OL/buildchecker/project/helper.o",
+    "e8-A-manual.2CB9OL/buildchecker/project/app"
+  ]
+}

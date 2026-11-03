@@ -1,0 +1,8 @@
+COMMIT e29d9b6c78e1ce2f53681b57836d31fdbcc65f72
+{'case': 'header', 'repeat': 1, 'equal': True, 'incremental_s': 0.010991681832820177, 'full_s': 0.010241700801998377, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 2, 'equal': True, 'incremental_s': 0.010812823660671711, 'full_s': 0.009863038081675768, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 3, 'equal': True, 'incremental_s': 0.010330412071198225, 'full_s': 0.009983055293560028, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 4, 'equal': True, 'incremental_s': 0.010074959136545658, 'full_s': 0.009937295690178871, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 5, 'equal': True, 'incremental_s': 0.00997840566560626, 'full_s': 0.009984411299228668, 'reused': 0, 'refreshed': 2}
+HEADER_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0

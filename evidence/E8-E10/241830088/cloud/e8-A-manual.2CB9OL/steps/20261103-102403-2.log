@@ -1,0 +1,5 @@
+actual = {'main.o': ['config.h', 'main.c'], 'helper.o': ['helper.c']}
+declared = {'main.o': ['main.c', 'unused.h'], 'helper.o': ['helper.c']}
+findings = [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}, {'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+BASELINE_PASS
+STEP_EXIT_CODE=0

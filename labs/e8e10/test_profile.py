@@ -39,4 +39,121 @@ class ProfileTests(unittest.TestCase):
         (self.p/'Makefile').write_text((self.p/'Makefile').read_text().replace('-O0','-include unknown.h'))
         with self.assertRaisesRegex(ValueError,'UNSUPPORTED_FLAGS'):scan(self.p)
 
+# Student 241830088: independent expectations, not copied course examples.
+"""241830088: independent edge expectations for the restricted A profile.
+
+These six inputs extend the seven course tests; they do not implement the
+paper's full syscall-graph update algorithm.
+"""
+import tempfile
+import unittest
+from pathlib import Path
+
+from lab import commit, fixture, scan
+
+
+class Student241830088Tests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.project = Path(self.directory.name) / "sample"
+        fixture(self.project)
+
+    def edges(self, report):
+        return {(f["type"], f["target"], f["dependency"])
+                for f in report["findings"]}
+
+    def assert_matches_full(self, report):
+        full = scan(self.project)
+        for key in ("actual", "declared", "findings"):
+            self.assertEqual(report[key], full[key], key)
+
+    def test_e8_two_hop_header_addition_refreshes_history(self):
+        old = scan(self.project)
+        (self.project / "config.h").write_text('#include "extra.h"\n#define VALUE 1\n')
+        (self.project / "extra.h").write_text('#include "leaf.h"\n')
+        (self.project / "leaf.h").write_text('#define LEAF 3\n')
+        commit(self.project, "student E8: two-hop headers")
+        result = scan(self.project, old)
+        self.assertEqual(result["actual"], {
+            "main.o": ["config.h", "extra.h", "leaf.h", "main.c"],
+            "helper.o": ["helper.c"],
+        })
+        self.assertEqual(self.edges(result), {
+            ("MISSING", "main.o", "config.h"),
+            ("MISSING", "main.o", "extra.h"),
+            ("MISSING", "main.o", "leaf.h"),
+            ("REDUNDANT", "main.o", "unused.h"),
+        })
+        self.assertEqual(result["refreshed"], ["main.o", "helper.o"])
+        self.assert_matches_full(result)
+
+    def test_e8_removing_include_resolves_old_missing_edge(self):
+        old = scan(self.project)
+        source = self.project / "main.c"
+        source.write_text(source.read_text().replace('#include "config.h"\n', "").replace("VALUE", "1"))
+        commit(self.project, "student E8: remove header read")
+        result = scan(self.project, old)
+        self.assertEqual(result["actual"]["main.o"], ["main.c"])
+        self.assertEqual(result["resolved"], [["MISSING", "main.o", "config.h"]])
+        self.assertEqual(self.edges(result), {("REDUNDANT", "main.o", "unused.h")})
+        self.assert_matches_full(result)
+
+    def test_e9_partial_declaration_repair_keeps_other_missing_edge(self):
+        source = self.project / "main.c"
+        source.write_text('#include "extra.h"\n' + source.read_text())
+        commit(self.project, "student E9: add extra include")
+        old = scan(self.project)
+        makefile = self.project / "Makefile"
+        makefile.write_text(makefile.read_text().replace(
+            "main.c unused.h", "main.c unused.h config.h"))
+        commit(self.project, "student E9: repair config only")
+        result = scan(self.project, old)
+        self.assertEqual(result["reused"], ["main.o", "helper.o"])
+        self.assertEqual(result["refreshed"], [])
+        self.assertEqual(result["resolved"], [["MISSING", "main.o", "config.h"]])
+        self.assertEqual(self.edges(result), {
+            ("MISSING", "main.o", "extra.h"),
+            ("REDUNDANT", "main.o", "unused.h"),
+        })
+        self.assert_matches_full(result)
+
+    def test_e9_supported_define_activates_conditional_include(self):
+        source = self.project / "main.c"
+        source.write_text('#ifdef MODE\n#include "extra.h"\n#endif\n' + source.read_text())
+        commit(self.project, "student E9: conditional input")
+        old = scan(self.project)
+        self.assertNotIn("extra.h", old["actual"]["main.o"])
+        makefile = self.project / "Makefile"
+        makefile.write_text(makefile.read_text().replace("-O0", "-O0 -DMODE=1"))
+        commit(self.project, "student E9: enable MODE")
+        result = scan(self.project, old)
+        self.assertEqual(result["actual"]["main.o"], ["config.h", "extra.h", "main.c"])
+        self.assertEqual(result["added"], [["MISSING", "main.o", "extra.h"]])
+        self.assertEqual(result["refreshed"], ["main.o", "helper.o"])
+        self.assert_matches_full(result)
+
+    def test_e10_equal_finding_counts_do_not_hide_changed_edges(self):
+        old = scan(self.project)
+        source = self.project / "main.c"
+        source.write_text(source.read_text().replace('"config.h"', '"extra.h"').replace("VALUE", "EXTRA"))
+        commit(self.project, "student E10: same counts different dependency")
+        result = scan(self.project, old)
+        self.assertEqual(len(result["findings"]), len(old["findings"]))
+        self.assertNotEqual(result["findings"], old["findings"])
+        self.assertEqual(result["actual"]["main.o"], ["extra.h", "main.c"])
+        self.assertEqual(result["added"], [["MISSING", "main.o", "extra.h"]])
+        self.assertEqual(result["resolved"], [["MISSING", "main.o", "config.h"]])
+        self.assert_matches_full(result)
+
+    def test_e10_deleted_source_fails_instead_of_reusing_cache(self):
+        old = scan(self.project)
+        (self.project / "helper.c").unlink()
+        commit(self.project, "student E10: delete required source")
+        for history in (old, None):
+            with self.assertRaisesRegex(ValueError, "COMMAND_FAILED"):
+                scan(self.project, history)
+
+
+
 if __name__=='__main__':unittest.main()

@@ -1,0 +1,200 @@
+仓库=/root/devops-students/241830088/buildchecker
+学号=241830088
+镜像=course-e8e10:241830088
+本次证据目录=work/e10-A-manual.Og3Upd
+
+MANUAL_BLOCK=1
+MATRIX_BASELINE_READY work/e10-A-manual.Og3Upd/matrix
+CFLAGS = -O0
+app: main.o helper.o
+	gcc main.o helper.o -o app
+main.o: main.c unused.h
+	gcc $(CFLAGS) -c main.c -o main.o
+helper.o: helper.c
+	gcc $(CFLAGS) -c helper.c -o helper.o
+.PHONY: clean
+clean:
+	rm -f main.o helper.o app
+
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=2
+NO_SOURCE_CHANGE
+{'case': 'unchanged', 'repeat': 1, 'equal': True, 'incremental_s': 0.0021428437903523445, 'full_s': 0.010489380918443203, 'reused': 2, 'refreshed': 0}
+{'case': 'unchanged', 'repeat': 2, 'equal': True, 'incremental_s': 0.0016444530338048935, 'full_s': 0.010198696050792933, 'reused': 2, 'refreshed': 0}
+{'case': 'unchanged', 'repeat': 3, 'equal': True, 'incremental_s': 0.0016909660771489143, 'full_s': 0.009846110828220844, 'reused': 2, 'refreshed': 0}
+{'case': 'unchanged', 'repeat': 4, 'equal': True, 'incremental_s': 0.0016391579993069172, 'full_s': 0.01085917092859745, 'reused': 2, 'refreshed': 0}
+{'case': 'unchanged', 'repeat': 5, 'equal': True, 'incremental_s': 0.00164461275562644, 'full_s': 0.009996222332119942, 'reused': 2, 'refreshed': 0}
+UNCHANGED_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=3
+COMMIT d5d1cd69bdc2016d324bc4f9b46667bb057cdceb
+{'case': 'body', 'repeat': 1, 'equal': True, 'incremental_s': 0.0020247120410203934, 'full_s': 0.010398749727755785, 'reused': 2, 'refreshed': 0}
+{'case': 'body', 'repeat': 2, 'equal': True, 'incremental_s': 0.0016206828877329826, 'full_s': 0.009796620812267065, 'reused': 2, 'refreshed': 0}
+{'case': 'body', 'repeat': 3, 'equal': True, 'incremental_s': 0.002845240291208029, 'full_s': 0.010185682214796543, 'reused': 2, 'refreshed': 0}
+{'case': 'body', 'repeat': 4, 'equal': True, 'incremental_s': 0.0016352361999452114, 'full_s': 0.009699768852442503, 'reused': 2, 'refreshed': 0}
+{'case': 'body', 'repeat': 5, 'equal': True, 'incremental_s': 0.0016173669137060642, 'full_s': 0.009732985869050026, 'reused': 2, 'refreshed': 0}
+BODY_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=4
+COMMIT c171e0cf097156e83ffe856c7bfc1b8bb6c28a1f
+{'case': 'include', 'repeat': 1, 'equal': True, 'incremental_s': 0.010475806891918182, 'full_s': 0.009744498878717422, 'reused': 0, 'refreshed': 2}
+{'case': 'include', 'repeat': 2, 'equal': True, 'incremental_s': 0.010418208315968513, 'full_s': 0.009712138678878546, 'reused': 0, 'refreshed': 2}
+{'case': 'include', 'repeat': 3, 'equal': True, 'incremental_s': 0.009826438035815954, 'full_s': 0.009718846995383501, 'reused': 0, 'refreshed': 2}
+{'case': 'include', 'repeat': 4, 'equal': True, 'incremental_s': 0.009985758922994137, 'full_s': 0.009916608221828938, 'reused': 0, 'refreshed': 2}
+{'case': 'include', 'repeat': 5, 'equal': True, 'incremental_s': 0.009829898364841938, 'full_s': 0.00982448598369956, 'reused': 0, 'refreshed': 2}
+INCLUDE_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=5
+COMMIT 95ca4e46680edc8cff4acd906cd46677b914762b
+{'case': 'declaration', 'repeat': 1, 'equal': True, 'incremental_s': 0.002005612011998892, 'full_s': 0.010394953191280365, 'reused': 2, 'refreshed': 0}
+{'case': 'declaration', 'repeat': 2, 'equal': True, 'incremental_s': 0.0017105648294091225, 'full_s': 0.011244770139455795, 'reused': 2, 'refreshed': 0}
+{'case': 'declaration', 'repeat': 3, 'equal': True, 'incremental_s': 0.0016585709527134895, 'full_s': 0.009867352899163961, 'reused': 2, 'refreshed': 0}
+{'case': 'declaration', 'repeat': 4, 'equal': True, 'incremental_s': 0.0016675940714776516, 'full_s': 0.009747928939759731, 'reused': 2, 'refreshed': 0}
+{'case': 'declaration', 'repeat': 5, 'equal': True, 'incremental_s': 0.0016634762287139893, 'full_s': 0.009883325081318617, 'reused': 2, 'refreshed': 0}
+DECLARATION_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=6
+COMMIT d2b1f863eb4a5af35afac602208413f2bcadcb69
+{'case': 'flags', 'repeat': 1, 'equal': True, 'incremental_s': 0.011574853211641312, 'full_s': 0.009933632798492908, 'reused': 0, 'refreshed': 2}
+{'case': 'flags', 'repeat': 2, 'equal': True, 'incremental_s': 0.009896475821733475, 'full_s': 0.00990988127887249, 'reused': 0, 'refreshed': 2}
+{'case': 'flags', 'repeat': 3, 'equal': True, 'incremental_s': 0.010046686045825481, 'full_s': 0.009757929015904665, 'reused': 0, 'refreshed': 2}
+{'case': 'flags', 'repeat': 4, 'equal': True, 'incremental_s': 0.009895083028823137, 'full_s': 0.009745258372277021, 'reused': 0, 'refreshed': 2}
+{'case': 'flags', 'repeat': 5, 'equal': True, 'incremental_s': 0.009967843070626259, 'full_s': 0.00980640109628439, 'reused': 0, 'refreshed': 2}
+FLAGS_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=7
+COMMIT e29d9b6c78e1ce2f53681b57836d31fdbcc65f72
+{'case': 'header', 'repeat': 1, 'equal': True, 'incremental_s': 0.010991681832820177, 'full_s': 0.010241700801998377, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 2, 'equal': True, 'incremental_s': 0.010812823660671711, 'full_s': 0.009863038081675768, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 3, 'equal': True, 'incremental_s': 0.010330412071198225, 'full_s': 0.009983055293560028, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 4, 'equal': True, 'incremental_s': 0.010074959136545658, 'full_s': 0.009937295690178871, 'reused': 0, 'refreshed': 2}
+{'case': 'header', 'repeat': 5, 'equal': True, 'incremental_s': 0.00997840566560626, 'full_s': 0.009984411299228668, 'reused': 0, 'refreshed': 2}
+HEADER_FIVE_REPEATS_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=8
+DYNAMIC_CROSSCHECK_AND_MATRIX_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=9
+{
+  "track": "A",
+  "passed": true,
+  "rows": 30
+}
+MATRIX_PASS {'unchanged': 5, 'body': 5, 'include': 5, 'declaration': 5, 'flags': 5, 'header': 5}
+
+MANUAL_BLOCK=10
+unchanged reuse= ['main.o', 'helper.o'] refresh= [] findings= [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}, {'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+body reuse= ['main.o', 'helper.o'] refresh= [] findings= [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}, {'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+include reuse= [] refresh= ['main.o', 'helper.o'] findings= [{'type': 'MISSING', 'target': 'main.o', 'dependency': 'config.h'}, {'type': 'MISSING', 'target': 'main.o', 'dependency': 'extra.h'}, {'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+declaration reuse= ['main.o', 'helper.o'] refresh= [] findings= [{'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+flags reuse= [] refresh= ['main.o', 'helper.o'] findings= [{'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+header reuse= [] refresh= ['main.o', 'helper.o'] findings= [{'type': 'REDUNDANT', 'target': 'main.o', 'dependency': 'unused.h'}]
+
+MANUAL_BLOCK=11
+['unchanged', 5, 0.00164461275562644, 0.010198696050792933, 0.0016391579993069172, 0.0021428437903523445, 6.201275051468396]
+['body', 5, 0.0016352361999452114, 0.009796620812267065, 0.0016173669137060642, 0.002845240291208029, 5.990951528956674]
+['include', 5, 0.009985758922994137, 0.009744498878717422, 0.009826438035815954, 0.010475806891918182, 0.9758395885443252]
+['declaration', 5, 0.0016675940714776516, 0.009883325081318617, 0.0016585709527134895, 0.002005612011998892, 5.926697180304211]
+['flags', 5, 0.009967843070626259, 0.00980640109628439, 0.009895083028823137, 0.011574853211641312, 0.9838037203035815]
+['header', 5, 0.010330412071198225, 0.009983055293560028, 0.00997840566560626, 0.010991681832820177, 0.9663753221803565]
+SAVED work/e10-A-manual.Og3Upd/matrix/performance-summary.csv
+
+MANUAL_BLOCK=12
+{
+  "status": "SUCCEEDED",
+  "detector": "BUILDCHECKER_TEACHING",
+  "detector_version": "0.2.0-teaching",
+  "trace_id": "e6-51abb358819447c0bbec1a63a1bc41b7",
+  "findings": [
+    {
+      "type": "REDUNDANT",
+      "target": "main.o",
+      "dependency": "unused.h",
+      "evidence": [
+        {
+          "source": "make_database",
+          "artifact": "make-db.txt",
+          "line": 1052,
+          "declaration": "main.o: main.c unused.h config.h extra.h"
+        }
+      ],
+      "scope": "Not observed in this recipe job under this build configuration"
+    }
+  ],
+  "scope": "Single Make process; one final output per recipe job; successful read-open observations",
+  "build_command": [
+    "make",
+    "app"
+  ],
+  "clean_command": [
+    "make",
+    "clean"
+  ],
+  "input_sha256": {
+    ".gitignore": "d7bfd39146ded6c9700eb81300e82345464db46cda1e775b8a114a811311bafe",
+    "Makefile": "966ca36a90df555a2e878c4f95f2560cc5179b51baca46f03750c2d524c224e6",
+    "config.h": "6024b92a8cb6cfd1881a66916f4b368c0cb49acfdd8def2fedb7a430892e28fa",
+    "extra.h": "5e20ae92639ee989af5638bd0308a6a86e71bdb4345f60b962ba9db7265e4f7c",
+    "helper.c": "5db584e6ea1db9fe026954a575b744c2a456ec3163606a16da1f0b909e4dbe6d",
+    "main.c": "1e2e75d84a5a28f44438792dbb33ce888a09fad6597094d998ebaf34fa784312",
+    "unused.h": "3f7fec0991b34d614462e29b450c76638f07171936a12df337c578c2d1481b37"
+  },
+  "clean_exit_code": 0,
+  "trace_command": [
+    "strace",
+    "-ff",
+    "-s",
+    "4096",
+    "-o",
+    "/course/work/e10-A-manual.Og3Upd/matrix/final-buildchecker/trace/t",
+    "-e",
+    "trace=%file,%process",
+    "make",
+    "-p",
+    "app"
+  ],
+  "build_exit_code": 0,
+  "observed_targets": [
+    "app",
+    "helper.o",
+    "main.o"
+  ],
+  "artifacts": {
+    "actual_graph": "actual-graph.json",
+    "declared_graph": "declared-graph.json",
+    "processes": "processes.json",
+    "make_database": "make-db.txt",
+    "trace_directory": "trace"
+  },
+  "elapsed_ms": 127
+}
+1052:main.o: main.c unused.h config.h extra.h
+t.13
+t.14
+t.15
+t.16
+t.17
+t.18
+t.19
+t.20
+
+MANUAL_BLOCK=13
+181:            for repeat in range(5):
+183:                passed=all(inc[k]==full[k] for k in ['actual','declared','findings'])
+185:                assert passed,case
+case,n,inc_median_s,full_median_s,inc_min_s,inc_max_s,full_over_inc
+unchanged,5,0.00164461275562644,0.010198696050792933,0.0016391579993069172,0.0021428437903523445,6.201275051468396
+body,5,0.0016352361999452114,0.009796620812267065,0.0016173669137060642,0.002845240291208029,5.990951528956674
+include,5,0.009985758922994137,0.009744498878717422,0.009826438035815954,0.010475806891918182,0.9758395885443252
+declaration,5,0.0016675940714776516,0.009883325081318617,0.0016585709527134895,0.002005612011998892,5.926697180304211
+flags,5,0.009967843070626259,0.00980640109628439,0.009895083028823137,0.011574853211641312,0.9838037203035815
+header,5,0.010330412071198225,0.009983055293560028,0.00997840566560626,0.010991681832820177,0.9663753221803565
+STAGE_COMPLETE=e10 OUT=work/e10-A-manual.Og3Upd

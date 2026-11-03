@@ -1,0 +1,144 @@
+{
+  "status": "SUCCEEDED",
+  "detector": "BUILDCHECKER_TEACHING",
+  "detector_version": "0.2.0-teaching",
+  "trace_id": "e6-73196380299a40b981f9e2225275e769",
+  "findings": [
+    {
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "config.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.94",
+          "line": 579,
+          "pid": 94,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.95",
+          "line": 23,
+          "pid": 95,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "main.c",
+        "unused.h"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "extra.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.94",
+          "line": 580,
+          "pid": 94,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.95",
+          "line": 23,
+          "pid": 95,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "main.c",
+        "unused.h"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "main.o",
+      "dependency": "leaf.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.94",
+          "line": 581,
+          "pid": 94,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.95",
+          "line": 23,
+          "pid": 95,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "main.c",
+        "unused.h"
+      ]
+    },
+    {
+      "type": "REDUNDANT",
+      "target": "main.o",
+      "dependency": "unused.h",
+      "evidence": [
+        {
+          "source": "make_database",
+          "artifact": "make-db.txt",
+          "line": 1044,
+          "declaration": "main.o: main.c unused.h"
+        }
+      ],
+      "scope": "Not observed in this recipe job under this build configuration"
+    }
+  ],
+  "scope": "Single Make process; one final output per recipe job; successful read-open observations",
+  "build_command": [
+    "make",
+    "app"
+  ],
+  "clean_command": [
+    "make",
+    "clean"
+  ],
+  "input_sha256": {
+    ".gitignore": "d7bfd39146ded6c9700eb81300e82345464db46cda1e775b8a114a811311bafe",
+    "Makefile": "9206301c23ce4cb93c3fc1434037e475cf69f53e132dc541f6028d05e30258b2",
+    "config.h": "6024b92a8cb6cfd1881a66916f4b368c0cb49acfdd8def2fedb7a430892e28fa",
+    "extra.h": "a0da9137e0055fe5692f9f217199e1a9e5a171711602fed9e83ddb05a5388af2",
+    "helper.c": "90a60f959d215b0b91807c6dd2c94acf6684a9fe26629dc1591e9b2ea773d78c",
+    "leaf.h": "de3df8c86373e999cfc1c25434944312c8a5f836057c6f0ad81d5de95affafd4",
+    "main.c": "0da2f94ca7b27cfeae51e4842a4a39f527929b28a82f40b3796d308cc72c1379",
+    "unused.h": "3f7fec0991b34d614462e29b450c76638f07171936a12df337c578c2d1481b37"
+  },
+  "clean_exit_code": 0,
+  "trace_command": [
+    "strace",
+    "-ff",
+    "-s",
+    "4096",
+    "-o",
+    "/course/work/e10-A-transitive-20261103-102412/extension/final-buildchecker/trace/t",
+    "-e",
+    "trace=%file,%process",
+    "make",
+    "-p",
+    "app"
+  ],
+  "build_exit_code": 0,
+  "observed_targets": [
+    "app",
+    "helper.o",
+    "main.o"
+  ],
+  "artifacts": {
+    "actual_graph": "actual-graph.json",
+    "declared_graph": "declared-graph.json",
+    "processes": "processes.json",
+    "make_database": "make-db.txt",
+    "trace_directory": "trace"
+  },
+  "elapsed_ms": 127
+}

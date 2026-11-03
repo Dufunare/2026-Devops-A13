@@ -1,0 +1,41 @@
+{
+  "actual": {
+    "main.o": [
+      "config.h",
+      "extra.h",
+      "leaf.h",
+      "main.c"
+    ],
+    "helper.o": [
+      "helper.c"
+    ]
+  },
+  "findings": [
+    [
+      "MISSING",
+      "main.o",
+      "config.h"
+    ],
+    [
+      "MISSING",
+      "main.o",
+      "extra.h"
+    ],
+    [
+      "MISSING",
+      "main.o",
+      "leaf.h"
+    ],
+    [
+      "REDUNDANT",
+      "main.o",
+      "unused.h"
+    ]
+  ],
+  "reused": [],
+  "refreshed": [
+    "main.o",
+    "helper.o"
+  ],
+  "repeat_history": "same C0 baseline for all five measurements"
+}

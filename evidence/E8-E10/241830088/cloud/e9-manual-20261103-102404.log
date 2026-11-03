@@ -1,0 +1,85 @@
+仓库=/root/devops-students/241830088/buildchecker
+学号=241830088
+镜像=course-e8e10:241830088
+本次证据目录=work/e9-A-manual.ov6Rix
+
+MANUAL_BLOCK=1
+CREATED work/e9-A-manual.ov6Rix/project
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=2
+/root/devops-students/241830088/buildchecker
+11b733e7d47512fb51562d5ee08c2de1f347048e
+CFLAGS = -O0
+app: main.o helper.o
+	gcc main.o helper.o -o app
+main.o: main.c unused.h
+	gcc $(CFLAGS) -c main.c -o main.o
+helper.o: helper.c
+	gcc $(CFLAGS) -c helper.c -o helper.o
+.PHONY: clean
+clean:
+	rm -f main.o helper.o app
+#include <stdio.h>
+#include "config.h"
+int helper(void);
+int main(void){printf("%d\n",VALUE+helper());return 0;}
+#define VALUE 1
+int helper(void){return 0;}
+fffe4cb C0 baseline
+
+MANUAL_BLOCK=3
+C0_BUILD_AND_BASELINE_PASS
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=4
+C1 d3b844f1a7176cb92a3c5ee3c14a6e5a6066f1d8
+gcc -O0 -c main.c -o main.o
+gcc main.o helper.o -o app
+
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=5
+C1_REUSE_PASS ['main.o', 'helper.o']
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=6
+C2 46a8b0bfc7bc5aa1ec785645f8e9d3d52511cbe9
+gcc -O0 -c main.c -o main.o
+gcc main.o helper.o -o app
+
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=7
+C2_REFRESH_PASS [['MISSING', 'main.o', 'extra.h']]
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=8
+C3 b2c650e6a5b6fdf612f1fc0745efcb6243c790ab
+CFLAGS = -O0
+app: main.o helper.o
+	gcc main.o helper.o -o app
+main.o: main.c unused.h config.h extra.h
+	gcc $(CFLAGS) -c main.c -o main.o
+helper.o: helper.c
+	gcc $(CFLAGS) -c helper.c -o helper.o
+.PHONY: clean
+clean:
+	rm -f main.o helper.o app
+
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=9
+C3_RESOLVED_PASS [['MISSING', 'main.o', 'config.h'], ['MISSING', 'main.o', 'extra.h']]
+STEP_EXIT_CODE=0
+
+MANUAL_BLOCK=10
+fffe4cb C0 baseline
+d3b844f C1 body change
+46a8b0b C2 include change
+b2c650e C3 repair declarations
+baseline fffe4cb0aa716647ec23ea06df5812d1f6c3200f [] ['main.o', 'helper.o'] [['MISSING', 'main.o', 'config.h'], ['REDUNDANT', 'main.o', 'unused.h']] []
+C1 d3b844f1a7176cb92a3c5ee3c14a6e5a6066f1d8 ['main.o', 'helper.o'] [] [] []
+C2 46a8b0bfc7bc5aa1ec785645f8e9d3d52511cbe9 [] ['main.o', 'helper.o'] [['MISSING', 'main.o', 'extra.h']] []
+C3 b2c650e6a5b6fdf612f1fc0745efcb6243c790ab ['main.o', 'helper.o'] [] [] [['MISSING', 'main.o', 'config.h'], ['MISSING', 'main.o', 'extra.h']]
+STAGE_COMPLETE=e9 OUT=work/e9-A-manual.ov6Rix

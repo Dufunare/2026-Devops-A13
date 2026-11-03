@@ -1,0 +1,24 @@
+[
+  {
+    "case": "same-count-wrong-edge",
+    "expected": "reject altered evidence",
+    "actual_exit": 1,
+    "passed": true,
+    "error_tail": [
+      "    assert report[\"actual\"] == {\"main.o\": actual_main, \"helper.o\": [\"helper.c\"]}",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError"
+    ]
+  },
+  {
+    "case": "csv-time-mismatch",
+    "expected": "reject altered evidence",
+    "actual_exit": 1,
+    "passed": true,
+    "error_tail": [
+      "    assert float(row[\"incremental_s\"]) == inc[\"elapsed_s\"] > 0",
+      "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+      "AssertionError"
+    ]
+  }
+]
