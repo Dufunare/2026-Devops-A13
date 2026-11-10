@@ -197,4 +197,7 @@ class Student241870063Tests(unittest.TestCase):
             self.assertEqual(inc['reused'],[])
             self.assertEqual(set(inc['refreshed']),{'main.o','helper.o'})
 
+# 241830217: independent target-wise tests loaded by teaching quality gate.
+from test_241830217 import Student241830217Tests
+
 if __name__=='__main__':unittest.main()
