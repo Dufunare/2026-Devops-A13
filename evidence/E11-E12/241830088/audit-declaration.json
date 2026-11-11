@@ -1,0 +1,30 @@
+{
+  "schema_version": "a13-e11-a-audit-1",
+  "passed": true,
+  "job_id": "job-44e7ce9af0464ca1b9820d45d926347b",
+  "trace_id": "trace-d7c8bb38a41d4d328febf28cc3cdb5b7",
+  "base_commit": "68140c398d540ffc65769ec15dcfb5f75a990e9b",
+  "target_commit": "f6e1e947ddfe362b57e0715e35fdca201af7c598",
+  "artifact_count": 81,
+  "baseline_trace_files": 10,
+  "target_trace_files": 10,
+  "cache_key_equal": true,
+  "reused": [
+    "main.o",
+    "helper.o"
+  ],
+  "refreshed": [],
+  "findings": [
+    [
+      "MISSING",
+      "main.o",
+      "extra.h"
+    ],
+    [
+      "REDUNDANT",
+      "main.o",
+      "unused.h"
+    ]
+  ],
+  "scope": "complete E11-A directory; two object targets; integrity and consistency, not source authentication"
+}

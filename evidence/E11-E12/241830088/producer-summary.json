@@ -1,0 +1,48 @@
+{
+  "student_source_sha": "608f0cce5a865cdbe7ceb10636972c3d1922a47a",
+  "image_id": "sha256:7a1915eba9ccc31a5fbd278f992d3f2c68dee1dea5118ba6f3ea394c00425bc2",
+  "dataset": "/course/data/a13-241830088-20261111-104037",
+  "cases": [
+    {
+      "case": "include",
+      "base": "8071bc7e67889229e0c33b5ca104ffee00f02ffe",
+      "target": "09986a8e53145e1df4c09500fafa1aeadd387dc2",
+      "job_id": "job-67e2921a96224cd584072da0cc534cde",
+      "trace_id": "trace-03ae673165fb48c69ed31a82b51e375d",
+      "status": "SUCCEEDED",
+      "reused": [],
+      "refreshed": [
+        "main.o",
+        "helper.o"
+      ]
+    },
+    {
+      "case": "body",
+      "base": "09986a8e53145e1df4c09500fafa1aeadd387dc2",
+      "target": "68140c398d540ffc65769ec15dcfb5f75a990e9b",
+      "job_id": "job-5abc620605d841869d649ecec85a5e65",
+      "trace_id": "trace-baa39d4b350d4db399c1f5a54dd55a3d",
+      "status": "SUCCEEDED",
+      "reused": [
+        "main.o",
+        "helper.o"
+      ],
+      "refreshed": []
+    },
+    {
+      "case": "declaration",
+      "base": "68140c398d540ffc65769ec15dcfb5f75a990e9b",
+      "target": "f6e1e947ddfe362b57e0715e35fdca201af7c598",
+      "job_id": "job-44e7ce9af0464ca1b9820d45d926347b",
+      "trace_id": "trace-d7c8bb38a41d4d328febf28cc3cdb5b7",
+      "status": "SUCCEEDED",
+      "reused": [
+        "main.o",
+        "helper.o"
+      ],
+      "refreshed": []
+    }
+  ],
+  "real_project_acceptance": false,
+  "B13_formal_receipt": false
+}

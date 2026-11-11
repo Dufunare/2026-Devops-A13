@@ -1,0 +1,46 @@
+IMAGE=course-e11e12:241830088
+test_baseline_cache_not_from_actual_graph_rejected (test_audit_a_241830088.AuditA241830088Tests.test_baseline_cache_not_from_actual_graph_rejected) ... ok
+test_changed_raw_file_rejected (test_audit_a_241830088.AuditA241830088Tests.test_changed_raw_file_rejected) ... ok
+test_different_task_binding_rejected (test_audit_a_241830088.AuditA241830088Tests.test_different_task_binding_rejected) ... ok
+test_input_snapshot_mismatch_rejected_after_manifest_update (test_audit_a_241830088.AuditA241830088Tests.test_input_snapshot_mismatch_rejected_after_manifest_update) ... ok
+test_missing_raw_processes_cannot_be_hidden_by_manifest (test_audit_a_241830088.AuditA241830088Tests.test_missing_raw_processes_cannot_be_hidden_by_manifest) ... ok
+test_old_payload_commit_rejected (test_audit_a_241830088.AuditA241830088Tests.test_old_payload_commit_rejected) ... ok
+test_payload_data_type_mismatch_rejected (test_audit_a_241830088.AuditA241830088Tests.test_payload_data_type_mismatch_rejected) ... ok
+test_same_count_wrong_actual_graph_rejected_even_with_updated_hashes (test_audit_a_241830088.AuditA241830088Tests.test_same_count_wrong_actual_graph_rejected_even_with_updated_hashes) ... ok
+test_same_count_wrong_declared_graph_rejected (test_audit_a_241830088.AuditA241830088Tests.test_same_count_wrong_declared_graph_rejected) ... ok
+test_valid_full_evidence_and_extra_app_edge (test_audit_a_241830088.AuditA241830088Tests.test_valid_full_evidence_and_extra_app_edge) ... ok
+test_wrong_added_edge_rejected (test_audit_a_241830088.AuditA241830088Tests.test_wrong_added_edge_rejected) ... ok
+test_wrong_cache_reuse_rejected (test_audit_a_241830088.AuditA241830088Tests.test_wrong_cache_reuse_rejected) ... ok
+test_accept_current_report (test_contract.Contracts.test_accept_current_report) ... ok
+test_api_rejects_repo_outside_data (test_contract.Contracts.test_api_rejects_repo_outside_data) ... ok
+test_artifact_uses_relative_uri_and_content_hash (test_contract.Contracts.test_artifact_uses_relative_uri_and_content_hash) ... ok
+test_changed_artifact_is_rejected (test_contract.Contracts.test_changed_artifact_is_rejected) ... ok
+test_existing_evidence_not_overwritten (test_contract.Contracts.test_existing_evidence_not_overwritten) ... ok
+test_reject_failed_upstream (test_contract.Contracts.test_reject_failed_upstream) ... ok
+test_reject_old_commit (test_contract.Contracts.test_reject_old_commit) ... ok
+test_reject_schema (test_contract.Contracts.test_reject_schema) ... ok
+test_reject_wrong_artifact_kind (test_contract.Contracts.test_reject_wrong_artifact_kind) ... ok
+test_same_key_same_request_same_job (test_contract.Contracts.test_same_key_same_request_same_job) ... ok
+test_artifact_uri_cannot_escape_the_source_run (test_handoff_241830088.Student241830088HandoffTests.test_artifact_uri_cannot_escape_the_source_run) ... ok
+test_bool_and_number_data_are_distinct (test_handoff_241830088.Student241830088HandoffTests.test_bool_and_number_data_are_distinct) ... ok
+test_bool_cannot_impersonate_integer_byte_count (test_handoff_241830088.Student241830088HandoffTests.test_bool_cannot_impersonate_integer_byte_count) ... ok
+test_duplicate_json_key_is_rejected_even_with_updated_hash (test_handoff_241830088.Student241830088HandoffTests.test_duplicate_json_key_is_rejected_even_with_updated_hash) ... ok
+test_duplicate_payload_reference_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_duplicate_payload_reference_is_rejected) ... ok
+test_environment_reuse_metadata_rejects_bool_number_confusion (test_handoff_241830088.Student241830088HandoffTests.test_environment_reuse_metadata_rejects_bool_number_confusion) ... ok
+test_existing_output_is_preserved (test_handoff_241830088.Student241830088HandoffTests.test_existing_output_is_preserved) ... ok
+test_failed_upstream_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_failed_upstream_is_rejected) ... ok
+test_float_overflow_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_float_overflow_is_rejected) ... ok
+test_inner_commit_cannot_be_hidden_by_correct_envelope (test_handoff_241830088.Student241830088HandoffTests.test_inner_commit_cannot_be_hidden_by_correct_envelope) ... ok
+test_nan_is_rejected_even_with_updated_hash (test_handoff_241830088.Student241830088HandoffTests.test_nan_is_rejected_even_with_updated_hash) ... ok
+test_payload_tampering_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_payload_tampering_is_rejected) ... ok
+test_producer_metadata_cannot_disagree_with_run_record (test_handoff_241830088.Student241830088HandoffTests.test_producer_metadata_cannot_disagree_with_run_record) ... ok
+test_recorded_generated_data_and_environment_are_preserved (test_handoff_241830088.Student241830088HandoffTests.test_recorded_generated_data_and_environment_are_preserved) ... ok
+test_stage_file_is_bound_to_its_expected_name (test_handoff_241830088.Student241830088HandoffTests.test_stage_file_is_bound_to_its_expected_name) ... ok
+test_stage_job_mismatch_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_stage_job_mismatch_is_rejected) ... ok
+test_stage_trace_mismatch_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_stage_trace_mismatch_is_rejected) ... ok
+test_valid_export_preserves_originals_and_contains_exact_project_commits (test_handoff_241830088.Student241830088HandoffTests.test_valid_export_preserves_originals_and_contains_exact_project_commits) ... ok
+
+----------------------------------------------------------------------
+Ran 40 tests in 0.475s
+
+OK
