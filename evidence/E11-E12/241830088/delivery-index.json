@@ -1,0 +1,22 @@
+{
+  "source_sha": "608f0cce5a865cdbe7ceb10636972c3d1922a47a",
+  "image_id": "sha256:7a1915eba9ccc31a5fbd278f992d3f2c68dee1dea5118ba6f3ea394c00425bc2",
+  "producer_out": "/root/devops-students/241830088/e11-e12-buildchecker/work/a13-producer-20261111-104037",
+  "test_counts": {
+    "course": 10,
+    "new_audit": 12,
+    "new_export": 18,
+    "total": 40
+  },
+  "production_cases": 3,
+  "audit_pass": 3,
+  "B13_frozen_consumer_local_preflight_pass": 3,
+  "formal_B13_receipt": false,
+  "cross_server_test": false,
+  "real_project_acceptance": false,
+  "draft_image_reused": false,
+  "archives": {
+    "A13_B13_报告交付包_20261111.tar.gz": "507d5a4d627a6eab24c4095de99aca0e6f5cc82acd9faae9a481f7f40a7a37a9",
+    "A13_241830088_原始证据_20261111.tar.gz": "bd792c90e336849d22acd2a3c1307de99a8652e58029963b595f4bb5641ad167"
+  }
+}
