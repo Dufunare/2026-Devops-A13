@@ -1,0 +1,64 @@
+{
+  "checked_on": "2026-11-13",
+  "passed": true,
+  "scope": "A13 received B13 independent offline-consumption evidence",
+  "outer_files_sha256_verified": 9,
+  "original_A13_package_sha256": "507d5a4d627a6eab24c4095de99aca0e6f5cc82acd9faae9a481f7f40a7a37a9",
+  "B13_result_archive_sha256": "bcaa95e5fbef608cd7377b99018cc8b73f81ba9c85655795fb8d6759473ede6a",
+  "B13_source_sha": "9cf6d26e0abba6477bd41e3fd9c54aaf19c54961",
+  "B13_image_id": "sha256:bd6407d706b8a3174a5444e1363cb0432f3e2eae70dcb0a36a7d1c1e0cb5afad",
+  "B13_consumer_sha256": "91dc5fb3f9a03cddb5cd67847429484184d480c951ae7dff19f49b8eba505c20",
+  "cases": [
+    {
+      "case": "handoff-include",
+      "input_files_unchanged": 90,
+      "received_originals_match": true,
+      "target": "09986a8e53145e1df4c09500fafa1aeadd387dc2",
+      "job_id": "job-67e2921a96224cd584072da0cc534cde",
+      "trace_id": "trace-03ae673165fb48c69ed31a82b51e375d",
+      "output_artifacts_verified": 61,
+      "accepted": true,
+      "missing_count": 0,
+      "redundant": [
+        "main.o -> unused.h"
+      ],
+      "patch_sha256": "88074f66c291dcad1344c48f6a2b9ddd42d235d9d0415c85fb33310c5b7cb2af"
+    },
+    {
+      "case": "handoff-body",
+      "input_files_unchanged": 90,
+      "received_originals_match": true,
+      "target": "68140c398d540ffc65769ec15dcfb5f75a990e9b",
+      "job_id": "job-5abc620605d841869d649ecec85a5e65",
+      "trace_id": "trace-baa39d4b350d4db399c1f5a54dd55a3d",
+      "output_artifacts_verified": 61,
+      "accepted": true,
+      "missing_count": 0,
+      "redundant": [
+        "main.o -> unused.h"
+      ],
+      "patch_sha256": "88074f66c291dcad1344c48f6a2b9ddd42d235d9d0415c85fb33310c5b7cb2af"
+    },
+    {
+      "case": "handoff-declaration",
+      "input_files_unchanged": 90,
+      "received_originals_match": true,
+      "target": "f6e1e947ddfe362b57e0715e35fdca201af7c598",
+      "job_id": "job-44e7ce9af0464ca1b9820d45d926347b",
+      "trace_id": "trace-d7c8bb38a41d4d328febf28cc3cdb5b7",
+      "output_artifacts_verified": 61,
+      "accepted": true,
+      "missing_count": 0,
+      "redundant": [
+        "main.o -> unused.h"
+      ],
+      "patch_sha256": "4f50c1a8988f0fdd8eeca49b5ef07bd4ec8f082e4d1d49707aa0318603f8782d"
+    }
+  ],
+  "total_verified_output_artifacts": 183,
+  "formal_B13_consumption_verified": true,
+  "A13_receipt_rechecked": true,
+  "shared_HTTP_cross_machine_verified": false,
+  "real_project_acceptance": false,
+  "draft_image_reused": false
+}

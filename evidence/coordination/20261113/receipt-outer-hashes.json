@@ -1,0 +1,47 @@
+[
+  {
+    "file": "a13-bundle-audit.json",
+    "sha256": "d5114837cea24d68d4bc39d1139f5df5f08fefaf7357390768a34547913378bb",
+    "matched": true
+  },
+  {
+    "file": "a13-delivery-audit.json",
+    "sha256": "0e9016c646725244e4c49e803f06ea10287b3fbfe1d99e8d3e75eaa5ab6ebd1c",
+    "matched": true
+  },
+  {
+    "file": "A13_交付包静态核验.md",
+    "sha256": "27d4ea07c0bf5af624c89ea646f8484f061b14e1444573fedcb5e6d33942e7b3",
+    "matched": true
+  },
+  {
+    "file": "B13_A13_receipt_20261113.tar.gz",
+    "sha256": "bcaa95e5fbef608cd7377b99018cc8b73f81ba9c85655795fb8d6759473ede6a",
+    "matched": true
+  },
+  {
+    "file": "B13_A13_receipt_summary.json",
+    "sha256": "54007930d0955a7d156b039d620ea022df3b201ef295f8cf5c099d4a009df093",
+    "matched": true
+  },
+  {
+    "file": "B13_E2_v2互读请求_20261113.md",
+    "sha256": "0be6224db38f965dac05f1e2e44f70d46204635d0976d4203b99ffa5b75a0e8c",
+    "matched": true
+  },
+  {
+    "file": "B13_toolchain.json",
+    "sha256": "b4af2277bca9c6c531041ffd42026ad58e254de4cae743415f3f80d5c3acce4e",
+    "matched": true
+  },
+  {
+    "file": "B13_致A13_正式消费回执_20261113.md",
+    "sha256": "0360efbffd42e3325c7c3fa8a88199b39b7ae73b3fc0ae29fbff06168b762f5a",
+    "matched": true
+  },
+  {
+    "file": "consume_a13_driver.py",
+    "sha256": "376ba4ce1c543a1436e974f34a5e47cf133b7f542973213c51cbbe2ede2e5dd0",
+    "matched": true
+  }
+]
