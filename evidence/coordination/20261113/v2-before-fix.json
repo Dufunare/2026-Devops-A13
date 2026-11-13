@@ -1,0 +1,150 @@
+{
+  "A13_commit": "9bc1d18fab823373dbc64d8a70df1c8b4cc163c9",
+  "validator_sha256": "d3fe4f9da364ce5fa9e4394eb9c45ce9b90d34fb77bdf866050510c2e4941804",
+  "path": "scripts/validate_e2_v2.py:validate_report",
+  "method": "Unmodified A13 legacy validator; no external JSON Schema library executed",
+  "matched": 12,
+  "total": 19,
+  "invalid_accepted": 5,
+  "uncaught_type_errors": 2,
+  "cases": [
+    {
+      "file": "contracts/examples/v2/invalid/artifact-locator-uri-array.json",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/invalid/artifact-locator-uri-null.json",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/invalid/dependency-dot-segment.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/dependency-double-slash.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/dependency-trailing-slash.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/detector-array.json",
+      "expected": "REJECT",
+      "actual": "CRASH",
+      "errors": [
+        "TypeError: unhashable type: 'list'"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/evidence-item-missing-detail.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].evidence[0] invalid"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/extensions-explicit-null.json",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/invalid/finding-commit-mismatch.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].commit: must equal repository.commit"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/finding-extensions-null.json",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/invalid/finding-type-object.json",
+      "expected": "REJECT",
+      "actual": "CRASH",
+      "errors": [
+        "TypeError: unhashable type: 'dict'"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/location-path-double-slash.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].location.path invalid"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/locator-repository-path-dot.json",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/invalid/oracle-with-producer-job.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "producer_job_id: oracle reports must be null/absent"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/unknown-finding-field.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0]: unknown core fields ['severity']"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/unresolved-with-line.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].location: unknown core fields ['line']"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/invalid/unsafe-dependency-absolute.json",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "file": "contracts/examples/v2/md-report.e3-target.valid.json",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "file": "contracts/examples/v2/md-report.valid.json",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "errors": []
+    }
+  ]
+}
