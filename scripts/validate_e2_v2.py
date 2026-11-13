@@ -12,9 +12,76 @@ def safe(v):
 def unknown(obj,allowed,where,e):
     x=sorted(set(obj)-allowed)
     if x:e.append(f"{where}: unknown core fields {x}")
+def structure_errors(d):
+    """Check the fixed v2 Schema's object/type constraints before semantics.
+
+    No third-party dependency; this is the Pair13 contract, not a general
+    JSON Schema interpreter. The published Schema itself remains unchanged.
+    """
+    errors=[]
+    def obj(value,allowed,required,where):
+        if not isinstance(value,dict):
+            errors.append(where+": object required");return False
+        unknown(value,set(allowed),where,errors)
+        for key in required:
+            if key not in value:errors.append(where+"."+key+": missing")
+        return True
+    def string(value,where):
+        if not nonempty(value):errors.append(where+": non-empty string required")
+    def extensions(value,where):
+        if obj(value,value.keys() if isinstance(value,dict) else (),(),where):
+            for key in value:
+                if not isinstance(key,str) or not EXT.fullmatch(key):errors.append(where+": namespaced key required")
+    def uri(value,where):
+        if not isinstance(value,str) or not value.startswith("artifact://pair13/"):
+            errors.append(where+": artifact://pair13/ URI string required")
+    for key in ("report_id","configuration_id","provenance"):
+        string(d.get(key),key)
+    repository=d.get("repository")
+    if obj(repository,("url","commit"),("url","commit"),"repository"):
+        string(repository.get("url"),"repository.url")
+    environment=d.get("environment")
+    if obj(environment,("os","arch","make_version","cc_version","image_ref"),("os","arch"),"environment"):
+        for key,value in environment.items():string(value,"environment."+key)
+    if d.get("detector") not in ("BUILDCHECKER","ECHECKER","INSTRUCTOR_ORACLE","A13_MANUAL_ORACLE","B13_MANUAL_ORACLE"):
+        errors.append("detector: invalid enum")
+    if "producer_job_id" in d and d["producer_job_id"] is not None and not isinstance(d["producer_job_id"],str):
+        errors.append("producer_job_id: string or null required")
+    if "extensions" in d:extensions(d["extensions"],"extensions")
+    if "artifact_locator" in d:
+        loc=d["artifact_locator"]
+        keys=("uri","repository_url","repository_commit","repository_path","sha256")
+        if obj(loc,keys,keys,"artifact_locator"):
+            uri(loc.get("uri"),"artifact_locator.uri")
+            string(loc.get("repository_url"),"artifact_locator.repository_url")
+            if not isinstance(loc.get("repository_commit"),str) or not SHA40.fullmatch(loc["repository_commit"]):errors.append("artifact_locator.repository_commit: 40-hex required")
+            if not safe(loc.get("repository_path")):errors.append("artifact_locator.repository_path: expected safe project-relative POSIX path")
+            if not isinstance(loc.get("sha256"),str) or not re.fullmatch(r"[0-9a-fA-F]{64}",loc["sha256"]):errors.append("artifact_locator.sha256: 64-hex required")
+    findings=d.get("findings")
+    if isinstance(findings,list):
+        for i,finding in enumerate(findings):
+            where=f"findings[{i}]"
+            keys=("finding_id","type","target","dependency","commit","configuration_id","location","evidence","extensions")
+            if not obj(finding,keys,("finding_id","type","target","dependency","location","evidence"),where):continue
+            for key in ("finding_id","target"):string(finding.get(key),where+"."+key)
+            if finding.get("type") not in ("MISSING","REDUNDANT"):errors.append(where+".type: invalid enum")
+            if "configuration_id" in finding:string(finding["configuration_id"],where+".configuration_id")
+            if "extensions" in finding:extensions(finding["extensions"],where+".extensions")
+            location=finding.get("location")
+            if isinstance(location,dict) and "declaration" in location:string(location["declaration"],where+".location.declaration")
+            evidence=finding.get("evidence")
+            if isinstance(evidence,list):
+                for j,item in enumerate(evidence):
+                    w=f"{where}.evidence[{j}]"
+                    if obj(item,("kind","detail","uri"),("kind","detail"),w):
+                        string(item.get("kind"),w+".kind");string(item.get("detail"),w+".detail")
+                        if "uri" in item:uri(item["uri"],w+".uri")
+    return errors
 def validate_report(d):
     e=[]
     if not isinstance(d,dict): return ["root: expected object"]
+    e=structure_errors(d)
+    if e:return e
     unknown(d,TOP,"root",e)
     for k in ("schema_version","report_id","repository","configuration_id","environment","detector","provenance","findings"):
         if k not in d:e.append(f"{k}: missing")

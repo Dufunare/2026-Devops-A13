@@ -1,0 +1,178 @@
+[
+  {
+    "file": "contracts/examples/v2/invalid/artifact-locator-uri-array.json",
+    "expected": "REJECT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/artifact-locator-uri-null.json",
+    "expected": "REJECT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/dependency-dot-segment.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].dependency: expected safe project-relative POSIX path"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/dependency-double-slash.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].dependency: expected safe project-relative POSIX path"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/dependency-trailing-slash.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].dependency: expected safe project-relative POSIX path"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/detector-array.json",
+    "expected": "REJECT",
+    "semantic": "CRASH",
+    "combined_schema_then_semantic": "CRASH",
+    "errors": [
+      "TypeError: unhashable type: 'list'"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/evidence-item-missing-detail.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].evidence[0] invalid"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/extensions-explicit-null.json",
+    "expected": "REJECT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/finding-commit-mismatch.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].commit: must equal repository.commit"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/finding-extensions-null.json",
+    "expected": "REJECT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/finding-type-object.json",
+    "expected": "REJECT",
+    "semantic": "CRASH",
+    "combined_schema_then_semantic": "CRASH",
+    "errors": [
+      "TypeError: unhashable type: 'dict'"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/location-path-double-slash.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].location.path invalid"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/locator-repository-path-dot.json",
+    "expected": "REJECT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/oracle-with-producer-job.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "producer_job_id: oracle reports must be null/absent"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/unknown-finding-field.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0]: unknown core fields ['severity']"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/unresolved-with-line.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].location: unknown core fields ['line']"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/invalid/unsafe-dependency-absolute.json",
+    "expected": "REJECT",
+    "semantic": "REJECT",
+    "combined_schema_then_semantic": "REJECT",
+    "errors": [
+      "findings[0].dependency: expected safe project-relative POSIX path"
+    ],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/md-report.e3-target.valid.json",
+    "expected": "ACCEPT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  },
+  {
+    "file": "contracts/examples/v2/md-report.valid.json",
+    "expected": "ACCEPT",
+    "semantic": "ACCEPT",
+    "combined_schema_then_semantic": "ACCEPT",
+    "errors": [],
+    "schema_errors": []
+  }
+]
