@@ -1,0 +1,26 @@
+{
+  "schema_version": "pair13-v2-fixed-freeze-1",
+  "status": "FROZEN_FIXED_PAIR",
+  "recorded_on": "2026-11-16",
+  "contract": "finding-report 2.0",
+  "A13_fixed_code_commit": "931563895a40df91a326cac5791e089d767e49a7",
+  "B13_fixed_code_and_examples_commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+  "A13_validator_sha256": "20ae9007cd184404ceb07080222d5af91dbb49d35805019e07d91e2ea56a4023",
+  "schema_sha256": "96f7374f484ad55ddab56989eaf9fbffb8d5d2636df7520be648ba9af2303f3e",
+  "B13_ACK_path": "evidence/coordination/20261116/B13_V2_ACK_20261116.md",
+  "B13_ACK_sha256": "367ff249aa4783072d56e37ea52e47bfbabd1bbc5c2211c3854b7be30044a8d5",
+  "B13_ACK_public_archive_commit": "e3bc9a9105b508636945ff250ae57a336c2b07b4",
+  "mutual_reading": {
+    "A13_reads_B13": {
+      "valid_accepted": 2,
+      "invalid_rejected": 17
+    },
+    "B13_replays_A13_tests": 16,
+    "B13_reads_A13_examples": {
+      "valid_accepted": 1,
+      "invalid_rejected": 5
+    }
+  },
+  "B13_document_sync": "Return this A13 archive commit for B13 backfill; do not replace executed fixed commits with documentation heads",
+  "scope": "E2 report only; E11 e11e12-1/e8e10-1 and runtime/environment acceptance are separate"
+}
