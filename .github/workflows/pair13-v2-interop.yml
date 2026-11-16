@@ -1,0 +1,28 @@
+name: Pair13 v2 interoperability
+on:
+  pull_request:
+  push:
+    branches: ['coord/241830088-v2-receipt-20261113']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  interop:
+    name: pair13-v2-interop
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: A13 regression and B13 fixed-file mutual reading
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/v2-interop
+          python3 -m unittest discover -s tests -v 2>&1 | tee work/v2-interop/regression.log
+          python3 scripts/validate_e2_v2.py | tee work/v2-interop/original-fixtures.log
+          python3 scripts/verify_b13_v2_interop.py --out work/v2-interop/interop.json
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: pair13-v2-interop-${{ github.run_id }}
+          path: work/v2-interop/
+          retention-days: 14
