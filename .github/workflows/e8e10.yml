@@ -20,7 +20,8 @@ jobs:
           mkdir -p work/ci
           git rev-parse HEAD > work/ci/commit.txt
           printf '%s\n' "$CANONICAL_BASE" > work/ci/base-image-source.txt
-          docker build --build-arg BASE_IMAGE="$CANONICAL_BASE" -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
+          printf '%s\n' 'APT_MIRROR=; PIP_INDEX_URL=https://pypi.org/simple' > work/ci/package-source-policy.txt
+          docker build --build-arg APT_MIRROR= --build-arg PIP_INDEX_URL=https://pypi.org/simple --build-arg BASE_IMAGE="$CANONICAL_BASE" -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
       - name: Validate both tracks
         shell: bash
         run: |
