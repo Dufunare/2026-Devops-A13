@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, e11-e12-integration]
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +27,26 @@ jobs:
           python3 run_e11e12.py prepare
           for mode in e11-a e11-b e12; do
             python3 run_e11e12.py run --request "data/integration-sample/$mode.json" --out "work/ci-$mode"
+          done
+      - name: Verify A13 independent producer and immutable handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE=course-e11e12:999999999
+          IMAGE_ID=$(docker image inspect "$IMAGE" --format '{{.Id}}')
+          docker run --rm --network none --cap-add SYS_PTRACE \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp -e A13_IMAGE_ID="$IMAGE_ID" \
+            -e PYTHONPATH=/course/labs/e11e12:/course/labs/e8e10:/app \
+            -v "$PWD:/course" -w /course "$IMAGE" \
+            python3 labs/e11e12/run_a_241830088.py \
+              --dataset /course/data/ci-a13-producer --out /course/work/ci-a13-producer
+          for CASE in include body declaration; do
+            python3 labs/e11e12/audit_a.py --run-dir "work/ci-a13-producer/$CASE" \
+              --out "work/ci-a13-producer/audit-$CASE.json"
+            python3 labs/e11e12/handoff.py --run-dir "work/ci-a13-producer/$CASE" \
+              --repo data/ci-a13-producer/repo --source-sha "$(git rev-parse HEAD)" \
+              --image-id "$IMAGE_ID" --toolchain work/ci-a13-producer/toolchain.txt \
+              --out "work/ci-a13-handoff-$CASE"
           done
       - uses: actions/upload-artifact@v7.0.2
         if: always()
