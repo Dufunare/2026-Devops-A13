@@ -1,0 +1,66 @@
+{
+  "schema_version": "a13-b13-access-observation-1",
+  "health": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "schema_version": "e11e12-1"
+    }
+  },
+  "fingerprints_verified": true,
+  "authenticated_public_key": true,
+  "negative_channel_observations": [
+    {
+      "test": "02-exec-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "generic server channel open failure; exact policy cause not independently distinguished",
+      "raw_stderr_sha256": "aab4aa042036c17e296effd136ddddfe5edafee5d23b8be5d94613d851707caa"
+    },
+    {
+      "test": "03-pty-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "generic server channel open failure; exact policy cause not independently distinguished",
+      "raw_stderr_sha256": "e1133df31a4ea1460d7f2d43254f859a6390ee220dd6ffcedb838efceba1c064"
+    },
+    {
+      "test": "04-sftp-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "generic server channel open failure; exact policy cause not independently distinguished",
+      "raw_stderr_sha256": "f014383aef74e82d54168d036861118bcb22255c65eb581d4f79422a48cd4b42"
+    },
+    {
+      "test": "05-other-tcp-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "specific forward rejection observed",
+      "raw_stderr_sha256": "ed75ef3f422f0566892a06bcdabc5435f58d765cd894451c8a02d73a7dbc94e7"
+    },
+    {
+      "test": "06-remote-forward-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "specific forward rejection observed",
+      "raw_stderr_sha256": "48f30e431985cdb63cc85a8bf962de913a7c4911bd90475a6f5f5e9c0281a5dd"
+    },
+    {
+      "test": "07-unix-forward-denied",
+      "authenticated": true,
+      "channel_not_established": true,
+      "reason": "generic server channel open failure; exact policy cause not independently distinguished",
+      "raw_stderr_sha256": "b73a3eb3ec1aac010f592224ed29256e09a6962e606c4fe18972887302347697"
+    }
+  ],
+  "all_negative_channels_not_established": true,
+  "initial_automatic_classifier_passed": false,
+  "classification_note": "Initial matcher did not recognize generic remote channel-open failure. Original summary/logs unchanged; this classification records observations, not a new experiment or sshd configuration attestation.",
+  "tunnels_closed": true,
+  "current_API_is_old_deployment": true,
+  "formal_new_E12_executed": false,
+  "deployment_context_commit": "9cf6d26e0abba6477bd41e3fd9c54aaf19c54961",
+  "started_utc": "2026-11-16T05:27:30.821168+00:00",
+  "finished_utc": "2026-11-16T05:27:34.104967+00:00",
+  "access_details_and_raw_logs": "Private local handoff only; not included in public Git"
+}
