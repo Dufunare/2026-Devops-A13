@@ -1,0 +1,9 @@
+{
+  "mode": "e12",
+  "repo": "/course/data/B13_CONFIRM/include-project",
+  "base": "8071bc7e67889229e0c33b5ca104ffee00f02ffe",
+  "target": "09986a8e53145e1df4c09500fafa1aeadd387dc2",
+  "candidate": "/course/data/B13_CONFIRM/candidate.Dockerfile",
+  "expected_output": "1",
+  "build_timeout": 900
+}
