@@ -21,6 +21,8 @@
       "invalid_rejected": 5
     }
   },
-  "B13_document_sync": "Return this A13 archive commit for B13 backfill; do not replace executed fixed commits with documentation heads",
-  "scope": "E2 report only; E11 e11e12-1/e8e10-1 and runtime/environment acceptance are separate"
+  "B13_document_sync": "CONFIRMED_BY_B13_REPLY_20261116",
+  "scope": "E2 report only; E11 e11e12-1/e8e10-1 and runtime/environment acceptance are separate",
+  "B13_followup_confirmation_sha256": "b23d13fadf238d6d9a416c48fd37ff493d2e0623b58264c53405bdc565ee0ff4",
+  "A13_document_commit_acknowledged_by_B13": "069ef09263bb08ca3deba541813e722013006fab"
 }

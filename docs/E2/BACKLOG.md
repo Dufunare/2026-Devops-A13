@@ -9,5 +9,5 @@
 | A13-E2-05 | B13 对 v2 candidate 互读 | 固定 commit + SHA-256 | 已完成：B13 2026-11-16 ACK |
 | A13-E2-06 | A13 对 B13 v2 REPAIR/report 互读 | 固定 commit + SHA-256 | 已完成：19原件互读 |
 | A13-E2-07 | ptrace/E4 环境能力 | 实际环境确认 | E4 已验证 SYS_PTRACE 路线 |
-| A13-E2-08 | 最终 v2 freeze | 双方写入同一组 commit | 双方确认固定版本；A13已登记，B13待回填归档提交 |
+| A13-E2-08 | 最终 v2 freeze | 双方写入同一组 commit | 已完成：双方固定对及归档回签；PR合并另记 |
 | A13-E2-09 | BuildChecker/EChecker 真实输出 | 后续论文复现 | 后续实验 |
