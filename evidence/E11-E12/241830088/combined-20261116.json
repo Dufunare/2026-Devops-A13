@@ -1,0 +1,49 @@
+{
+  "schema_version": "a13-integration-precheck-1",
+  "candidate_sha": "0bcfad1896cfa706f7275400e9cb54c7b76ae089",
+  "state": "LOCAL_AND_CLOUD_PRECHECK_NOT_MERGED",
+  "inputs": {
+    "integration": "9681702414428e7b9a7d0da5d9baa04443bee613",
+    "PR15": "93c8e20a88203cdbbc088d033333d7d520b69153",
+    "PR16": "ba6ae1e01721697f8223eb17f11dafea68cadfc4",
+    "PR17": "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c"
+  },
+  "merge_conflicts": false,
+  "linux_e11e12": {
+    "tests": 62,
+    "passed": 62,
+    "log": "combined-linux-tests.log",
+    "image_id": "sha256:7a1915eba9ccc31a5fbd278f992d3f2c68dee1dea5118ba6f3ea394c00425bc2",
+    "host": "A13 course server",
+    "path": "/root/devops-students/241830088/e11-e12-combined-20261116",
+    "network": "none"
+  },
+  "macos_e11e12": {
+    "tests": 62,
+    "failures": 2,
+    "errors": 2,
+    "log": "combined-e11e12-tests.log",
+    "cause_observed": "Apple SDKSettings.json appears in GCC-compatible compiler dependency output; real-profile tests expect Linux GCC scope"
+  },
+  "root_tests": {
+    "passed": 23,
+    "log": "combined-root-tests.log"
+  },
+  "v2_interop": {
+    "valid_accepted": 2,
+    "invalid_rejected": 17,
+    "log": "combined-v2-interop.json"
+  },
+  "scope_limitations": [
+    "Unit tests do not prove new full tomlc99 pipeline execution at this candidate",
+    "No B13 DRAFT-image consumption or formal HTTP acceptance",
+    "Real-profile scope and source binding remain pending owner review"
+  ],
+  "bundle": {
+    "sha256": "db1307c4f52b578ee160fb9b4ecf86c4e585fb5c30d7f8699166d05ca4a325cf",
+    "prerequisites": [
+      "9681702414428e7b9a7d0da5d9baa04443bee613",
+      "9bc1d18fab823373dbc64d8a70df1c8b4cc163c9"
+    ]
+  }
+}
