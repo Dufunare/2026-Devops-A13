@@ -1,4 +1,8 @@
-"""Compose the existing E5-E10 teaching components using versioned artifacts."""
+"""Compose the existing E5-E10 teaching components using versioned artifacts.
+
+适配：通过请求 JSON 中可选的 "profile" 段支持不同目标名/源布局/构建目标/输出断言。
+不传 profile 时行为与课程原版完全一致。
+"""
 import argparse
 import hashlib
 import json
@@ -10,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'labs/e8e10'), str(ROOT / 'labs/e11e12/vendor'), '/app']
-from lab import scan, patch, validate
+from lab import scan, patch, validate, resolve_profile
 
 class Failure(ValueError):
     def __init__(self, code, message):
@@ -49,25 +53,43 @@ def command(argv, cwd, log):
         raise Failure('COMMAND_FAILED', f'{argv[0]} failed; see {log.name}')
     return p.stdout.strip()
 
-def snapshot(repo, revision, dest, logs):
+def shape_ok(dest, profile=None):
+    """项目形状检查：根目录（或递归）的 *.c 名字集合必须与 profile.units 的源文件一致，
+    且配置头存在。单独提出来便于测试，不依赖 git clone。"""
+    prof = resolve_profile(profile)
+    pattern = '**/*.c' if prof['recursive_scan'] else '*.c'
+    names = {p.name for p in dest.glob(pattern) if '.git' not in p.parts}
+    expected = {Path(src).name for _target, src in prof['units']}
+    ok_sources = (names == expected) if prof['strict_sources'] else (expected <= names)
+    return ok_sources and (dest / prof['config_file']).is_file(), names, expected
+
+def snapshot(repo, revision, dest, logs, profile=None):
+    prof = resolve_profile(profile)
     sha = command(['git','rev-parse','--verify',revision+'^{commit}'], repo, logs/(dest.name+'-resolve.log'))
     command(['git','clone','--no-hardlinks','--no-checkout',str(repo),str(dest)], repo, logs/(dest.name+'-clone.log'))
     command(['git','checkout','--detach',sha], dest, logs/(dest.name+'-checkout.log'))
     # E8-E10 profile; fail early instead of silently ignoring other targets.
-    names = {p.name for p in dest.glob('*.c')}
-    if names != {'main.c','helper.c'} or not (dest/'config.h').is_file():
-        raise Failure('UNSUPPORTED_PROJECT', 'Expected main.c/helper.c/config.h and explicit Make rules')
+    okc, names, expected = shape_ok(dest, prof)
+    if not okc:
+        raise Failure('UNSUPPORTED_PROJECT',
+                      'Expected %s plus %s and explicit Make rules; found %s'
+                      % ('/'.join(sorted(expected)), prof['config_file'], '/'.join(sorted(names)) or '(none)'))
     return sha
 
-def full(project, folder):
+def full(project, folder, profile=None):
     from buildchecker.fullcheck import full_check
-    report = full_check(project, folder)
+    prof = resolve_profile(profile)
+    report = full_check(project, folder,
+                        clean_command='make ' + prof['clean_target'],
+                        build_command='make ' + prof['build_target'])
     if report.get('status') != 'SUCCEEDED':
         raise Failure('FULL_CHECK_FAILED', str(report.get('error', report.get('error_code'))))
     return report
 
-def normalized(findings):
-    return sorted((f['type'],f['target'],f['dependency']) for f in findings if f['target'] in ('main.o','helper.o'))
+def normalized(findings, profile=None):
+    prof = resolve_profile(profile)
+    targets = {t for t, _s in prof['units']}
+    return sorted((f['type'], f['target'], f['dependency']) for f in findings if f['target'] in targets)
 
 def execute(request, out, job_id=None):
     job_id = job_id or 'job-'+uuid.uuid4().hex
@@ -88,13 +110,17 @@ def execute(request, out, job_id=None):
         mode=request['mode']
         if mode not in ('e11-a','e11-b','e12'):
             raise Failure('INVALID_REQUEST','Unknown mode')
+        try:
+            profile=resolve_profile(request.get('profile'))
+        except ValueError as exc:
+            raise Failure('UNSUPPORTED_PROFILE', str(exc))
         repo=Path(request['repo']).resolve()
         if not repo.is_dir():
             raise Failure('INVALID_REQUEST','Repository missing')
         base=out/'base-project'; target=out/'target-project'
-        base_sha=snapshot(repo,request['base'],base,out/'logs')
-        target_sha=snapshot(repo,request['target'],target,out/'logs')
-        result.update(base_commit=base_sha,target_commit=target_sha)
+        base_sha=snapshot(repo,request['base'],base,out/'logs',profile)
+        target_sha=snapshot(repo,request['target'],target,out/'logs',profile)
+        result.update(base_commit=base_sha,target_commit=target_sha,profile=profile)
         if mode in ('e11-b','e12'):
             from draft.autobuild import auto_build
             candidate=Path(request['candidate']).resolve()
@@ -103,20 +129,21 @@ def execute(request, out, job_id=None):
                 raise Failure('DRAFT_FAILED',draft.get('error','Inspect draft-build logs'))
             stage('draft',target_sha,draft,[out/'draft-build/result.json'])
         if mode in ('e11-a','e12'):
-            base_full=full(base,out/'baseline-full')
-            old=scan(base)
+            base_full=full(base,out/'baseline-full',profile)
+            old=scan(base,None,profile)
             edges=json.loads((out/'baseline-full/actual-graph.json').read_text())
-            projected={t:sorted({e['dependency'] for e in edges if e['target']==t}) for t in ('main.o','helper.o')}
+            targets=[t for t,_s in profile['units']]
+            projected={t:sorted({e['dependency'] for e in edges if e['target']==t}) for t in targets}
             if projected != old['actual']:
                 raise Failure('GRAPH_MISMATCH','BuildChecker baseline differs from GCC observations')
             old['actual']=projected
             save(out/'baseline-cache.json',old)
             baseline=stage('full-check',base_sha,base_full,[out/'baseline-full/actual-graph.json',out/'baseline-full/findings.json',out/'baseline-cache.json'])
             check_envelope(baseline,base_sha,'full-check')
-            current=scan(target,old)
+            current=scan(target,old,profile)
             save(out/'incremental-report.json',current)
-            reference=full(target,out/'target-full')
-            if normalized(reference['findings']) != normalized(current['findings']):
+            reference=full(target,out/'target-full',profile)
+            if normalized(reference['findings'],profile) != normalized(current['findings'],profile):
                 raise Failure('FINDINGS_MISMATCH','Incremental/full object-target findings differ')
             md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'])
         else:
@@ -141,14 +168,20 @@ def execute(request, out, job_id=None):
             patchfile=out/'candidate.patch';patchfile.write_text(diff,encoding='utf-8')
             save(out/'repair-plan.json',edits)
             stage('repair',target_sha,{'edits':edits,'input_report':artifact(out/(md_envelope['kind']+'.json'),out,job_id)},[patchfile,out/'repair-plan.json'])
-            verdict=validate(target,patchfile,out/'validation')
+            verdict=validate(target,patchfile,out/'validation',profile=profile)
             if not verdict['accepted']:
                 raise Failure('REPAIR_REJECTED',str(verdict))
-            final=full(target,out/'final-full')
-            if any(f['type']=='MISSING' for f in final['findings']):
+            final=full(target,out/'final-full',profile)
+            # 只对被 profile 纳入依赖检查的目标负责：非 profile 目标（例如内联编译的
+            # 可执行目标）的头文件依赖不在本工具的修复范围内，不能据此判定修复失败。
+            remaining=[f for f in normalized(final['findings'],profile) if f[0]=='MISSING']
+            if remaining:
                 (target/'Makefile').write_bytes(before)
-                raise Failure('RECHECK_FAILED','MD remains; working-copy declaration restored')
-            stage('recheck',target_sha,{'validation':verdict,'findings':final['findings'],'patched_makefile_sha256':hashlib.sha256((target/'Makefile').read_bytes()).hexdigest()},[out/'validation/validation.json',out/'final-full/findings.json'])
+                raise Failure('RECHECK_FAILED','MD remains for profile targets: %s' % (remaining,))
+            stage('recheck',target_sha,{'validation':verdict,'findings':final['findings'],
+                                        'profile_targets':[t for t,_s in profile['units']],
+                                        'remaining_md':[],
+                                        'patched_makefile_sha256':hashlib.sha256((target/'Makefile').read_bytes()).hexdigest()},[out/'validation/validation.json',out/'final-full/findings.json'])
         result['status']='SUCCEEDED'
     except (Failure,ValueError,OSError,KeyError,subprocess.TimeoutExpired) as exc:
         result.update(status='TIMED_OUT' if isinstance(exc,subprocess.TimeoutExpired) else 'FAILED',error={'code':getattr(exc,'code','EXECUTION_FAILED'),'message':str(exc)})
