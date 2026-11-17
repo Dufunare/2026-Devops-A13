@@ -1,0 +1,43 @@
+{
+  "schema_version": "a13-b13-mutual-countersign-1",
+  "updated_utc": "2026-11-17T05:13:27.432408+00:00",
+  "source_reply_zip": {
+    "name": "发给A13_回签与real06签收_20261117.zip",
+    "bytes": 17133,
+    "sha256": "ed24cd2aadc96dedc9d97b22ec3bd2e9713fb937bd844bad46f8b09fdcfefef9",
+    "manifest_files_verified": 5
+  },
+  "status": "THREE_HANDOFF_ITEMS_CLOSED",
+  "teaching_return_sha256": "90efb8bdbeb48a45c7465ce3d6ac8575464399d3d7e24570233e1ced88438aed",
+  "real_receiver_return_sha256": "cde7e187cbca4251644af32d5e77dd336c5ee378c57cf4abd89323546180fd5f",
+  "closed_items": {
+    "teaching_E12_client_evidence": "BILATERAL_ACCEPTED",
+    "B13_to_A13_real_report_independent_receipt": "BILATERAL_ACCEPTED",
+    "A13_to_B13_real06_image_material_transfer": "RECEIVED_LOADED_AND_PROBED"
+  },
+  "B13_real06_image_receipt_archive_sha256": "1dc5d0034fe25ab4b8c7728d1af2caadd3411881dd4d89089a0ffe934cf16e35",
+  "B13_image_receipt_raw_records_consistent": true,
+  "five_C1_files_and_original_RootFS_match": true,
+  "real06_A13_runtime_chain_accepted": false,
+  "A13_to_B13_real06_report_consumed": false,
+  "real06_five_open_items": [
+    "A13 executed source/diff/hash binding",
+    "Downstream actual container records",
+    "Full effective flags/cache invalidation evidence",
+    "Missing original requests/attachment index",
+    "A13-to-B13 profile/report actual consumption"
+  ],
+  "B13_PR37": {
+    "head": "1dcc785760b8f60d5f58802a78b7962b6185ed57",
+    "state": "open",
+    "draft": false,
+    "merged": false,
+    "technical_review": "COMMENTED; technical acceptance, formal APPROVE requested after Ready",
+    "reviewer": "yqy241880115",
+    "review_submitted_utc": "2026-11-17T04:27:00Z",
+    "formal_approve_seen": false
+  },
+  "formal_tomlc99_HTTP": "PENDING_ACTUAL_APPROVED_DEPLOYMENT_AND_FROZEN_INPUT",
+  "verification_scope": "A13 offline verification of B13 supplied records; no B13 server administration or impersonated member3 execution.",
+  "raw_B13_admin_records_published": false
+}
