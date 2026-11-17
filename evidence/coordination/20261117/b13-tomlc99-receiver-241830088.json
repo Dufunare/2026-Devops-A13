@@ -1,0 +1,96 @@
+{
+  "audit_status": "PASS",
+  "audited_utc": "2026-11-17T02:29:10.168269+00:00",
+  "offline_only": true,
+  "actor": "朱宇辰 / 241830088",
+  "assistance": "Codex-assisted actual A13 server execution",
+  "linux_uid": 998,
+  "linux_gid": 121,
+  "code_head": "d47ac126f58046406c86c35fc3eecb100e3cc535",
+  "tested_source": "c8ed0dcc92017e6ec8ecf4b2bb228c5b94cc6f2d",
+  "draft_image_id": "sha256:2a9765dff295ddb466b9679122c289937c70e65ab90bd011f8805af23bebc651",
+  "upstream_job_id": "job-18ae9f2ef97e4b1092a3de126f4c47a8",
+  "upstream_trace_id": "trace-06ffc7fcdbc041fcad476123322674ef",
+  "new_API_job_created": false,
+  "recipient_artifact_references_verified": 1024,
+  "archive_manifest_files_verified": 2571,
+  "source_C1_files_verified": 154,
+  "runtime_files_verified": 11,
+  "received_report_bytes_unchanged": true,
+  "original_C1_source_clean": true,
+  "only_target_Makefile_rule_changed": true,
+  "changed_tracked_files_in_repair_copy": [
+    "Makefile"
+  ],
+  "actual_image_operations": 2,
+  "raw_operation_container_inspects": 4,
+  "probe_container_inspect": 1,
+  "all_three_owned_container_cleanups_zero": true,
+  "five_validation_checks": {
+    "build": true,
+    "header_change": true,
+    "no_missing": true,
+    "patch_applies": true,
+    "test": true
+  },
+  "effective_flags": [
+    "-std=c99",
+    "-Wall",
+    "-Wextra",
+    "-fpic",
+    "-O2",
+    "-DNDEBUG"
+  ],
+  "successful_header_recompile_observations": 1,
+  "program_stdout_hex": "7b7d0a",
+  "scoped_missing_count": 0,
+  "full_findings": [
+    {
+      "declared_dependencies": [
+        "libtoml.a",
+        "toml_json.c"
+      ],
+      "dependency": "toml.h",
+      "evidence": [
+        {
+          "line": 98,
+          "operation": "openat",
+          "pid": 28,
+          "source": "system_call",
+          "trace_file": "t.28"
+        },
+        {
+          "line": 70,
+          "operation": "openat",
+          "pid": 31,
+          "source": "system_call",
+          "trace_file": "t.31"
+        }
+      ],
+      "target": "toml_json",
+      "type": "MISSING"
+    }
+  ],
+  "existing_shared_services_preserved": true,
+  "scope": "Receipt and independent consumption of B13 real-project report; formal tomlc99 cross-machine HTTP remains pending.",
+  "received_release_zip_sha256": "18bb875962ab552cd577f262ef0a1a3ddba075736f6ad36d50a63d1d2a676bea",
+  "received_image_archive_sha256": "4d8fda75dcbcd4a61949b4892bf114f11c0191c476ec54f99419edf359c0f978",
+  "profile_canonical_sha256": "0f2bc52c0e791b97a833c1c4a22c70d6cd72a97befc3959c578ccf5c85d40ee1",
+  "receiver_archive": {
+    "file": "A13_241830088_B13真实项目独立接收原件_20261117.tar.gz",
+    "bytes": 3673709,
+    "sha256": "2fda57023c3f46ea7099aa60121649e7c31f571893c070d3a277dcde51d882f4",
+    "manifest_files": 2571,
+    "created_utc": "2026-11-17T02:21:53.556538+00:00"
+  },
+  "return_archive": {
+    "file": "A13_241830088_给B13_真实项目接收签收回包_20261117.zip",
+    "bytes": 3677783,
+    "sha256": "cde7e187cbca4251644af32d5e77dd336c5ee378c57cf4abd89323546180fd5f",
+    "manifest_files_verified": 15
+  },
+  "started_utc": "2026-11-17T02:19:27.288638+00:00",
+  "finished_utc": "2026-11-17T02:19:37.425072+00:00",
+  "B13_acknowledgement_of_A13_receipt": "PENDING",
+  "formal_http": "PENDING_APPROVED_DEPLOYMENT"
+}
