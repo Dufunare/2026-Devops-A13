@@ -1,0 +1,120 @@
+{
+  "schema_version": "a13-new-image-receipt-audit-1",
+  "status": "PASS",
+  "receipt_archive_sha256": "aaf5dab5f2bcff149cb529e65dd41f01f1a9f5b4f07cacd61cf43ebac286d8f9",
+  "B13_executed_source": "64ee6c948693f8f35a30b53b31d0d69508cb7336",
+  "original_input_hashes_verified": 270,
+  "artifact_hashes_and_bytes_verified": 567,
+  "cases": [
+    {
+      "case": "handoff-include",
+      "job_id": "job-67e2921a96224cd584072da0cc534cde",
+      "trace_id": "trace-03ae673165fb48c69ed31a82b51e375d",
+      "target_commit": "09986a8e53145e1df4c09500fafa1aeadd387dc2",
+      "artifacts_verified": 189,
+      "original_report_sha256": {
+        "incremental-check.json": "e5d798e4c35b4ecc03c8c5c31c3baa5c0ca64aa853dcf01e7d67ab6c4bdef801",
+        "incremental-report.json": "e447675b734adfc10bac24bb6faa9f123b0398b06bfbed497465dfeee6f62744"
+      },
+      "accepted": true,
+      "missing_count": 0,
+      "RD_unused_retained": true,
+      "patch_sha256": "88074f66c291dcad1344c48f6a2b9ddd42d235d9d0415c85fb33310c5b7cb2af"
+    },
+    {
+      "case": "handoff-body",
+      "job_id": "job-5abc620605d841869d649ecec85a5e65",
+      "trace_id": "trace-baa39d4b350d4db399c1f5a54dd55a3d",
+      "target_commit": "68140c398d540ffc65769ec15dcfb5f75a990e9b",
+      "artifacts_verified": 189,
+      "original_report_sha256": {
+        "incremental-check.json": "e86ca36e2694cb4d8469301ddeeb84222d1b7a3e384b7b7ec300ad4d8204e012",
+        "incremental-report.json": "12a8f2b2ebba3b1306ca7bb7044e63405305687a5379b80cb16303e920883524"
+      },
+      "accepted": true,
+      "missing_count": 0,
+      "RD_unused_retained": true,
+      "patch_sha256": "88074f66c291dcad1344c48f6a2b9ddd42d235d9d0415c85fb33310c5b7cb2af"
+    },
+    {
+      "case": "handoff-declaration",
+      "job_id": "job-44e7ce9af0464ca1b9820d45d926347b",
+      "trace_id": "trace-d7c8bb38a41d4d328febf28cc3cdb5b7",
+      "target_commit": "f6e1e947ddfe362b57e0715e35fdca201af7c598",
+      "artifacts_verified": 189,
+      "original_report_sha256": {
+        "incremental-check.json": "bc3fb25842f7ad78086f3ac950970ab5073bd44629171d1254135633022d988f",
+        "incremental-report.json": "75f8786e8b3bb35510af7d758ee198ec7de8a9ee190606231bf5451754996a7d"
+      },
+      "accepted": true,
+      "missing_count": 0,
+      "RD_unused_retained": true,
+      "patch_sha256": "4f50c1a8988f0fdd8eeca49b5ef07bd4ec8f082e4d1d49707aa0318603f8782d"
+    }
+  ],
+  "image_operations": [
+    {
+      "case": "handoff-include",
+      "operation": "validate",
+      "container_id": "c058f04b2cedfb8c65165625b1997d1c31b976d03dfc6deed20fe615dcfee32d",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    },
+    {
+      "case": "handoff-include",
+      "operation": "full",
+      "container_id": "22fe73ef3c21ddd42d36cf56783aa864b0d320761846fbd9006dccd0c84c47cf",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    },
+    {
+      "case": "handoff-body",
+      "operation": "validate",
+      "container_id": "84735925e8ba9086488a6e9997b94cbdb10ccd0e7480105c7bd5225cadbb166c",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    },
+    {
+      "case": "handoff-body",
+      "operation": "full",
+      "container_id": "bba3c125a346a76f8ea3a4fff4e3db1851042f3c79aa6edbc35bb70451a5f0b6",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    },
+    {
+      "case": "handoff-declaration",
+      "operation": "validate",
+      "container_id": "e7c985d319441c9980345cbba3e8585af98ebe177abf13c3327c0e1fe6497874",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    },
+    {
+      "case": "handoff-declaration",
+      "operation": "full",
+      "container_id": "a77b84780fa7ccf77b005abd25e246e4f5b74d2dd5ca9e9b6e3e1c57b7cb6f6a",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "exit_code": 0,
+      "raw_inspects_verified": 2
+    }
+  ],
+  "B13_member2_archive_sha256": "a4030eaabb292f1663ecadc1ebccd3193e7e6da0cff18f65fde8a9dd2029d06a",
+  "DRAFT_source_result_verified": [
+    {
+      "path": "work/m2-e11e12-20261111-134430-krozl6/delivery-20261116-w34xJr/retest/image-tests/e12/draft-build/result.json",
+      "image_id": "sha256:c2e79b20c4f8019b6ca2cf98f8eaa57502cc246ff90b002edc298f3285a187d0",
+      "build_and_runtime_succeeded": true
+    }
+  ],
+  "scopes": {
+    "teaching_three_original_reports_in_B13_DRAFT_image": true,
+    "A13_candidate_cross_host_import": false,
+    "tomlc99_acceptance": false,
+    "formal_HTTP_acceptance": false
+  },
+  "peer_code_executed": false
+}
