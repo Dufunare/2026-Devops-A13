@@ -16,6 +16,7 @@ DEFAULT_PROFILE = {
     'config_mode': 'overwrite',
     'header_check': 'output',
     'exec_image': 'orchestrator',
+    'require_make_flags': False,
     'expected_output': '1',
     'expected_output_after': '2',
     'build_target': 'app',
@@ -63,6 +64,8 @@ def resolve_profile(raw=None):
         raise ValueError('UNSUPPORTED_PROFILE header_check')
     if prof['exec_image'] not in ('orchestrator', 'draft'):
         raise ValueError('UNSUPPORTED_PROFILE exec_image')
+    if not isinstance(prof['require_make_flags'], bool):
+        raise ValueError('UNSUPPORTED_PROFILE require_make_flags')
     return prof
 
 
@@ -71,21 +74,24 @@ def default_profile():
 
 
 def effective_flags(p, fallback=''):
-    """从 make 数据库读取**实际生效**的 CFLAGS（含 ifdef 分支里的 +=）。
+    """返回 (实际生效 CFLAGS, 来源)。
 
-    课程原实现只解析 `CFLAGS =` 那一行，会漏掉 `CFLAGS += -O2 -DNDEBUG`，
-    导致缓存 key 与真实构建参数不一致。make 不可用或解析失败时退回 fallback。
+    来源：'make' = 取自 `make -p -n` 的变量数据库（含 ifdef 分支内的 +=）；
+          'fallback' = make 不可用/解析失败，退回 Makefile 里 `CFLAGS =` 的声明值。
+    B13 指出需说明回退策略：profile.require_make_flags=True 时，回退即判失败。
     """
     try:
         out = run(['make', '-p', '-n'], p)
     except (ValueError, OSError, subprocess.TimeoutExpired):
-        return fallback
-    value = fallback
+        return fallback, 'fallback'
+    value = None
     for line in out.splitlines():
         m = re.match(r'^CFLAGS\s*[:?]?=\s*(.*)$', line)
         if m:
             value = ' '.join(m.group(1).split())
-    return value or fallback
+    if value is None:
+        return fallback, 'fallback'
+    return value or fallback, 'make'
 
 
 def _source_files(p, prof):
@@ -156,7 +162,9 @@ def declarations(p, profile=None):
 def scan(p, old=None, profile=None):
     prof = resolve_profile(profile)
     start = time.perf_counter(); declared, declared_flags = declarations(p, prof)
-    flags = effective_flags(p, declared_flags)
+    flags, flags_source = effective_flags(p, declared_flags)
+    if prof['require_make_flags'] and flags_source != 'make':
+        raise ValueError('FLAGS_SOURCE_FALLBACK 无法从 make 数据库读取生效 flags')
     if flags not in prof['flags_allowed']: raise ValueError('UNSUPPORTED_FLAGS')
     # Conservative invalidation: all local preprocessor lines, source set and recipes.
     files = _source_files(p, prof)
@@ -179,6 +187,7 @@ def scan(p, old=None, profile=None):
     previous = {(f['type'], f['target'], f['dependency']) for f in old['findings']} if old else set()
     return {'schema_version': 'e8e10-1', 'profile': 'GCC_LOCAL_HEADERS_EXPLICIT_MAKE',
             'commit': run(['git', 'rev-parse', 'HEAD'], p).strip(), 'key': key, 'actual': actual, 'declared': declared,
+            'flags': flags, 'flags_source': flags_source,
             'findings': findings, 'added': [list(x) for x in sorted(current - previous)],
             'resolved': [list(x) for x in sorted(previous - current)], 'refreshed': refreshed, 'reused': reused,
             'elapsed_s': time.perf_counter() - start}
@@ -254,7 +263,14 @@ def validate(p, patchfile, evidence, fail_test=False, profile=None, exec_image=N
             checks['header_change'] = any(('-o ' + t) in incremental for t, _s in prof['units'])
         else:
             checks['header_change'] = step([binary]).strip() == prof['expected_output_after']
-        recheck = scan(sandbox, profile=prof); save(evidence / 'recheck.json', recheck)
+        if exec_image:
+            # 复检扫描同样在 DRAFT 镜像内执行（B13 指出 lab.py 原先此处仍直接 scan）
+            from imgrunner import scan_in_image
+            recheck = scan_in_image(exec_image, sandbox, evidence / 'recheck-image.json', prof,
+                                    evidence=evidence / 'inimage', tag='validate-recheck-scan')
+        else:
+            recheck = scan(sandbox, profile=prof)
+        save(evidence / 'recheck.json', recheck)
         checks['no_missing'] = not any(f['type'] == 'MISSING' for f in recheck['findings'])
     except (ValueError, subprocess.TimeoutExpired) as ex: error = str(ex)
     accepted = bool(checks) and all(checks.values()) and error is None

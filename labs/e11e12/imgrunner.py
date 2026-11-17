@@ -97,7 +97,11 @@ def run(image, argv, cwd=None, timeout=900, ptrace=True, evidence=None, tag='ste
                     record['inspect_exit_code'] = (data.get('State') or {}).get('ExitCode')
                 except (ValueError, IndexError, KeyError):
                     pass
-            subprocess.run(['docker', 'rm', '-f', cid], capture_output=True)
+            rm = subprocess.run(['docker', 'rm', '-f', cid], capture_output=True, text=True)
+            record['cleanup_argv'] = ['docker', 'rm', '-f', cid]
+            record['cleanup_exit'] = rm.returncode
+            (ev / ('%s.cleanup.log' % tag)).write_text(
+                (rm.stdout or '') + (rm.stderr or ''), encoding='utf-8')
         (ev / ('%s.stdout.log' % tag)).write_text(out, encoding='utf-8')
         (ev / ('%s.stderr.log' % tag)).write_text(err, encoding='utf-8')
         (ev / ('%s.exec.json' % tag)).write_text(

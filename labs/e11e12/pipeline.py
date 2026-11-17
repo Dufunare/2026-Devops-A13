@@ -134,7 +134,10 @@ def execute(request, out, job_id=None):
             draft_image=None
 
         # DRAFT 镜像贯通：profile.exec_image='draft' 时，下游检测/修复/复检全部在 DRAFT 镜像内执行。
-        use_image = profile['exec_image']=='draft' and bool(draft_image)
+        # fail-closed：声明了 draft 却拿不到完整 image ID 时直接失败，不静默回退编排环境。
+        if profile['exec_image']=='draft' and not draft_image:
+            raise Failure('DRAFT_IMAGE_MISSING','exec_image=draft 但未取得 DRAFT 完整 image ID')
+        use_image = profile['exec_image']=='draft'
         result['downstream_executed_in']=('image:'+draft_image) if use_image else 'orchestrator'
 
         def run_full(project, folder, tag):
