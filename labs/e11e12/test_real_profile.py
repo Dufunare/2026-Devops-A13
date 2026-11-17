@@ -155,10 +155,14 @@ class RealProfileTests(unittest.TestCase):
                 return 0, ('7\n' if runs['n'] == 1 else '8\n')
             return 0, ''
 
-        with mock.patch('imgrunner.run', side_effect=fake_run):
+        with mock.patch('imgrunner.run', side_effect=fake_run), \
+             mock.patch('imgrunner.scan_in_image', return_value={'findings': []}) as image_scan:
             verdict = lab.validate(root, patchfile, self.base / 'ev-in-image',
                                    profile=prof, exec_image=image)
         self.assertTrue(verdict['accepted'], verdict)
+        image_scan.assert_called_once()
+        self.assertEqual(image_scan.call_args.args[0], image)
+        self.assertEqual(image_scan.call_args.kwargs['tag'], 'validate-recheck-scan')
         self.assertEqual(verdict['executed_in'], 'image:' + image)
         self.assertTrue(calls and all(c[0] == image for c in calls), calls[:3])
         self.assertTrue(any(c[1][:1] == ['make'] for c in calls))
