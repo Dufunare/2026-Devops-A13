@@ -119,6 +119,50 @@ class RealProfileTests(unittest.TestCase):
             {(f['type'], f['dependency']) for f in report['findings']},
             {('MISSING', 'config.h'), ('REDUNDANT', 'unused.h')})
 
+    def test_effective_flags_change_invalidates_cache(self):
+        """make 数据库中的完整 CFLAGS（含 ifdef 里的 +=）必须进入缓存 key。"""
+        p = self.base / 'flags'
+        lab.fixture(p)
+        prof = lab.resolve_profile({'flags_allowed': ['-O0', '-O0 -g']})
+        first = lab.scan(p, None, prof)
+        self.assertEqual(first['key']['flags'], '-O0')
+        (p / 'Makefile').write_text((p / 'Makefile').read_text().replace('CFLAGS = -O0', 'CFLAGS = -O0 -g'))
+        second = lab.scan(p, first, prof)
+        self.assertNotEqual(first['key']['flags'], second['key']['flags'])
+        self.assertEqual(sorted(second['refreshed']), ['helper.o', 'main.o'])
+        self.assertEqual(second['reused'], [])
+
+    def test_validate_can_execute_inside_draft_image(self):
+        """exec_image 指定时，构建/运行必须走 DRAFT 镜像，而不是编排环境。"""
+        from unittest import mock
+        root = self.base / 'in-image'
+        build_project(root)
+        prof = dict(REAL_PROFILE, exec_image='draft')
+        diff, _ = lab.patch(root, lab.scan(root, None, prof))
+        patchfile = self.base / 'in-image.patch'
+        patchfile.write_text(diff)
+        image = 'sha256:' + 'a' * 64
+        calls = []
+        runs = {'n': 0}
+
+        def fake_run(img, argv, cwd=None, **kw):
+            calls.append((img, list(argv)))
+            cmd = ' '.join(argv)
+            if cmd.startswith('make'):
+                return 0, ''
+            if cmd.startswith('./'):
+                runs['n'] += 1
+                return 0, ('7\n' if runs['n'] == 1 else '8\n')
+            return 0, ''
+
+        with mock.patch('imgrunner.run', side_effect=fake_run):
+            verdict = lab.validate(root, patchfile, self.base / 'ev-in-image',
+                                   profile=prof, exec_image=image)
+        self.assertTrue(verdict['accepted'], verdict)
+        self.assertEqual(verdict['executed_in'], 'image:' + image)
+        self.assertTrue(calls and all(c[0] == image for c in calls), calls[:3])
+        self.assertTrue(any(c[1][:1] == ['make'] for c in calls))
+
     def test_non_strict_sources_allows_extra_c_files(self):
         """真实项目通常还有别的 .c 不参与依赖检查：strict_sources=False 时允许。"""
         root = self.base / 'extra'

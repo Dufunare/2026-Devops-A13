@@ -128,9 +128,42 @@ def execute(request, out, job_id=None):
             if draft['status']!='SUCCEEDED':
                 raise Failure('DRAFT_FAILED',draft.get('error','Inspect draft-build logs'))
             stage('draft',target_sha,draft,[out/'draft-build/result.json'])
+            draft_image=next((a.get('image_id') for a in (draft.get('attempts') or []) if a.get('iteration')==2),None)
+            result['draft_image_id']=draft_image
+        else:
+            draft_image=None
+
+        # DRAFT 镜像贯通：profile.exec_image='draft' 时，下游检测/修复/复检全部在 DRAFT 镜像内执行。
+        use_image = profile['exec_image']=='draft' and bool(draft_image)
+        result['downstream_executed_in']=('image:'+draft_image) if use_image else 'orchestrator'
+
+        def run_full(project, folder, tag):
+            if use_image:
+                from imgrunner import full_in_image
+                full_in_image(draft_image, project, folder,
+                              'make '+profile['clean_target'], 'make '+profile['build_target'],
+                              timeout=max(300, request.get('build_timeout',600)),
+                              evidence=out/'inimage', tag=tag)
+                report=json.loads((Path(folder)/'findings.json').read_text())
+                if report.get('status')!='SUCCEEDED':
+                    raise Failure('FULL_CHECK_FAILED', str(report.get('error')))
+                return report
+            return full(project, folder, profile)
+
+        def run_scan(project, old_path, out_json, tag):
+            if use_image:
+                from imgrunner import scan_in_image
+                return scan_in_image(draft_image, project, out_json, profile, old_path,
+                                     timeout=max(300, request.get('build_timeout',600)),
+                                     evidence=out/'inimage', tag=tag)
+            old=json.loads(Path(old_path).read_text()) if old_path and Path(old_path).exists() else None
+            report=scan(project, old, profile)
+            Path(out_json).write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\n')
+            return report
+
         if mode in ('e11-a','e12'):
-            base_full=full(base,out/'baseline-full',profile)
-            old=scan(base,None,profile)
+            base_full=run_full(base,out/'baseline-full','full-check-baseline')
+            old=run_scan(base,None,out/'baseline-cache.json','scan-baseline')
             edges=json.loads((out/'baseline-full/actual-graph.json').read_text())
             targets=[t for t,_s in profile['units']]
             projected={t:sorted({e['dependency'] for e in edges if e['target']==t}) for t in targets}
@@ -140,9 +173,8 @@ def execute(request, out, job_id=None):
             save(out/'baseline-cache.json',old)
             baseline=stage('full-check',base_sha,base_full,[out/'baseline-full/actual-graph.json',out/'baseline-full/findings.json',out/'baseline-cache.json'])
             check_envelope(baseline,base_sha,'full-check')
-            current=scan(target,old,profile)
-            save(out/'incremental-report.json',current)
-            reference=full(target,out/'target-full',profile)
+            current=run_scan(target,out/'baseline-cache.json',out/'incremental-report.json','scan-target')
+            reference=run_full(target,out/'target-full','full-check-target')
             if normalized(reference['findings'],profile) != normalized(current['findings'],profile):
                 raise Failure('FINDINGS_MISMATCH','Incremental/full object-target findings differ')
             md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'])
@@ -168,10 +200,11 @@ def execute(request, out, job_id=None):
             patchfile=out/'candidate.patch';patchfile.write_text(diff,encoding='utf-8')
             save(out/'repair-plan.json',edits)
             stage('repair',target_sha,{'edits':edits,'input_report':artifact(out/(md_envelope['kind']+'.json'),out,job_id)},[patchfile,out/'repair-plan.json'])
-            verdict=validate(target,patchfile,out/'validation',profile=profile)
+            verdict=validate(target,patchfile,out/'validation',profile=profile,
+                             exec_image=draft_image if use_image else None)
             if not verdict['accepted']:
                 raise Failure('REPAIR_REJECTED',str(verdict))
-            final=full(target,out/'final-full',profile)
+            final=run_full(target,out/'final-full','full-check-recheck')
             # 只对被 profile 纳入依赖检查的目标负责：非 profile 目标（例如内联编译的
             # 可执行目标）的头文件依赖不在本工具的修复范围内，不能据此判定修复失败。
             remaining=[f for f in normalized(final['findings'],profile) if f[0]=='MISSING']

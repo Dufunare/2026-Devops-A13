@@ -15,6 +15,7 @@ DEFAULT_PROFILE = {
     'config_after': '#define VALUE 2\n',
     'config_mode': 'overwrite',
     'header_check': 'output',
+    'exec_image': 'orchestrator',
     'expected_output': '1',
     'expected_output_after': '2',
     'build_target': 'app',
@@ -60,11 +61,31 @@ def resolve_profile(raw=None):
         raise ValueError('UNSUPPORTED_PROFILE config_mode')
     if prof['header_check'] not in ('output', 'rebuild'):
         raise ValueError('UNSUPPORTED_PROFILE header_check')
+    if prof['exec_image'] not in ('orchestrator', 'draft'):
+        raise ValueError('UNSUPPORTED_PROFILE exec_image')
     return prof
 
 
 def default_profile():
     return resolve_profile(None)
+
+
+def effective_flags(p, fallback=''):
+    """从 make 数据库读取**实际生效**的 CFLAGS（含 ifdef 分支里的 +=）。
+
+    课程原实现只解析 `CFLAGS =` 那一行，会漏掉 `CFLAGS += -O2 -DNDEBUG`，
+    导致缓存 key 与真实构建参数不一致。make 不可用或解析失败时退回 fallback。
+    """
+    try:
+        out = run(['make', '-p', '-n'], p)
+    except (ValueError, OSError, subprocess.TimeoutExpired):
+        return fallback
+    value = fallback
+    for line in out.splitlines():
+        m = re.match(r'^CFLAGS\s*[:?]?=\s*(.*)$', line)
+        if m:
+            value = ' '.join(m.group(1).split())
+    return value or fallback
 
 
 def _source_files(p, prof):
@@ -134,7 +155,8 @@ def declarations(p, profile=None):
 
 def scan(p, old=None, profile=None):
     prof = resolve_profile(profile)
-    start = time.perf_counter(); declared, flags = declarations(p, prof)
+    start = time.perf_counter(); declared, declared_flags = declarations(p, prof)
+    flags = effective_flags(p, declared_flags)
     if flags not in prof['flags_allowed']: raise ValueError('UNSUPPORTED_FLAGS')
     # Conservative invalidation: all local preprocessor lines, source set and recipes.
     files = _source_files(p, prof)
@@ -184,7 +206,7 @@ def patch(p, report):
     return diff, edits
 
 
-def validate(p, patchfile, evidence, fail_test=False, profile=None):
+def validate(p, patchfile, evidence, fail_test=False, profile=None, exec_image=None):
     prof = resolve_profile(profile)
     evidence.mkdir(parents=True); before = (p / 'Makefile').read_bytes()
     sandbox = evidence / 'sandbox'; shutil.copytree(p, sandbox, ignore=shutil.ignore_patterns('.git', '*.o', 'app'))
@@ -195,12 +217,29 @@ def validate(p, patchfile, evidence, fail_test=False, profile=None):
     checks = {}; error = None
     build = ['make', prof['build_target']]; clean = ['make', prof['clean_target']]
     binary = './' + prof['build_target']
+
+    image_steps = {'n': 0}
+
+    def step(argv):
+        """执行构建/运行命令：默认在编排环境就地执行；exec_image 指定时在 DRAFT 镜像内执行并留容器证据。"""
+        if not exec_image:
+            return run(argv, sandbox)
+        from imgrunner import run as run_in_image
+        image_steps['n'] += 1
+        base = re.sub(r'[^a-zA-Z0-9]+', '-', argv[0]).strip('-').lower()[:12]
+        tag = 'validate-%02d-%s' % (image_steps['n'], base)
+        code, out = run_in_image(exec_image, argv, cwd=sandbox.resolve(),
+                                 evidence=evidence / 'inimage', tag=tag)
+        if code:
+            raise ValueError('COMMAND_FAILED ' + repr(argv) + '\n' + out[-800:])
+        return out
+
     try:
         run(['git', 'apply', '--check', str(patchfile.resolve())], sandbox); checks['patch_applies'] = True
         run(['git', 'apply', str(patchfile.resolve())], sandbox)
-        log = run(clean, sandbox) + run(build, sandbox); (evidence / 'build.log').write_text(log); checks['build'] = True
+        log = step(clean) + step(build); (evidence / 'build.log').write_text(log); checks['build'] = True
         expected = '99' if fail_test else prof['expected_output']
-        output = run([binary], sandbox).strip(); checks['test'] = output == expected
+        output = step([binary]).strip(); checks['test'] = output == expected
         # Real header-change build checks the originally broken incremental behavior.
         time.sleep(1.05)
         target_header = sandbox / prof['config_file']
@@ -208,13 +247,13 @@ def validate(p, patchfile, evidence, fail_test=False, profile=None):
             target_header.write_text(target_header.read_text() + prof['config_after'])
         else:
             target_header.write_text(prof['config_after'])
-        incremental = run(build, sandbox)
+        incremental = step(build)
         (evidence / 'incremental.log').write_text(incremental)
         if prof['header_check'] == 'rebuild':
             # 只要求"改头文件后确实重新编译"，不要求程序输出变化（真实项目常见形态）。
             checks['header_change'] = any(('-o ' + t) in incremental for t, _s in prof['units'])
         else:
-            checks['header_change'] = run([binary], sandbox).strip() == prof['expected_output_after']
+            checks['header_change'] = step([binary]).strip() == prof['expected_output_after']
         recheck = scan(sandbox, profile=prof); save(evidence / 'recheck.json', recheck)
         checks['no_missing'] = not any(f['type'] == 'MISSING' for f in recheck['findings'])
     except (ValueError, subprocess.TimeoutExpired) as ex: error = str(ex)
@@ -222,7 +261,9 @@ def validate(p, patchfile, evidence, fail_test=False, profile=None):
     # Source remains untouched until all checks pass. Evidence sandbox is retained.
     if accepted: (p / 'Makefile').write_bytes((sandbox / 'Makefile').read_bytes())
     unchanged = (p / 'Makefile').read_bytes() == before
-    result = {'accepted': accepted, 'checks': checks, 'error': error, 'source_unchanged': unchanged, 'rollback': not accepted and unchanged}
+    result = {'accepted': accepted, 'checks': checks, 'error': error, 'source_unchanged': unchanged,
+              'rollback': not accepted and unchanged,
+              'executed_in': ('image:' + str(exec_image)) if exec_image else 'orchestrator'}
     save(evidence / 'validation.json', result); return result
 
 
