@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "image_id": "sha256:de2ea79e001d88ce6e40f38cd9d73025af12aeda21269ec6d9170738c36258e3",
+  "bytes": 156689439,
+  "sha256": "3417910047ff2192172745ab5880e7bf09413f9241cfe8bbb4feff49f3006bd2",
+  "OCI_index_verified": true,
+  "cross_host_loaded_by_B13": false
+}

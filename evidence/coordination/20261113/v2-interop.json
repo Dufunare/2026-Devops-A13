@@ -1,0 +1,255 @@
+{
+  "A13_base_commit": "9bc1d18fab823373dbc64d8a70df1c8b4cc163c9",
+  "A13_base_validator_sha256": "d3fe4f9da364ce5fa9e4394eb9c45ce9b90d34fb77bdf866050510c2e4941804",
+  "A13_fixed_validator_sha256": "20ae9007cd184404ceb07080222d5af91dbb49d35805019e07d91e2ea56a4023",
+  "B13_fixed_commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+  "passed": 19,
+  "total": 19,
+  "cases": [
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/artifact-locator-uri-array.json",
+      "local": "B13/contracts/examples/v2/invalid/artifact-locator-uri-array.json",
+      "git_blob_sha": "011d35187809c2f6dcfbb5001a6db76fa3816a17",
+      "sha256": "e4a6a2a8c7161c05fcbf56c19f917f5229e6b05d8b5e767ccb3b7e6bf4dd01b9",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "artifact_locator.uri: artifact://pair13/ URI string required"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/artifact-locator-uri-null.json",
+      "local": "B13/contracts/examples/v2/invalid/artifact-locator-uri-null.json",
+      "git_blob_sha": "b7374fb8996a735ca5b32c180fa4843d9bf6b07e",
+      "sha256": "3e8571125cd1c4da29e9f624e0f1dbdbd4a2b9ca4016f01bb744d1ef325c4aff",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "artifact_locator.uri: artifact://pair13/ URI string required"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/dependency-dot-segment.json",
+      "local": "B13/contracts/examples/v2/invalid/dependency-dot-segment.json",
+      "git_blob_sha": "dea040f5e308e1c917262366e0f0c6b064979c78",
+      "sha256": "fbfe195aa8a9178c890456b85edaf962ed8864fd79d1621b0e10e4bc5d595062",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/dependency-double-slash.json",
+      "local": "B13/contracts/examples/v2/invalid/dependency-double-slash.json",
+      "git_blob_sha": "2e044e93d03b7123c0c857cf79f076761a602695",
+      "sha256": "2b134d1f523aff96a773402d4fb78ff6792ce89f8c74139a24e7e98da98e58d3",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/dependency-trailing-slash.json",
+      "local": "B13/contracts/examples/v2/invalid/dependency-trailing-slash.json",
+      "git_blob_sha": "17181108ad861c66b3e8dbcfc7d9ab6a88e1a4b3",
+      "sha256": "e0a58edb920baa6f31d87d10c59bf2aa6a1047f935f4cebaeac1a7bf50bd8c12",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/detector-array.json",
+      "local": "B13/contracts/examples/v2/invalid/detector-array.json",
+      "git_blob_sha": "743cb76f91df4650671250716e60f0b5620d6be2",
+      "sha256": "bd5380307a30076ee116700352b7b7f4e8cac4b3bbc71d9b961c4f88016d3f28",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "detector: invalid enum"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/evidence-item-missing-detail.json",
+      "local": "B13/contracts/examples/v2/invalid/evidence-item-missing-detail.json",
+      "git_blob_sha": "f42a2e3a0caba0b00650a3fd5d1f70964c4bbb3e",
+      "sha256": "075fe69d7c0fedf2b674bd3f7ebce75456a52512ffcae6fded05dd062ca4d814",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].evidence[0].detail: missing",
+        "findings[0].evidence[0].detail: non-empty string required"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/extensions-explicit-null.json",
+      "local": "B13/contracts/examples/v2/invalid/extensions-explicit-null.json",
+      "git_blob_sha": "9f2c2cdc3781f68b049512c0422f25945858514c",
+      "sha256": "663e61510713c9f447bc7527dee5ab99fd87b7a965aa9a973e82a83090c810ab",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "extensions: object required"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/finding-commit-mismatch.json",
+      "local": "B13/contracts/examples/v2/invalid/finding-commit-mismatch.json",
+      "git_blob_sha": "29ac512a7aa01184d7bc2759d2b551901943bd06",
+      "sha256": "c515816a9d127145bc6eed2ef58b5f7bf67872f64fb5f894ffafc014143340de",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].commit: must equal repository.commit"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/finding-extensions-null.json",
+      "local": "B13/contracts/examples/v2/invalid/finding-extensions-null.json",
+      "git_blob_sha": "f46ce50427c1362d25f2152e67e6d187156642c7",
+      "sha256": "f515779375f421f6dd54d87b51b131d258ede81acafa280ff8aaa153fd969a17",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].extensions: object required"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/finding-type-object.json",
+      "local": "B13/contracts/examples/v2/invalid/finding-type-object.json",
+      "git_blob_sha": "1109864ff8f4b240af80c685f8e11a91c20a7a2e",
+      "sha256": "19c4d179b5a82219d2766f599ee5fb28ec2eb9e85548967ec3f7f5e7be37d339",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].type: invalid enum"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/location-path-double-slash.json",
+      "local": "B13/contracts/examples/v2/invalid/location-path-double-slash.json",
+      "git_blob_sha": "f11443611ebd9b862eee365a4d6687da7366051c",
+      "sha256": "9108d1ac2f058530f28b35480113e3c5f8e11a27aa665859e9f720beb5b9d68c",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].location.path invalid"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/locator-repository-path-dot.json",
+      "local": "B13/contracts/examples/v2/invalid/locator-repository-path-dot.json",
+      "git_blob_sha": "1d93225b726b9edc0afe6bccbc668172df506b71",
+      "sha256": "180604c294044e6805a8465d30fd8be2fad55e66b10bf7f31c651ff2413156e7",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "artifact_locator.repository_path: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/oracle-with-producer-job.json",
+      "local": "B13/contracts/examples/v2/invalid/oracle-with-producer-job.json",
+      "git_blob_sha": "e4ef3cc26f39b62c6dc9d31c802d724aad699f17",
+      "sha256": "973f7eeac60339ff7d815cda33a9bb73d7e443362ef49c16274a10114680d9a0",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "producer_job_id: oracle reports must be null/absent"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/unknown-finding-field.json",
+      "local": "B13/contracts/examples/v2/invalid/unknown-finding-field.json",
+      "git_blob_sha": "a579614f3e32fa24343fec172df12eeec48f06b4",
+      "sha256": "3e8a8c5a7c08ce8eeac3606a1500526060eb30d597a7ae7afe82f213587fcf54",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0]: unknown core fields ['severity']"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/unresolved-with-line.json",
+      "local": "B13/contracts/examples/v2/invalid/unresolved-with-line.json",
+      "git_blob_sha": "eed7dd6c28a9858727b6db4701c9766b6436fcfc",
+      "sha256": "d1e2fb5d1759fe5df60acc86309732d293f5a9574a167305958cf4307ab2999f",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].location: unknown core fields ['line']"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/invalid/unsafe-dependency-absolute.json",
+      "local": "B13/contracts/examples/v2/invalid/unsafe-dependency-absolute.json",
+      "git_blob_sha": "7f693dffd72c0482b84c4da6fcfab80dbb4185b5",
+      "sha256": "68f88ed44faba6922cf3cc677bc0913b8b9a5de14546118a8692af17027416a4",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "errors": [
+        "findings[0].dependency: expected safe project-relative POSIX path"
+      ]
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/md-report.e3-target.valid.json",
+      "local": "B13/contracts/examples/v2/md-report.e3-target.valid.json",
+      "git_blob_sha": "a089c1b7c7a2c76a7e9e58c499f26b353563eb3a",
+      "sha256": "bab145cc0eaea409f0c3e2d827fbadf60f9ab361098a8c0d1018a139898ef340",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "errors": []
+    },
+    {
+      "repository": "ma058/2026-Devops-B13",
+      "commit": "1d7f4839eff567aa7037d431df86952f24076c4d",
+      "path": "contracts/examples/v2/md-report.valid.json",
+      "local": "B13/contracts/examples/v2/md-report.valid.json",
+      "git_blob_sha": "b099d1be2a454e7ac203ff4381347c53f3d74ec8",
+      "sha256": "eb8a68e14e2b536ae15c016d5e089a58b296e249b6f702e1350a50412f758476",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "errors": []
+    }
+  ],
+  "freeze_state": "A13_CANDIDATE_VERIFIED_PENDING_B13_ACK"
+}
