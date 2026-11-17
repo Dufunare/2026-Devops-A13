@@ -1,0 +1,34 @@
+{
+  "schema_version": "a13-b13-followup-ack-1",
+  "B13_reply_zip_sha256": "b23d13fadf238d6d9a416c48fd37ff493d2e0623b58264c53405bdc565ee0ff4",
+  "B13_main_observed": "1600b594e9e4296be78cd54b34c168dd2c99487a",
+  "B13_PR32_observed_head": "1d041eb671728a2a1e8831510db40d96c75c74a9",
+  "B13_PR32_draft": true,
+  "B13_PR32_checks_success": 6,
+  "closed_by_peer_confirmation": [
+    "teaching three reports real-DRAFT consumption roundtrip",
+    "A13 client SSH/health/negative-channel precheck including server log correlation",
+    "finding-report v2 fixed-pair archival confirmation",
+    "tomlc99 C0/C1 source receipt and recovery"
+  ],
+  "independently_reverified_source_recovery": {
+    "fsck": 0,
+    "upstream_files": 152,
+    "C0_bytes_matched": 152,
+    "C1_bytes_matched": 154,
+    "shallow_boundary_preserved": true
+  },
+  "B13_baseline_precheck": {
+    "reported_status": "PASS",
+    "baseline_archive_in_received_zip": false,
+    "A13_reexecuted_baseline": false,
+    "scope": "B13 report of C0/C1 build/header-probe baseline, not full E12 or A13 image import"
+  },
+  "current_actions": [
+    "original E12-real03 image exported by immutable ID",
+    "actual image toolchain measured; git/strace absent",
+    "profile scope and full flags prepared for peer mapping",
+    "historical runtime source-binding limitation retained"
+  ],
+  "formal_E12_started": false
+}

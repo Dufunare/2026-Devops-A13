@@ -84,12 +84,15 @@ jobs:
           set -euo pipefail
           # A13 E4/E5 uses a DaoCloud mirror on its course server.
           # GitHub-hosted Ubuntu must resolve the identical pinned OCI digest
-          # via canonical Docker Hub; do not alter the Dockerfile or digest.
+          # via canonical Docker Hub; preserve the pinned base digest.
+          # Keep upstream APT sources on GitHub; the Dockerfile still defaults
+          # to the course-server mirror when APT_MIRROR is not supplied.
           PINNED_BASE=$(sed -n 's/^ARG BASE_IMAGE=//p' services/buildchecker/Dockerfile)
           test -n "$PINNED_BASE"
           CANONICAL_BASE="${PINNED_BASE/m.daocloud.io\/docker.io\//docker.io\/}"
           printf '%s\n' "$CANONICAL_BASE" > work/ci/base-image-source.txt
-          docker build --progress=plain --build-arg BASE_IMAGE="$CANONICAL_BASE" -f services/buildchecker/Dockerfile -t "$IMAGE" . 2>&1 | tee work/ci/build.log
+          printf '%s\n' 'APT_MIRROR= (upstream base-image sources)' > work/ci/apt-source-policy.txt
+          docker build --progress=plain --build-arg APT_MIRROR= --build-arg BASE_IMAGE="$CANONICAL_BASE" -f services/buildchecker/Dockerfile -t "$IMAGE" . 2>&1 | tee work/ci/build.log
           docker image inspect "$IMAGE" > work/ci/service-image-inspect.json
 
       - name: Scan service image
