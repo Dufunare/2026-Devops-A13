@@ -91,6 +91,22 @@ def normalized(findings, profile=None):
     targets = {t for t, _s in prof['units']}
     return sorted((f['type'], f['target'], f['dependency']) for f in findings if f['target'] in targets)
 
+def read_fixed_report(request, target_sha):
+    """Validate the received bytes before starting a potentially costly DRAFT build."""
+    raw = Path(request['fixed_report']).read_bytes()
+    expected = request.get('fixed_report_sha256')
+    if expected is not None:
+        if not isinstance(expected, str) or not re.fullmatch(r'[0-9a-f]{64}', expected):
+            raise Failure('INVALID_REQUEST', 'fixed_report_sha256 must be a SHA256')
+        if hashlib.sha256(raw).hexdigest() != expected:
+            raise Failure('ARTIFACT_HASH_MISMATCH', 'Received fixed report bytes changed')
+    from handoff import strict_json
+    report = strict_json(raw)
+    check_envelope(report, target_sha, 'fixed-md')
+    if not isinstance(report.get('data'), dict) or report['data'].get('commit') != target_sha:
+        raise Failure('STALE_REPORT', 'Fixed report data commit mismatch')
+    return report, raw
+
 def execute(request, out, job_id=None):
     job_id = job_id or 'job-'+uuid.uuid4().hex
     trace_id = 'trace-'+uuid.uuid4().hex
@@ -121,6 +137,8 @@ def execute(request, out, job_id=None):
         base_sha=snapshot(repo,request['base'],base,out/'logs',profile)
         target_sha=snapshot(repo,request['target'],target,out/'logs',profile)
         result.update(base_commit=base_sha,target_commit=target_sha,profile=profile)
+        if mode == 'e11-b':
+            fixed_envelope, fixed_raw = read_fixed_report(request, target_sha)
         if mode in ('e11-b','e12'):
             from draft.autobuild import auto_build
             candidate=Path(request['candidate']).resolve()
@@ -183,13 +201,11 @@ def execute(request, out, job_id=None):
             md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'])
         else:
             # E11-B still consumes a fixed MD input, separately from A's live output.
-            fixed=Path(request['fixed_report'])
-            envelope=json.loads(fixed.read_text(encoding='utf-8'))
-            check_envelope(envelope,target_sha,'fixed-md')
+            envelope=fixed_envelope
             current=envelope['data']
             if current.get('commit') != target_sha:
                 raise Failure('STALE_REPORT','Fixed report data commit mismatch')
-            save(out/'fixed-md-input.json',envelope)
+            (out/'fixed-md-input.json').write_bytes(fixed_raw)
             md_envelope=stage('fixed-md',target_sha,current,[out/'fixed-md-input.json'])
         if mode in ('e11-b','e12'):
             reference=result['stages'][-1]['artifact']

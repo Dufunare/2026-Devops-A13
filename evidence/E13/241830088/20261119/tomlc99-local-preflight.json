@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-19",
+  "passed": true,
+  "scope": "A13 local maintained-project C1-C3 preflight, not B13 formal acceptance",
+  "archive_sha256": "6608eda39172e3acb8bdda60d2aaf1a1a06160dcd87d3c2ad35ad11c04048cc3",
+  "bytes": 664796,
+  "manifest_entries_verified": 1503,
+  "artifact_refs_verified": {
+    "c1": 862,
+    "c2": 313,
+    "c3": 313
+  },
+  "runtime_source": "352070a4adb630f56d430a1d8a1402f524b02747",
+  "C1_image_operations_verified": [
+    "full-check-recheck",
+    "validate-01-make",
+    "validate-02-make",
+    "validate-03-toml-json",
+    "validate-04-make",
+    "validate-recheck-scan"
+  ],
+  "C1": {
+    "exit": 0,
+    "status": "SUCCEEDED",
+    "error": null,
+    "job_id": "job-980811be4fc64264b08da3e35bd120bb",
+    "trace_id": "trace-360b42f87bb84c9da333a0079bb028ad",
+    "draft_image_id": "sha256:1ba0c42ae689a5fa1319d84149bc97f947894e8cf3378fa2152e7343a0307879",
+    "draft_started": true,
+    "remaining_scoped_md": [],
+    "complete_findings": [
+      {
+        "type": "MISSING",
+        "target": "toml_json",
+        "dependency": "toml.h",
+        "evidence": [
+          {
+            "source": "system_call",
+            "trace_file": "t.19",
+            "line": 98,
+            "pid": 19,
+            "operation": "openat"
+          },
+          {
+            "source": "system_call",
+            "trace_file": "t.22",
+            "line": 70,
+            "pid": 22,
+            "operation": "openat"
+          }
+        ],
+        "declared_dependencies": [
+          "libtoml.a",
+          "toml_json.c"
+        ]
+      }
+    ]
+  },
+  "C2": {
+    "exit": 1,
+    "status": "FAILED",
+    "error": {
+      "code": "STALE_REPORT",
+      "message": "Report belongs to another commit"
+    },
+    "job_id": "job-5dc9d8dff717410e8e1256ec96e38ad5",
+    "trace_id": "trace-f5d160f19cc542778eac9e4d172bcb71",
+    "draft_image_id": null,
+    "draft_started": false
+  },
+  "C3": {
+    "exit": 1,
+    "status": "FAILED",
+    "error": {
+      "code": "ARTIFACT_HASH_MISMATCH",
+      "message": "Received fixed report bytes changed"
+    },
+    "job_id": "job-169967dc08294fda9b529ae5b9325782",
+    "trace_id": "trace-66abc172a7b5414191d41b4efd1342c8",
+    "draft_image_id": null,
+    "draft_started": false
+  },
+  "source_report_unchanged": true,
+  "B13_formal_acceptance": false
+}
