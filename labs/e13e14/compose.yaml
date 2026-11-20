@@ -44,6 +44,9 @@ services:
     environment:
       E14_ROLE: draft
       PYTHONDONTWRITEBYTECODE: "1"
+      # Default: existing E11/E12 mirror policy for ECS. Override via
+      # E14_SOURCE_POLICY to switch CI to an upstream/no-op policy file.
+      EXPERIMENTAL_BUILDKIT_SOURCE_POLICY: ${E14_SOURCE_POLICY-/course/labs/e11e12/environment/source-policy.json}
     command: ["python3", "labs/e13e14/service.py"]
     ports: ["127.0.0.1:18083:8080"]
     volumes:
