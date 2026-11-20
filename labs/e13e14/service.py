@@ -3,9 +3,10 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 import traceback
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.path[:0] = ['/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
@@ -15,6 +16,9 @@ from buildchecker.fullcheck import full_check
 
 ROOT = Path('/course').resolve()
 ROLE = os.environ['E14_ROLE']
+# Keep /health available while a role processes a long build.
+# One /v1/run at a time per role avoids concurrent writes and Docker contention.
+RUN_LOCK = threading.Lock()
 
 
 def local(value, area='work'):
@@ -122,6 +126,11 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != '/v1/run':
             self.reply(404, {'error': 'NOT_FOUND'})
             return
+        if not RUN_LOCK.acquire(blocking=False):
+            # Return a retryable conflict rather than queueing competing builds.
+            self.reply(409, {'status': 'FAILED', 'role': ROLE,
+                             'error_code': 'BUSY', 'error': 'Role is processing another request'})
+            return
         start = time.monotonic()
         data = {}
         try:
@@ -141,9 +150,11 @@ class Handler(BaseHTTPRequestHandler):
                               'trace_id': data.get('trace_id'), 'status': 'FAILED',
                               'error_code': code, 'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
             self.reply(422, {'status': 'FAILED', 'role': ROLE, 'error_code': code, 'error': str(exc)})
+        finally:
+            RUN_LOCK.release()
 
 
 if __name__ == '__main__':
     if ROLE not in {'draft', 'buildchecker', 'echecker', 'mdfixer'}:
         raise SystemExit('Invalid E14_ROLE')
-    HTTPServer(('0.0.0.0', 8080), Handler).serve_forever()
+    ThreadingHTTPServer(('0.0.0.0', 8080), Handler).serve_forever()

@@ -58,12 +58,22 @@ def snapshot(repo, revision, target, logs):
     return head
 
 
+def http_timeout(role, payload):
+    # DRAFT runs up to two Docker builds, each with its own timeout.
+    if role != 'draft':
+        return 720
+    per_build = float(payload.get('build_timeout', 600))
+    if not 0 < per_build <= 3600:
+        raise ValueError('DRAFT build_timeout must be in (0, 3600] seconds')
+    return max(720, int(2 * per_build + 120))
+
+
 def call(role, payload, evidence):
     req = urllib.request.Request(f'http://127.0.0.1:{PORTS[role]}/v1/run',
                                  data=json.dumps(payload).encode(),
                                  headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(req, timeout=720) as resp:
+        with urllib.request.urlopen(req, timeout=http_timeout(role, payload)) as resp:
             data = json.load(resp)
     except urllib.error.HTTPError as exc:
         body = exc.read().decode(errors='replace')
