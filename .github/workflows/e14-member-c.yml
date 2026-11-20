@@ -80,6 +80,21 @@ jobs:
           docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" ps
           docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" exec -T draft sh -c \
             'test "$EXPERIMENTAL_BUILDKIT_SOURCE_POLICY" = /course/labs/e13e14/source-policy-ci.json'
+      - name: Trust only generated CI snapshot repositories
+        run: |
+          set -euo pipefail
+          export E14_ROOT="$PWD"
+          for role in echecker mdfixer; do
+            for case_name in success recovery; do
+              for snapshot in base-project target-project; do
+                repo_path="/course/work/ci-e14-member-c/${case_name}/${snapshot}"
+                docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+                  exec -T "$role" git config --global --add safe.directory "$repo_path"
+              done
+            done
+            docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+              exec -T "$role" git config --global --get-all safe.directory
+          done
       - name: Five-stage success, timeout failure, health and new-job recovery
         run: |
           set -euo pipefail
