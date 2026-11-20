@@ -1,0 +1,24 @@
+--- a/Makefile
++++ b/Makefile
+@@ -21,7 +21,7 @@
+ 
+ all: $(LIB) $(LIB_SHARED) $(EXEC)
+ 
+-toml.o: toml.c
++toml.o: toml.c toml.h toml_extra.h
+ 	$(CC) $(CFLAGS) -c -o toml.o toml.c
+ 
+ libtoml.a: toml.o
+@@ -52,3 +52,12 @@
+ 	clang-format -i $(shell find . -name '*.[ch]')
+ 
+ .PHONY: all clean install format
++
++toml_cat: toml_cat.c $(LIB) toml.h
++	$(LINK.c) toml_cat.c $(LIB) $(LOADLIBES) $(LDLIBS) -o $@
++
++toml_json: toml_json.c $(LIB) toml.h
++	$(LINK.c) toml_json.c $(LIB) $(LOADLIBES) $(LDLIBS) -o $@
++
++toml_sample: toml_sample.c $(LIB) toml.h
++	$(LINK.c) toml_sample.c $(LIB) $(LOADLIBES) $(LDLIBS) -o $@

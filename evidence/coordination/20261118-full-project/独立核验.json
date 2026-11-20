@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "archive_sha256": "198e103d58908f1269acde4564a90a6c63eae9ccc3e44caf3bc30eff9db1b252",
+  "archive_bytes": 15858611,
+  "manifest_entries_verified": 688,
+  "before_md": 5,
+  "after_md": 0,
+  "after_rd": 0,
+  "graph_findings_consistent": true,
+  "image_operations_verified": [
+    "after-full-all",
+    "before-full-all",
+    "header-probe-all"
+  ],
+  "header_rebuilt_outputs": 6,
+  "compiler_execution_verified": true,
+  "source_sha": "dadcc74ad13c3460644486a5b1411318d6b1c9c9",
+  "old_http_job_unchanged": true
+}

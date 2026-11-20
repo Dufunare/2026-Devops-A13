@@ -1,0 +1,122 @@
+test_baseline_cache_not_from_actual_graph_rejected (test_audit_a_241830088.AuditA241830088Tests.test_baseline_cache_not_from_actual_graph_rejected) ... ok
+test_changed_raw_file_rejected (test_audit_a_241830088.AuditA241830088Tests.test_changed_raw_file_rejected) ... ok
+test_different_task_binding_rejected (test_audit_a_241830088.AuditA241830088Tests.test_different_task_binding_rejected) ... ok
+test_input_snapshot_mismatch_rejected_after_manifest_update (test_audit_a_241830088.AuditA241830088Tests.test_input_snapshot_mismatch_rejected_after_manifest_update) ... ok
+test_missing_raw_processes_cannot_be_hidden_by_manifest (test_audit_a_241830088.AuditA241830088Tests.test_missing_raw_processes_cannot_be_hidden_by_manifest) ... ok
+test_old_payload_commit_rejected (test_audit_a_241830088.AuditA241830088Tests.test_old_payload_commit_rejected) ... ok
+test_payload_data_type_mismatch_rejected (test_audit_a_241830088.AuditA241830088Tests.test_payload_data_type_mismatch_rejected) ... ok
+test_same_count_wrong_actual_graph_rejected_even_with_updated_hashes (test_audit_a_241830088.AuditA241830088Tests.test_same_count_wrong_actual_graph_rejected_even_with_updated_hashes) ... ok
+test_same_count_wrong_declared_graph_rejected (test_audit_a_241830088.AuditA241830088Tests.test_same_count_wrong_declared_graph_rejected) ... ok
+test_valid_full_evidence_and_extra_app_edge (test_audit_a_241830088.AuditA241830088Tests.test_valid_full_evidence_and_extra_app_edge) ... ok
+test_wrong_added_edge_rejected (test_audit_a_241830088.AuditA241830088Tests.test_wrong_added_edge_rejected) ... ok
+test_wrong_cache_reuse_rejected (test_audit_a_241830088.AuditA241830088Tests.test_wrong_cache_reuse_rejected) ... ok
+test_accept_current_report (test_contract.Contracts.test_accept_current_report) ... ok
+test_api_rejects_repo_outside_data (test_contract.Contracts.test_api_rejects_repo_outside_data) ... ok
+test_artifact_uses_relative_uri_and_content_hash (test_contract.Contracts.test_artifact_uses_relative_uri_and_content_hash) ... ok
+test_changed_artifact_is_rejected (test_contract.Contracts.test_changed_artifact_is_rejected) ... ok
+test_existing_evidence_not_overwritten (test_contract.Contracts.test_existing_evidence_not_overwritten) ... ok
+test_reject_failed_upstream (test_contract.Contracts.test_reject_failed_upstream) ... ok
+test_reject_old_commit (test_contract.Contracts.test_reject_old_commit) ... ok
+test_reject_schema (test_contract.Contracts.test_reject_schema) ... ok
+test_reject_wrong_artifact_kind (test_contract.Contracts.test_reject_wrong_artifact_kind) ... ok
+test_same_key_same_request_same_job (test_contract.Contracts.test_same_key_same_request_same_job) ... ok
+test_artifact_uri_cannot_escape_the_source_run (test_handoff_241830088.Student241830088HandoffTests.test_artifact_uri_cannot_escape_the_source_run) ... ok
+test_bool_and_number_data_are_distinct (test_handoff_241830088.Student241830088HandoffTests.test_bool_and_number_data_are_distinct) ... ok
+test_bool_cannot_impersonate_integer_byte_count (test_handoff_241830088.Student241830088HandoffTests.test_bool_cannot_impersonate_integer_byte_count) ... ok
+test_duplicate_json_key_is_rejected_even_with_updated_hash (test_handoff_241830088.Student241830088HandoffTests.test_duplicate_json_key_is_rejected_even_with_updated_hash) ... ok
+test_duplicate_payload_reference_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_duplicate_payload_reference_is_rejected) ... ok
+test_environment_reuse_metadata_rejects_bool_number_confusion (test_handoff_241830088.Student241830088HandoffTests.test_environment_reuse_metadata_rejects_bool_number_confusion) ... ok
+test_existing_output_is_preserved (test_handoff_241830088.Student241830088HandoffTests.test_existing_output_is_preserved) ... ok
+test_failed_upstream_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_failed_upstream_is_rejected) ... ok
+test_float_overflow_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_float_overflow_is_rejected) ... ok
+test_inner_commit_cannot_be_hidden_by_correct_envelope (test_handoff_241830088.Student241830088HandoffTests.test_inner_commit_cannot_be_hidden_by_correct_envelope) ... ok
+test_nan_is_rejected_even_with_updated_hash (test_handoff_241830088.Student241830088HandoffTests.test_nan_is_rejected_even_with_updated_hash) ... ok
+test_payload_tampering_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_payload_tampering_is_rejected) ... ok
+test_producer_metadata_cannot_disagree_with_run_record (test_handoff_241830088.Student241830088HandoffTests.test_producer_metadata_cannot_disagree_with_run_record) ... ok
+test_recorded_generated_data_and_environment_are_preserved (test_handoff_241830088.Student241830088HandoffTests.test_recorded_generated_data_and_environment_are_preserved) ... ok
+test_stage_file_is_bound_to_its_expected_name (test_handoff_241830088.Student241830088HandoffTests.test_stage_file_is_bound_to_its_expected_name) ... ok
+test_stage_job_mismatch_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_stage_job_mismatch_is_rejected) ... ok
+test_stage_trace_mismatch_is_rejected (test_handoff_241830088.Student241830088HandoffTests.test_stage_trace_mismatch_is_rejected) ... ok
+test_valid_export_preserves_originals_and_contains_exact_project_commits (test_handoff_241830088.Student241830088HandoffTests.test_valid_export_preserves_originals_and_contains_exact_project_commits) ... ok
+test_complete_new_job_poll_download_all_three_modes (test_http_evidence_241830088.HttpEvidence.test_complete_new_job_poll_download_all_three_modes) ... ok
+test_do_not_overwrite_existing_evidence (test_http_evidence_241830088.HttpEvidence.test_do_not_overwrite_existing_evidence) ... ok
+test_failed_job_does_not_count_as_completed_or_download (test_http_evidence_241830088.HttpEvidence.test_failed_job_does_not_count_as_completed_or_download) ... ok
+test_reject_escaping_artifact_before_download (test_http_evidence_241830088.HttpEvidence.test_reject_escaping_artifact_before_download) ... ok
+test_reject_tampered_download_and_preserve_response (test_http_evidence_241830088.HttpEvidence.test_reject_tampered_download_and_preserve_response) ... ok
+test_reject_unsafe_reference_job_and_bool_length (test_http_evidence_241830088.HttpEvidence.test_reject_unsafe_reference_job_and_bool_length) ... ok
+test_reject_wrong_project_commit (test_http_evidence_241830088.HttpEvidence.test_reject_wrong_project_commit) ... ok
+test_reject_wrong_request_binding (test_http_evidence_241830088.HttpEvidence.test_reject_wrong_request_binding) ... ok
+test_reject_wrong_server_hash_header (test_http_evidence_241830088.HttpEvidence.test_reject_wrong_server_hash_header) ... ok
+test_reject_wrong_stage_trace_with_consistent_file_hash (test_http_evidence_241830088.HttpEvidence.test_reject_wrong_stage_trace_with_consistent_file_hash) ... ok
+test_timeout_preserves_partial_http_records (test_http_evidence_241830088.HttpEvidence.test_timeout_preserves_partial_http_records) ... ok
+test_accepts_digest_pin_with_added_run (test_real_profile.CandidateContractTests.test_accepts_digest_pin_with_added_run)
+iter-01 = 把候选 FROM 的固定 digest 套在 broken 上；新增 RUN 只属于候选文件本身。 ... ok
+test_rejects_changed_base_tag (test_real_profile.CandidateContractTests.test_rejects_changed_base_tag) ... ok
+test_rejects_missing_instruction (test_real_profile.CandidateContractTests.test_rejects_missing_instruction) ... ok
+test_rejects_non_run_instruction (test_real_profile.CandidateContractTests.test_rejects_non_run_instruction) ... ok
+test_default_profile_unchanged (test_real_profile.RealProfileTests.test_default_profile_unchanged)
+回归保护：不传 profile 时仍是教学样例的预期结果。 ... FAIL
+test_non_strict_sources_allows_extra_c_files (test_real_profile.RealProfileTests.test_non_strict_sources_allows_extra_c_files)
+真实项目通常还有别的 .c 不参与依赖检查：strict_sources=False 时允许。 ... ok
+test_normalized_ignores_non_unit_targets (test_real_profile.RealProfileTests.test_normalized_ignores_non_unit_targets)
+复检只对被 profile 纳入的目标负责：内联编译的可执行目标不算 MD 残留。 ... ok
+test_rebuild_mode_checks_recompilation (test_real_profile.RealProfileTests.test_rebuild_mode_checks_recompilation)
+header_check=rebuild：只要求改头文件后确实重新编译，不要求程序输出变化。 ... ERROR
+test_scan_maps_profile_units (test_real_profile.RealProfileTests.test_scan_maps_profile_units)
+预期手写：calc.o 漏声明 src/config.h；calc.o 多声明 src/unused.h；util.o 无变化。 ... FAIL
+test_unadapted_project_is_rejected (test_real_profile.RealProfileTests.test_unadapted_project_is_rejected)
+不带 profile：目标映射解析失败；带 profile：快照检查通过。 ... ok
+test_validate_uses_profile_expectations (test_real_profile.RealProfileTests.test_validate_uses_profile_expectations)
+补丁后先输出 7，改 src/config.h 后输出 8；五项检查全过才算 accepted。 ... ERROR
+
+======================================================================
+ERROR: test_rebuild_mode_checks_recompilation (test_real_profile.RealProfileTests.test_rebuild_mode_checks_recompilation)
+header_check=rebuild：只要求改头文件后确实重新编译，不要求程序输出变化。
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e11e12/test_real_profile.py", line 151, in test_rebuild_mode_checks_recompilation
+    diff, _ = lab.patch(root, lab.scan(root, None, prof))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e8e10/lab.py", line 171, in patch
+    if not re.fullmatch(r'[\w./-]+', d) or '..' in Path(d).parts or Path(d).is_absolute(): raise ValueError('UNSAFE_PATH')
+                                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: UNSAFE_PATH
+
+======================================================================
+ERROR: test_validate_uses_profile_expectations (test_real_profile.RealProfileTests.test_validate_uses_profile_expectations)
+补丁后先输出 7，改 src/config.h 后输出 8；五项检查全过才算 accepted。
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e11e12/test_real_profile.py", line 103, in test_validate_uses_profile_expectations
+    diff, _edits = lab.patch(self.root, lab.scan(self.root, None, REAL_PROFILE))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e8e10/lab.py", line 171, in patch
+    if not re.fullmatch(r'[\w./-]+', d) or '..' in Path(d).parts or Path(d).is_absolute(): raise ValueError('UNSAFE_PATH')
+                                                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: UNSAFE_PATH
+
+======================================================================
+FAIL: test_default_profile_unchanged (test_real_profile.RealProfileTests.test_default_profile_unchanged)
+回归保护：不传 profile 时仍是教学样例的预期结果。
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e11e12/test_real_profile.py", line 118, in test_default_profile_unchanged
+    self.assertEqual(
+AssertionError: Items in the first set but not the second:
+('MISSING', '/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json')
+
+======================================================================
+FAIL: test_scan_maps_profile_units (test_real_profile.RealProfileTests.test_scan_maps_profile_units)
+预期手写：calc.o 漏声明 src/config.h；calc.o 多声明 src/unused.h；util.o 无变化。
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/tmp/a13-closeout-20261116/combined/labs/e11e12/test_real_profile.py", line 80, in test_scan_maps_profile_units
+    self.assertEqual(
+AssertionError: Items in the first set but not the second:
+('MISSING', 'util.o', '/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json')
+('MISSING', 'calc.o', '/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/SDKSettings.json')
+
+----------------------------------------------------------------------
+Ran 62 tests in 4.620s
+
+FAILED (failures=2, errors=2)

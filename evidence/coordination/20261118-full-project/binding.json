@@ -1,0 +1,7 @@
+{
+  "implementation_sha": "dadcc74ad13c3460644486a5b1411318d6b1c9c9",
+  "dirty": false,
+  "project_c1": "b2dda5513fe4a7d250493528800fe425cae459a5",
+  "draft_image_id": "sha256:da792170afbe9cdf3075f3973ac4746c723a285cf2976992b6f29ce65141da23",
+  "scope": "all targets built by make all; supplemental local acceptance, not a new HTTP job"
+}
