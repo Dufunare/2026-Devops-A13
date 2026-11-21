@@ -18,7 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPOSE = ROOT / 'labs/e13e14/compose.yaml'
-PORTS = {'buildchecker': 18081, 'echecker': 18082, 'draft': 18083, 'mdfixer': 18084}
+PORTS = {role: int(os.environ.get('E14_PORT_' + role.upper(), default))
+         for role, default in (('buildchecker', 18081), ('echecker', 18082),
+                               ('draft', 18083), ('mdfixer', 18084))}
 STAGES = ['draft', 'full-check', 'incremental-check', 'repair', 'recheck']
 EXPECTED_ROLES = Counter({'buildchecker': 3, 'echecker': 1, 'draft': 1, 'mdfixer': 1})
 
