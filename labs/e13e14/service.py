@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 sys.path[:0] = ['/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
-from lab import scan, patch, validate
+from lab import scan, patch, validate, resolve_profile
 from draft.autobuild import auto_build
 from buildchecker.fullcheck import full_check
 
@@ -43,15 +43,19 @@ def run(data):
     out = local(data['out'])
     if out.exists():
         raise ValueError('Output already exists')
+    profile = resolve_profile(data.get('profile'))
+    if profile['exec_image'] != 'orchestrator' and ROLE != 'draft':
+        raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
     if ROLE == 'draft':
         candidate = local(data['candidate'], 'data')
-        result = auto_build(project, candidate, out, data.get('expected_output', '1'),
+        result = auto_build(project, candidate, out, data.get('expected_output', profile['expected_output']),
                             timeout=float(data.get('build_timeout', 600)))
         if result['status'] != 'SUCCEEDED':
             raise ValueError('DRAFT_' + result['status'] + ': ' + str(result.get('error')))
         return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'result.json')}
     if ROLE == 'buildchecker':
-        result = full_check(project, out)
+        result = full_check(project, out, clean_command='make ' + profile['clean_target'],
+                            build_command='make ' + profile['build_target'])
         if result['status'] != 'SUCCEEDED':
             raise ValueError('BUILDCHECKER_' + result['status'] + ': ' + str(result.get('error')))
         return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'findings.json')}
@@ -59,17 +63,18 @@ def run(data):
         base = local(data['base'])
         baseline_graph = local(data['baseline_graph'])
         target_findings = local(data['target_findings'])
-        old = scan(base)
+        old = scan(base, profile=profile)
         graph = json.loads(baseline_graph.read_text())
+        targets = {t for t, _source in profile['units']}
         projected = {t: sorted({e['dependency'] for e in graph if e['target'] == t})
-                     for t in ('main.o', 'helper.o')}
+                     for t in targets}
         if old['actual'] != projected:
             raise ValueError('Baseline BuildChecker/GCC graph mismatch')
         old['actual'] = projected
-        current = scan(project, old)
+        current = scan(project, old, profile)
         reference = json.loads(target_findings.read_text())
         normalize = lambda fs: sorted((x['type'], x['target'], x['dependency']) for x in fs
-                                      if x['target'] in ('main.o', 'helper.o'))
+                                      if x['target'] in targets)
         if reference['status'] != 'SUCCEEDED' or normalize(current['findings']) != normalize(reference['findings']):
             raise ValueError('Incremental/full findings mismatch')
         out.mkdir(parents=True)
@@ -99,7 +104,7 @@ def run(data):
         candidate = out / 'candidate.patch'
         candidate.write_text(diff, encoding='utf-8')
         save(out / 'repair-plan.json', edits)
-        verdict = validate(project, candidate, out / 'validation')
+        verdict = validate(project, candidate, out / 'validation', profile=profile)
         if not verdict['accepted']:
             raise ValueError('Patch rejected: ' + str(verdict))
         return {'status': 'SUCCEEDED', 'patch': str(candidate),

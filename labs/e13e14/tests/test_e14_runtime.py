@@ -26,6 +26,7 @@ def mocked_service():
     lab = ModuleType('lab')
     for name in ('scan', 'patch', 'validate'):
         setattr(lab, name, lambda *a, **k: None)
+    lab.resolve_profile = lambda raw=None: raw or {'exec_image': 'orchestrator'}
     draft = ModuleType('draft')
     draft.__path__ = []
     autobuild = ModuleType('draft.autobuild')

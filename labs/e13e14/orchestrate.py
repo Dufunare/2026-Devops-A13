@@ -1,4 +1,4 @@
-"""Run E14's four Compose services on one pinned teaching project."""
+"""Run E14's four Compose services with B's optional project profile."""
 import argparse
 import hashlib
 import json
@@ -12,6 +12,18 @@ from pathlib import Path
 
 PORTS = {'buildchecker': 18081, 'echecker': 18082, 'draft': 18083, 'mdfixer': 18084}
 ROOT = Path(__file__).resolve().parents[2]
+# Reuse B's exact profile and project-shape contract; do not copy its rules here.
+sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
+from lab import resolve_profile
+from pipeline import shape_ok
+
+
+def resolve_project_profile(raw):
+    profile = resolve_profile(raw)
+    # B owns DRAFT-image downstream execution. Do not silently claim it here.
+    if profile['exec_image'] != 'orchestrator':
+        raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
+    return profile
 
 
 def save(path, data):
@@ -45,7 +57,7 @@ def command(argv, cwd, log):
     return p.stdout.strip()
 
 
-def snapshot(repo, revision, target, logs):
+def snapshot(repo, revision, target, logs, profile=None):
     if not re.fullmatch(r'[0-9a-f]{40}', revision):
         raise ValueError('Use a full Git commit SHA')
     head = command(['git', 'rev-parse', '--verify', revision + '^{commit}'], repo,
@@ -53,8 +65,10 @@ def snapshot(repo, revision, target, logs):
     command(['git', 'clone', '--no-hardlinks', '--no-checkout', str(repo), str(target)], repo,
             logs / (target.name + '-clone.log'))
     command(['git', 'checkout', '--detach', head], target, logs / (target.name + '-checkout.log'))
-    if {p.name for p in target.glob('*.c')} != {'main.c', 'helper.c'} or not (target / 'config.h').is_file():
-        raise ValueError('Unsupported teaching project profile')
+    shape, actual_sources, expected_sources = shape_ok(target, profile)
+    if not shape:
+        raise ValueError('Unsupported project profile: expected %s, found %s' %
+                         (sorted(expected_sources), sorted(actual_sources)))
     return head
 
 
@@ -94,16 +108,18 @@ def execute(request, out):
     candidate = host_path(request['candidate'])
     if not repo.resolve().is_relative_to((ROOT / 'data').resolve()) or not candidate.resolve().is_relative_to((ROOT / 'data').resolve()):
         raise ValueError('Input project and candidate must be in data/')
+    profile = resolve_project_profile(request.get('profile'))
     out.mkdir(parents=True)
     job = 'job-' + uuid.uuid4().hex
     trace = 'trace-' + uuid.uuid4().hex
     result = {'schema_version': 'e14-compose-1', 'job_id': job, 'trace_id': trace,
-              'status': 'RUNNING', 'stages': []}
+              'status': 'RUNNING', 'stages': [], 'profile': profile,
+              'downstream_execution_environment': 'orchestrator'}
     save(out / 'request.json', request)
 
     def payload(project, folder, **extra):
         return {'project': container_path(project), 'out': container_path(folder),
-                'job_id': job, 'trace_id': trace, **extra}
+                'job_id': job, 'trace_id': trace, 'profile': profile, **extra}
 
     def stage(name, commit, data):
         item = {'name': name, 'commit': commit, 'job_id': job, 'trace_id': trace, 'status': 'SUCCEEDED', 'data': data}
@@ -115,13 +131,13 @@ def execute(request, out):
         base = out / 'base-project'
         target = out / 'target-project'
         logs = out / 'logs'
-        base_sha = snapshot(repo, request['base'], base, logs)
-        target_sha = snapshot(repo, request['target'], target, logs)
+        base_sha = snapshot(repo, request['base'], base, logs, profile)
+        target_sha = snapshot(repo, request['target'], target, logs, profile)
         result.update(base_commit=base_sha, target_commit=target_sha)
 
         drafted = call('draft', payload(target, out / 'draft-build',
                                         candidate=container_path(candidate),
-                                        expected_output=request.get('expected_output', '1'),
+                                        expected_output=request.get('expected_output', profile['expected_output']),
                                         build_timeout=request.get('build_timeout', 600)),
                        out / 'draft-response.json')
         stage('draft', target_sha, drafted)
