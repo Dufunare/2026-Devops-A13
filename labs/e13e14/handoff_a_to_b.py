@@ -10,38 +10,37 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "e11e12"))
+from handoff import strict_json, validate_incremental_payload
 
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def read_json(path: Path) -> dict:
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"Expected JSON object: {path}")
-    return value
-
-
-def checked_artifact(run_dir: Path, item: dict, job_id: str) -> Path:
+def checked_artifact(run_dir: Path, item: dict, job_id: str) -> tuple[Path, bytes]:
     prefix = f"artifact://{job_id}/"
-    uri = item["uri"]
+    uri = item.get("uri") if isinstance(item, dict) else None
     if not isinstance(uri, str) or not uri.startswith(prefix):
         raise ValueError("Artifact belongs to another job")
     path = (run_dir / uri[len(prefix) :]).resolve()
     if not path.is_relative_to(run_dir.resolve()) or not path.is_file():
         raise ValueError("Artifact path is missing or outside the run")
-    if digest(path) != item["sha256"] or path.stat().st_size != item["bytes"]:
+    raw = path.read_bytes()
+    size = item.get("bytes")
+    if hashlib.sha256(raw).hexdigest() != item.get("sha256") or type(size) is not int or len(raw) != size:
         raise ValueError(f"Artifact hash or size mismatch: {path.name}")
-    return path
+    return path, raw
 
 
 def make_handoff(result_path: Path, target_sha: str) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", target_sha):
         raise ValueError("Target must be a complete lowercase Git SHA")
     run_dir = result_path.resolve().parent
-    result = read_json(result_path)
+    result = strict_json(result_path.read_bytes())
     if result.get("schema_version") != "e11e12-1" or result.get("status") != "SUCCEEDED":
         raise ValueError("A task did not succeed with the expected schema")
     if result.get("target_commit") != target_sha:
@@ -51,10 +50,10 @@ def make_handoff(result_path: Path, target_sha: str) -> dict:
     if len(matches) != 1:
         raise ValueError("Expected one incremental-check stage")
     stage_item = matches[0]["artifact"]
-    stage_path = checked_artifact(run_dir, stage_item, job_id)
-    if stage_path != (run_dir / "incremental-check.json").resolve():
+    _, stage_raw = checked_artifact(run_dir, stage_item, job_id)
+    if stage_item["uri"] != f"artifact://{job_id}/incremental-check.json":
         raise ValueError("Unexpected stage artifact path")
-    stage = read_json(stage_path)
+    stage = strict_json(stage_raw)
     if (
         stage.get("schema_version") != "e11e12-1"
         or stage.get("kind") != "incremental-check"
@@ -62,11 +61,24 @@ def make_handoff(result_path: Path, target_sha: str) -> dict:
         or stage.get("commit") != target_sha
         or stage.get("job_id") != job_id
         or stage.get("trace_id") != trace_id
-        or stage.get("data", {}).get("commit") != target_sha
     ):
         raise ValueError("Incremental report identity or target mismatch")
-    for item in stage.get("artifacts", []):
-        checked_artifact(run_dir, item, job_id)
+
+    artifacts = stage.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("Expected a list of incremental-check artifacts")
+    payload_path = (run_dir / "incremental-report.json").resolve()
+    payload_uri = f"artifact://{job_id}/incremental-report.json"
+    payloads = []
+    for item in artifacts:
+        path, raw = checked_artifact(run_dir, item, job_id)
+        if path == payload_path:
+            if item["uri"] != payload_uri:
+                raise ValueError("Unexpected incremental-report.json artifact URI")
+            payloads.append(raw)
+    if len(payloads) != 1:
+        raise ValueError("Expected exactly one incremental-report.json artifact")
+    validate_incremental_payload(strict_json(payloads[0]), stage.get("data"), target_sha)
     return {
         "schema_version": "e11e12-1",
         "kind": "fixed-md",

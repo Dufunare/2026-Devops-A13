@@ -59,6 +59,12 @@ def same_json(one, two):
     return canonical(one) == canonical(two)
 
 
+def validate_incremental_payload(payload, stage_data, target):
+    require(payload.get('schema_version') == 'e8e10-1', 'SCHEMA_MISMATCH', 'Payload schema')
+    require(payload.get('commit') == target, 'STALE_REPORT', 'Payload commit')
+    require(same_json(stage_data, payload), 'REPORT_DATA_MISMATCH', 'Envelope data and payload differ')
+
+
 def command(args, cwd=None):
     result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=120)
     require(result.returncode == 0, 'GIT_FAILED', result.stderr.strip())
@@ -153,9 +159,7 @@ def validate_run(run_dir, repo, source_sha, image_id, toolchain):
     require(len(matches) == 1, 'ARTIFACT_REFERENCE_MISMATCH', 'Need exactly one payload reference')
     require('incremental-report.json' in originals, 'INVALID_ARTIFACT', 'Missing payload')
     payload = strict_json(originals['incremental-report.json'])
-    require(payload.get('schema_version') == 'e8e10-1', 'SCHEMA_MISMATCH', 'Payload schema')
-    require(payload.get('commit') == target, 'STALE_REPORT', 'Payload commit')
-    require(same_json(incremental.get('data'), payload), 'REPORT_DATA_MISMATCH', 'Envelope data and payload differ')
+    validate_incremental_payload(payload, incremental.get('data'), target)
     findings = payload.get('findings')
     require(isinstance(findings, list) and all(isinstance(item, dict)
         and item.get('type') in ('MISSING', 'REDUNDANT')
