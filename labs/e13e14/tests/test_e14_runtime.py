@@ -125,6 +125,23 @@ class HttpTimeoutContract(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 self.orchestrator.http_timeout('draft', {'build_timeout': bad})
 
+    def test_configurable_ports_match_gate_and_orchestrator(self):
+        settings = {'E14_PORT_BUILDCHECKER': '18181', 'E14_PORT_ECHECKER': '18182',
+                    'E14_PORT_DRAFT': '18183', 'E14_PORT_MDFIXER': '18184'}
+        with patch.dict(os.environ, settings):
+            orch = load_module(ROOT / 'labs/e13e14/orchestrate.py',
+                               'e14_configurable_ports_orchestrator')
+            gate = load_module(ROOT / 'labs/e13e14/e14_gate.py',
+                               'e14_configurable_ports_gate')
+        expected = dict(buildchecker=18181, echecker=18182,
+                        draft=18183, mdfixer=18184)
+        self.assertEqual(expected, orch.PORTS)
+        self.assertEqual(expected, gate.PORTS)
+
+    def test_default_ports_preserved(self):
+        self.assertEqual({'buildchecker': 18081, 'echecker': 18082,
+                          'draft': 18083, 'mdfixer': 18084}, self.orchestrator.PORTS)
+
 
 if __name__ == '__main__':
     unittest.main()

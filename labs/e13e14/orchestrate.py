@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -10,7 +11,11 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-PORTS = {'buildchecker': 18081, 'echecker': 18082, 'draft': 18083, 'mdfixer': 18084}
+# Host endpoints are configurable so an isolated pre-integration Compose project
+# cannot collide with the already running member-C teaching service.
+PORTS = {role: int(os.environ.get('E14_PORT_' + role.upper(), default))
+         for role, default in (('buildchecker', 18081), ('echecker', 18082),
+                               ('draft', 18083), ('mdfixer', 18084))}
 ROOT = Path(__file__).resolve().parents[2]
 # Reuse B's exact profile and project-shape contract; do not copy its rules here.
 sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]

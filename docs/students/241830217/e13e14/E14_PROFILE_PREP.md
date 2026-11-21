@@ -42,3 +42,23 @@ python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v
 
 The existing `e14_gate.py` continues to validate the fixed teaching
 fixture separately; it is not a real-project E14 acceptance test.
+
+## Isolated ECS fixture regression (parallel to the original service)
+
+Optional host port variables `E14_PORT_BUILDCHECKER`, `E14_PORT_ECHECKER`,
+`E14_PORT_DRAFT`, `E14_PORT_MDFIXER` apply consistently to Compose,
+`orchestrate.py` and `e14_gate.py`. All default to original 18081-18084;
+changing their values does not alter the API's in-container port 8080.
+
+On ECS, keep the original Compose project `e14-241830217-c` running.
+For a dedicated worktree and unmodified evidence, choose a new project name
+(e.g., `e14-profile-241830217`) and unused local ports 18181-18184.
+Do **not** use the original project's containers to validate this branch.
+Copy the ignored teaching fixtures from the original workspace into the new
+worktree before running any integration gate; do not symlink absolute host
+paths into the containers. In the new worktree, the fixture's /course paths
+resolve within the new mounted project.
+
+The sample-specific gate still expects its pinned success/timeout/recovery
+outputs (162 artifacts per successful run), and remains a regression test,
+not formal real-project acceptance.
