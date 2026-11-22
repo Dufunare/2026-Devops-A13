@@ -9,10 +9,14 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-sys.path[:0] = ['/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
+sys.path[:0] = [str(Path(__file__).resolve().parent),
+                str(Path(__file__).resolve().parents[1] / 'e11e12'),
+                '/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
 from lab import scan, patch, validate, resolve_profile
 from draft.autobuild import auto_build
 from buildchecker.fullcheck import full_check
+from contract import (checked_incremental, findings_by_scope,
+                      profile_sha256, successful_draft_image, verify_request_identity)
 
 ROOT = Path('/course').resolve()
 ROLE = os.environ['E14_ROLE']
@@ -44,6 +48,7 @@ def run(data):
     if out.exists():
         raise ValueError('Output already exists')
     profile = resolve_profile(data.get('profile'))
+    image_id = verify_request_identity(data, profile)
     if profile['exec_image'] != 'orchestrator' and ROLE != 'draft':
         raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
     if ROLE == 'draft':
@@ -52,13 +57,16 @@ def run(data):
                             timeout=float(data.get('build_timeout', 600)))
         if result['status'] != 'SUCCEEDED':
             raise ValueError('DRAFT_' + result['status'] + ': ' + str(result.get('error')))
-        return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'result.json')}
+        draft_id = successful_draft_image({'status': 'SUCCEEDED', 'result': result})
+        return {'status': 'SUCCEEDED', 'result': result, 'draft_image_id': draft_id,
+                'artifact': str(out / 'result.json')}
     if ROLE == 'buildchecker':
         result = full_check(project, out, clean_command='make ' + profile['clean_target'],
                             build_command='make ' + profile['build_target'])
         if result['status'] != 'SUCCEEDED':
             raise ValueError('BUILDCHECKER_' + result['status'] + ': ' + str(result.get('error')))
-        return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'findings.json')}
+        return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'findings.json'),
+                **findings_by_scope(result['findings'], profile)}
     if ROLE == 'echecker':
         base = local(data['base'])
         baseline_graph = local(data['baseline_graph'])
@@ -77,26 +85,24 @@ def run(data):
                                       if x['target'] in targets)
         if reference['status'] != 'SUCCEEDED' or normalize(current['findings']) != normalize(reference['findings']):
             raise ValueError('Incremental/full findings mismatch')
+        scope = findings_by_scope(reference['findings'], profile)
         out.mkdir(parents=True)
         save(out / 'baseline-cache.json', old)
         envelope = {'schema_version': 'e11e12-1', 'kind': 'incremental-check',
                     'status': 'SUCCEEDED', 'commit': data['target_commit'],
-                    'job_id': data['job_id'], 'trace_id': data['trace_id'], 'data': current}
+                    'job_id': data['job_id'], 'trace_id': data['trace_id'], 'data': current,
+                    'profile_sha256': profile_sha256(profile), 'draft_image_id': image_id}
         if current['commit'] != data['target_commit']:
             raise ValueError('Target commit mismatch')
         save(out / 'incremental-check.json', envelope)
         return {'status': 'SUCCEEDED', 'report': str(out / 'incremental-check.json'),
-                'sha256': sha(out / 'incremental-check.json'), 'findings': current['findings']}
+                'sha256': sha(out / 'incremental-check.json'), 'findings': current['findings'],
+                **scope}
     if ROLE == 'mdfixer':
         report = local(data['report'])
-        if sha(report) != data['report_sha256']:
-            raise ValueError('Report transfer hash mismatch')
-        envelope = json.loads(report.read_text())
-        if (envelope['schema_version'], envelope['kind'], envelope['status'],
-            envelope['commit'], envelope['job_id'], envelope['trace_id']) != (
-                'e11e12-1', 'incremental-check', 'SUCCEEDED', data['target_commit'],
-                data['job_id'], data['trace_id']):
-            raise ValueError('Report identity mismatch')
+        envelope = checked_incremental(report.read_bytes(), data['report_sha256'],
+                                       data['job_id'], data['trace_id'], data['target_commit'],
+                                       data.get('profile_sha256'), image_id)
         out.mkdir(parents=True)
         diff, edits = patch(project, envelope['data'])
         if not diff:
@@ -108,7 +114,11 @@ def run(data):
         if not verdict['accepted']:
             raise ValueError('Patch rejected: ' + str(verdict))
         return {'status': 'SUCCEEDED', 'patch': str(candidate),
-                'sha256': sha(candidate), 'validation': verdict}
+                'sha256': sha(candidate), 'validation': verdict,
+                'input_report': {'kind': 'incremental-check', 'uri': str(report),
+                                 'sha256': data['report_sha256'],
+                                 'job_id': data['job_id'], 'trace_id': data['trace_id'],
+                                 'commit': data['target_commit']}}
     raise ValueError('Unknown role')
 
 
@@ -144,6 +154,10 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Invalid request size')
             data = json.loads(self.rfile.read(length))
             result = run(data)
+            result.update(job_id=data.get('job_id'), trace_id=data.get('trace_id'),
+                          profile_sha256=data.get('profile_sha256'))
+            if 'draft_image_id' in data:
+                result['draft_image_id'] = data['draft_image_id']
             print(json.dumps({'role': ROLE, 'job_id': data.get('job_id'),
                               'trace_id': data.get('trace_id'), 'status': 'SUCCEEDED',
                               'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)

@@ -58,11 +58,26 @@ class ProjectProfileContract(unittest.TestCase):
             seen = []
             def fake_call(role, payload, evidence):
                 seen.append((role, payload))
+                if role == 'draft':
+                    return {'status': 'SUCCEEDED', 'result': {'status': 'SUCCEEDED',
+                            'attempts': [{'iteration': 2, 'build_exit_code': 0,
+                                          'image_id': 'sha256:' + 'c' * 64}]}}
                 if role == 'buildchecker':
                     return {'status': 'SUCCEEDED', 'result': {'findings': []}}
                 if role == 'echecker':
-                    return {'status': 'SUCCEEDED', 'report': '/course/work/report.json',
-                            'sha256': '0' * 64}
+                    path = root / 'work' / 'profile-e14' / 'incremental' / 'incremental-check.json'
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    from contract import profile_sha256, digest
+                    report = {'schema_version': 'e11e12-1', 'kind': 'incremental-check',
+                              'status': 'SUCCEEDED', 'commit': 'b' * 40,
+                              'job_id': payload['job_id'], 'trace_id': payload['trace_id'],
+                              'profile_sha256': payload['profile_sha256'],
+                              'draft_image_id': payload['draft_image_id'],
+                              'data': {'commit': 'b' * 40, 'findings': []}}
+                    path.write_text(json.dumps(report))
+                    return {'status': 'SUCCEEDED',
+                            'report': payload['out'] + '/incremental-check.json',
+                            'sha256': digest(path.read_bytes())}
                 return {'status': 'SUCCEEDED'}
             request = {
                 'repo': '/course/data/project', 'candidate': '/course/data/candidate.Dockerfile',
@@ -81,6 +96,11 @@ class ProjectProfileContract(unittest.TestCase):
                 self.assertEqual('src/config.h', payload['profile']['config_file'])
             self.assertEqual('7', seen[0][1]['expected_output'])
             self.assertEqual('orchestrator', result['downstream_execution_environment'])
+            self.assertTrue(result['draft_image_id'].startswith('sha256:'))
+            self.assertEqual(1, len({x[1]['profile_sha256'] for x in seen}))
+            self.assertTrue(all(x[1]['draft_image_id'] == result['draft_image_id']
+                                for x in seen[1:]))
+            self.assertEqual(result['report_transfer']['job_id'], seen[4][1]['job_id'])
 
 
 class ServiceProfileContract(unittest.TestCase):

@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
 from lab import resolve_profile
 from pipeline import shape_ok
+from contract import checked_incremental, findings_by_scope, profile_sha256, successful_draft_image
 
 
 def resolve_project_profile(raw):
@@ -99,6 +100,11 @@ def call(role, payload, evidence):
         save(evidence, {'role': role, 'http': exc.code, 'error': body})
         raise ValueError(f'{role} HTTP {exc.code}: {body}') from exc
     save(evidence, data)
+    for key in ('job_id', 'trace_id', 'profile_sha256'):
+        if data.get(key) != payload.get(key):
+            raise ValueError(f'{role} response {key} mismatch')
+    if payload.get('draft_image_id') is not None and data.get('draft_image_id') != payload['draft_image_id']:
+        raise ValueError(f'{role} response DRAFT image ID mismatch')
     if data['status'] != 'SUCCEEDED':
         raise ValueError(f'{role} did not succeed')
     return data
@@ -114,17 +120,25 @@ def execute(request, out):
     if not repo.resolve().is_relative_to((ROOT / 'data').resolve()) or not candidate.resolve().is_relative_to((ROOT / 'data').resolve()):
         raise ValueError('Input project and candidate must be in data/')
     profile = resolve_project_profile(request.get('profile'))
+    profile_hash = profile_sha256(profile)
+    candidate_hash = digest(candidate)
     out.mkdir(parents=True)
     job = 'job-' + uuid.uuid4().hex
     trace = 'trace-' + uuid.uuid4().hex
     result = {'schema_version': 'e14-compose-1', 'job_id': job, 'trace_id': trace,
               'status': 'RUNNING', 'stages': [], 'profile': profile,
-              'downstream_execution_environment': 'orchestrator'}
+              'profile_sha256': profile_hash, 'candidate_sha256': candidate_hash,
+              'downstream_execution_environment': 'orchestrator',
+              'downstream_container_attested': False}
     save(out / 'request.json', request)
+    result['request_sha256'] = digest(out / 'request.json')
+    draft_image_id = None
 
     def payload(project, folder, **extra):
         return {'project': container_path(project), 'out': container_path(folder),
-                'job_id': job, 'trace_id': trace, 'profile': profile, **extra}
+                'job_id': job, 'trace_id': trace, 'profile': profile,
+                'profile_sha256': profile_hash,
+                **({'draft_image_id': draft_image_id} if draft_image_id else {}), **extra}
 
     def stage(name, commit, data):
         item = {'name': name, 'commit': commit, 'job_id': job, 'trace_id': trace, 'status': 'SUCCEEDED', 'data': data}
@@ -145,6 +159,8 @@ def execute(request, out):
                                         expected_output=request.get('expected_output', profile['expected_output']),
                                         build_timeout=request.get('build_timeout', 600)),
                        out / 'draft-response.json')
+        draft_image_id = successful_draft_image(drafted)
+        result['draft_image_id'] = draft_image_id
         stage('draft', target_sha, drafted)
 
         base_full = call('buildchecker', payload(base, out / 'baseline-full'), out / 'baseline-response.json')
@@ -155,6 +171,17 @@ def execute(request, out):
                                             baseline_graph=container_path(out / 'baseline-full/actual-graph.json'),
                                             target_findings=container_path(out / 'target-full/findings.json'),
                                             target_commit=target_sha), out / 'incremental-response.json')
+        report_path = host_path(increment['report'])
+        if report_path != (out / 'incremental' / 'incremental-check.json').resolve():
+            raise ValueError('Incremental report URI does not match this job output')
+        checked_incremental(report_path.read_bytes(), increment['sha256'], job, trace,
+                            target_sha, profile_hash, draft_image_id)
+        result['report_transfer'] = {'kind': 'incremental-check',
+                                     'uri': increment['report'], 'sha256': increment['sha256'],
+                                     'job_id': job, 'trace_id': trace,
+                                     'target_commit': target_sha,
+                                     'profile_sha256': profile_hash,
+                                     'draft_image_id': draft_image_id}
         stage('incremental-check', target_sha, increment)
 
         repair = call('mdfixer', payload(target, out / 'repair-work',
@@ -163,10 +190,12 @@ def execute(request, out):
         stage('repair', target_sha, repair)
 
         final = call('buildchecker', payload(target, out / 'final-full'), out / 'recheck-response.json')
-        missing = [x for x in final['result']['findings'] if x['type'] == 'MISSING']
-        if missing:
-            raise ValueError(f'Recheck has {len(missing)} missing dependencies')
-        stage('recheck', target_sha, {'result': final, 'remaining_missing': 0})
+        scope = findings_by_scope(final['result']['findings'], profile)
+        result['recheck_scope'] = scope
+        if scope['remaining_missing_full']:
+            raise ValueError(f"Recheck has {scope['remaining_missing_full']} full-project missing dependencies")
+        stage('recheck', target_sha, {'result': final, 'remaining_missing': 0,
+                                     **scope})
         result['status'] = 'SUCCEEDED'
     except Exception as exc:
         result.update(status='FAILED', error=str(exc))

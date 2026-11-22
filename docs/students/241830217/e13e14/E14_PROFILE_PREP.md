@@ -62,3 +62,19 @@ resolve within the new mounted project.
 The sample-specific gate still expects its pinned success/timeout/recovery
 outputs (162 artifacts per successful run), and remains a regression test,
 not formal real-project acceptance.
+
+
+## B real08 contract preparation
+
+This branch now records canonical profile/request/candidate SHA256 and requires one successful DRAFT build with a complete image ID. That **reported** ID is passed to all downstream HTTP services, but does not attest execution in the image. The orchestrator checks report original bytes, SHA256, job/trace, commit, profile SHA and DRAFT ID before passing the incremental-check to MDFixer; the receiver repeats checks before applying a patch. The EChecker emits both complete BuildChecker findings and the B profile-target projection. Final MISSING=0 applies to all actual BuildChecker targets.
+
+For B's frozen input (staged under this worktree's ignored data/), run the no-Docker preflight:
+
+```bash
+python3 labs/e13e14/real_preflight.py \\
+  --request data/real-e12-inimage.json \\
+  --request-sha256 4b8267018b7189b9cb0b214397de0779388f0860d9aec529787603f53393a5a5 \\
+  --candidate-sha256 eb506f89177da2eb5736b7a62336b0f2d156e81feca04de1ef5747ce27f7eb8a
+```
+
+Real `exec_image=draft` remains fail-closed until B/A land safe subprocess isolation and per-container image/mount attestation. Do not change the input profile to orchestrator mode as a workaround. Existing teaching fixed-fixture CI remains independent of this unaccepted real-project execution.
