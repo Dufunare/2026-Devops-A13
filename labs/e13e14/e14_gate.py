@@ -9,11 +9,13 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
 import urllib.request
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -166,6 +168,73 @@ def compose_logs(out: Path, project: str, image: str):
     require(r.returncode == 0, 'Could not collect Compose logs')
 
 
+
+
+def service_containers(out: Path, project: str, image: str, phase: str):
+    """Capture only this Compose project's four live service identities.
+
+    The returned evidence omits the full docker inspect, which can include
+    unrelated container environment variables and secrets.
+    This function never starts, stops, or recreates any container.
+    """
+    env = os.environ.copy()
+    env.update(E14_ROOT=str(ROOT), E14_IMAGE=image)
+    identities = {}
+    for role in PORTS:
+        ps = subprocess.run(
+            ['docker', 'compose', '-f', str(COMPOSE), '-p', project, 'ps', '-q', role],
+            cwd=ROOT, env=env, capture_output=True, text=True, timeout=30)
+        require(ps.returncode == 0, f'{phase}: Compose ps failed for {role}: {ps.stderr[-300:]}')
+        found = ps.stdout.strip().splitlines()
+        require(len(found) == 1 and re.fullmatch(r'[0-9a-f]{64}', found[0]),
+                f'{phase}: expected exactly one container ID for {role}')
+        ident = found[0]
+        info = subprocess.run(['docker', 'inspect', '--type', 'container', ident],
+                              cwd=ROOT, capture_output=True, text=True, timeout=30)
+        require(info.returncode == 0, f'{phase}: Docker inspect failed for {role}: {info.stderr[-300:]}')
+        inspected = json.loads(info.stdout)
+        require(isinstance(inspected, list) and len(inspected) == 1 and
+                isinstance(inspected[0], dict), f'{phase}: invalid inspect for {role}')
+        container = inspected[0]
+        labels = (container.get('Config') or {}).get('Labels') or {}
+        require(container.get('Id') == ident and
+                labels.get('com.docker.compose.project') == project and
+                labels.get('com.docker.compose.service') == role,
+                f'{phase}: container identity / project / role mismatch for {role}')
+        state = container.get('State') or {}
+        started = state.get('StartedAt')
+        require(state.get('Running') is True and isinstance(started, str),
+                f'{phase}: {role} is not running or has no start time')
+        try:
+            stamp = datetime.fromisoformat(started.replace('Z', '+00:00'))
+        except ValueError as exc:
+            raise GateError(f'{phase}: malformed State.StartedAt for {role}') from exc
+        require(stamp.tzinfo is not None and stamp.astimezone(timezone.utc).year > 2000,
+                f'{phase}: invalid State.StartedAt for {role}')
+        identities[role] = {'container_id': ident, 'started_at': started}
+    # Four roles must not alias one container.
+    require(len({entry['container_id'] for entry in identities.values()}) == len(PORTS),
+            f'{phase}: Compose services share a container')
+    save(out / f'containers-{phase}.json', {'compose_project': project, 'phase': phase,
+                                             'services': identities})
+    return identities
+
+
+def verify_continuity(before: dict, after: dict, from_phase: str, to_phase: str):
+    """Reject a replacement ID *or* a restart with the same container ID."""
+    roles = set(PORTS)
+    require(set(before) == roles and set(after) == roles,
+            f'{from_phase}->{to_phase}: missing Compose service')
+    for role in PORTS:
+        previous, current = before[role], after[role]
+        require(previous['container_id'] == current['container_id'],
+                f'{from_phase}->{to_phase}: {role} container was replaced')
+        require(previous['started_at'] == current['started_at'],
+                f'{from_phase}->{to_phase}: {role} container restarted')
+    return {'status': 'PASS', 'from': from_phase, 'to': to_phase,
+            'roles_verified': sorted(roles)}
+
+
 def events(logpath: Path, job: str, trace: str):
     matched = []
     for line in logpath.read_text(encoding='utf-8', errors='replace').splitlines():
@@ -221,12 +290,16 @@ def main():
             ['docker', 'image', 'inspect', args.image, '--format', '{{.Id}}'],
             cwd=ROOT, text=True), encoding='utf-8')
         save(out / 'health-initial.json', get_health())
+        before_success = service_containers(out, args.project, args.image, 'before-success')
         (out / 'request.sha256').write_text(f'{sha(request)}  {request}\n', encoding='utf-8')
 
         success = out / 'success'
         execute(request, success, out / 'success.console.log', expect_rc=0)
         states['success'] = verify_success(success)
         print('E14_FIVE_STAGE_AND_ARTIFACTS=PASS', flush=True)
+        before_fault = service_containers(out, args.project, args.image, 'before-fault')
+        continuity = [verify_continuity(before_success, before_fault,
+                                        'before-success', 'before-fault')]
 
         faulty = load(request)
         faulty['build_timeout'] = 0.01
@@ -236,6 +309,9 @@ def main():
         execute(fault_request, fault, out / 'fault.console.log', expect_rc=1)
         states['fault'] = verify_fault(fault)
         save(out / 'health-after-fault.json', get_health())
+        after_fault = service_containers(out, args.project, args.image, 'after-fault')
+        continuity.append(verify_continuity(before_fault, after_fault,
+                                            'before-fault', 'after-fault'))
         print('E14_TIMEOUT_AND_HEALTH_RECOVERY=PASS', flush=True)
 
         recovery = out / 'recovery'
@@ -246,6 +322,15 @@ def main():
                 'Recovery reused the failed job/trace')
         print('E14_RECOVERY_AND_ARTIFACTS=PASS', flush=True)
         save(out / 'health-final.json', get_health())
+        after_recovery = service_containers(out, args.project, args.image, 'after-recovery')
+        continuity.append(verify_continuity(after_fault, after_recovery,
+                                            'after-fault', 'after-recovery'))
+        save(out / 'service-continuity.json', {'status': 'PASS', 'compose_project': args.project,
+                                               'checks': continuity,
+                                               'stable_services': after_recovery})
+        states['service_continuity'] = {'status': 'PASS', 'checks': continuity,
+                                        'stable_services': after_recovery}
+        print('E14_SERVICE_CONTINUITY=PASS', flush=True)
         compose_logs(out, args.project, args.image)
         states['service_logs'] = check_logs(out, states)
         print('E14_SERVICE_TRACE=PASS', flush=True)
