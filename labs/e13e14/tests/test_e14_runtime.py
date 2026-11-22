@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -105,7 +106,14 @@ class Concurrency(unittest.TestCase):
             status, error = self.post(b'{"job_id":"bad","trace_id":"t"}')
             self.assertEqual(422, status)
             self.assertEqual('VALUEERROR', error['error_code'])
-            status, good = self.post(b'{"job_id":"good","trace_id":"t"}')
+            # The client can receive HTTP 422 before the server executes
+            # finally: RUN_LOCK.release(). A brief BUSY response is valid.
+            deadline = time.monotonic() + 2
+            while True:
+                status, good = self.post(b'{"job_id":"good","trace_id":"t"}')
+                if status != 409 or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.01)
             self.assertEqual(200, status)
             self.assertEqual('SUCCEEDED', good['status'])
 
