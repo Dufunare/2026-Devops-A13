@@ -1,0 +1,95 @@
+name: E13 member C fixture and protection gate
+
+on:
+  pull_request:
+    branches: [main, e11-e12-integration]
+  push:
+    branches: [student/241830217/e13e14-c]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: e13-c-static-and-secret-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Python unit tests / request and artifact safety
+        run: |
+          set -euo pipefail
+          python3 -m py_compile labs/e13e14/*.py labs/e13e14/tests/test_member_c_gate.py
+          python3 -m unittest discover -s labs/e13e14/tests -p 'test_member_c_gate.py' -v
+          python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
+      - name: Tracked source, Git history and Compose syntax
+        run: |
+          set -euo pipefail
+          python3 scripts/secret_scan.py . --history
+          E14_ROOT="$PWD" E14_IMAGE=course-e11e12:999999999 \
+            docker compose -f labs/e13e14/compose.yaml config --quiet
+
+  runtime:
+    name: e13-c-c4-c7-c8-docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build pinned-base image with CI mirror overlay
+        run: |
+          set -euo pipefail
+          git config --local user.name 999999999
+          git config --local user.email ci@example.invalid
+          # The 9681702 teaching Dockerfile hard-codes Tsinghua mirrors; hosted
+          # runners may not reach them. Preserve a reproducible CI-only copy,
+          # replacing just APT/PIP mirror URLs. The tracked file stays unchanged.
+          mkdir -p work/ci-e13-image
+          cp labs/e11e12/environment/services/buildchecker/Dockerfile \
+            work/ci-e13-image/Dockerfile.original
+          sed \
+            -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian-security#https://deb.debian.org/debian-security#g' \
+            -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian#https://deb.debian.org/debian#g' \
+            -e 's#https://pypi.tuna.tsinghua.edu.cn/simple#https://pypi.org/simple#g' \
+            work/ci-e13-image/Dockerfile.original \
+            > work/ci-e13-image/Dockerfile.ci
+          sha256sum work/ci-e13-image/Dockerfile.* | tee work/ci-e13-image/SHA256SUMS
+          docker build --progress=plain \
+            --build-arg APT_MIRROR= \
+            --build-arg PIP_INDEX_URL=https://pypi.org/simple \
+            --build-arg BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74 \
+            --build-arg DOCKER_CLI_IMAGE=docker:28.5.1-cli@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad \
+            -f work/ci-e13-image/Dockerfile.ci \
+            -t course-e11e12:999999999 labs/e11e12/environment
+          mkdir -p work
+          E11E12_USE_SOURCE_POLICY=0 python3 run_e11e12.py prepare
+      - name: Run C4 timeout, C7 failure isolation, C8 isolated API with download verification
+        env:
+          E11E12_USE_SOURCE_POLICY: '0'
+        run: |
+          set -euo pipefail
+          python3 labs/e13e14/member_c_gate.py \
+            --image course-e11e12:999999999 \
+            --api-port 18095 \
+            --out work/ci-e13-member-c
+      - name: Image/history and generated evidence scans
+        run: |
+          set -euo pipefail
+          python3 scripts/secret_scan.py . --history --image course-e11e12:999999999
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e13-member-c
+      - name: Upload full isolated CI evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: e13-member-c-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/ci-e13-member-c/
+            work/ci-e13-image/
+          if-no-files-found: warn
+          retention-days: 14
