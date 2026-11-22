@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -26,6 +27,7 @@ def mocked_service():
     lab = ModuleType('lab')
     for name in ('scan', 'patch', 'validate'):
         setattr(lab, name, lambda *a, **k: None)
+    lab.resolve_profile = lambda raw=None: raw or {'exec_image': 'orchestrator'}
     draft = ModuleType('draft')
     draft.__path__ = []
     autobuild = ModuleType('draft.autobuild')
@@ -104,7 +106,14 @@ class Concurrency(unittest.TestCase):
             status, error = self.post(b'{"job_id":"bad","trace_id":"t"}')
             self.assertEqual(422, status)
             self.assertEqual('VALUEERROR', error['error_code'])
-            status, good = self.post(b'{"job_id":"good","trace_id":"t"}')
+            # The client can receive HTTP 422 before the server executes
+            # finally: RUN_LOCK.release(). A brief BUSY response is valid.
+            deadline = time.monotonic() + 2
+            while True:
+                status, good = self.post(b'{"job_id":"good","trace_id":"t"}')
+                if status != 409 or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.01)
             self.assertEqual(200, status)
             self.assertEqual('SUCCEEDED', good['status'])
 
@@ -123,6 +132,23 @@ class HttpTimeoutContract(unittest.TestCase):
         for bad in (0, -1, 3601):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 self.orchestrator.http_timeout('draft', {'build_timeout': bad})
+
+    def test_configurable_ports_match_gate_and_orchestrator(self):
+        settings = {'E14_PORT_BUILDCHECKER': '18181', 'E14_PORT_ECHECKER': '18182',
+                    'E14_PORT_DRAFT': '18183', 'E14_PORT_MDFIXER': '18184'}
+        with patch.dict(os.environ, settings):
+            orch = load_module(ROOT / 'labs/e13e14/orchestrate.py',
+                               'e14_configurable_ports_orchestrator')
+            gate = load_module(ROOT / 'labs/e13e14/e14_gate.py',
+                               'e14_configurable_ports_gate')
+        expected = dict(buildchecker=18181, echecker=18182,
+                        draft=18183, mdfixer=18184)
+        self.assertEqual(expected, orch.PORTS)
+        self.assertEqual(expected, gate.PORTS)
+
+    def test_default_ports_preserved(self):
+        self.assertEqual({'buildchecker': 18081, 'echecker': 18082,
+                          'draft': 18083, 'mdfixer': 18084}, self.orchestrator.PORTS)
 
 
 if __name__ == '__main__':
