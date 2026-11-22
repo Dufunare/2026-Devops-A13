@@ -78,3 +78,27 @@ python3 labs/e13e14/real_preflight.py \\
 ```
 
 Real `exec_image=draft` remains fail-closed until B/A land safe subprocess isolation and per-container image/mount attestation. Do not change the input profile to orchestrator mode as a workaround. Existing teaching fixed-fixture CI remains independent of this unaccepted real-project execution.
+
+
+## Downstream child-container attestation (added 2026-11-22)
+
+`labs/e13e14/execution_attestation.py` defines a fail-closed evidence contract
+for the future B/088 downstream executor. It requires the **original** per-child
+`<tag>.inspect.json` and matching `<tag>.exec.json`, exact immutable image
+ID, container ID and successful exit/cleanup, and one `/course` bind mount
+from the **exact expected host worktree**. Socket inheritance, missing raw
+inspect, extra mounts, image mismatch, or missing required real08 step fails.
+This verifier is not yet wired to the real execution success path.
+
+The historical B real08 package intentionally fails this inspection:
+
+```bash
+python3 labs/e13e14/execution_attestation.py \\
+  --evidence-dir /root/devops-materials/real08-b-handoff/real08/inimage \\
+  --expected-image sha256:da792170afbe9cdf3075f3973ac4746c723a285cf2976992b6f29ce65141da23 \\
+  --course-source /root/devops-students/241830217/e14-profile-review
+```
+
+Expected nonzero return and `EXEC_DOCKER_SOCKET_EXPOSED`. Do not alter the
+historic evidence to force acceptance; the historic ZIP lacks raw inspect
+originals and explicitly records the socket mount.

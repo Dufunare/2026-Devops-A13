@@ -34,10 +34,15 @@ def read_json(path: Path):
     return json.loads(path.read_bytes())
 
 
-def verify_exec(record: dict, inspect: object, expected_image: str) -> dict:
+def verify_exec(record: dict, inspect: object, expected_image: str,
+                expected_course_source: str) -> dict:
     """Validate original inspect fields, not just fields echoed by the executor."""
     require(isinstance(expected_image, str) and IMAGE_RE.fullmatch(expected_image),
             "EXEC_EXPECTED_IMAGE_INVALID")
+    require(isinstance(expected_course_source, str) and
+            Path(expected_course_source).is_absolute() and
+            str(Path(expected_course_source)) == expected_course_source,
+            "EXEC_COURSE_SOURCE_INVALID")
     require(isinstance(record, dict), "EXEC_RECORD_INVALID")
     require(record.get("image") == expected_image, "EXEC_REPORTED_IMAGE_MISMATCH")
     require(record.get("inspect_image") == expected_image, "EXEC_REPORTED_INSPECT_MISMATCH")
@@ -74,14 +79,17 @@ def verify_exec(record: dict, inspect: object, expected_image: str) -> dict:
     require(len(destinations) == 1 and destinations[0] == "/course",
             "EXEC_UNAPPROVED_MOUNT")
     require(mounts[0].get("Type") == "bind", "EXEC_COURSE_MOUNT_NOT_BIND")
-    require(bool(mounts[0].get("Source")), "EXEC_COURSE_SOURCE_MISSING")
+    require(mounts[0].get("Source") == expected_course_source,
+            "EXEC_COURSE_SOURCE_MISMATCH")
     return {"tag": record.get("tag"), "container_id": cid,
             "image": actual["Image"], "exit_code": state["ExitCode"],
-            "mount_destinations": destinations, "socket_exposed": False,
+            "mount_destinations": destinations, "course_source": expected_course_source,
+            "socket_exposed": False,
             "cleanup_exit": record["cleanup_exit"]}
 
 
-def verify_job(evidence_dir: Path, expected_image: str, required_tags=REAL08_TAGS) -> dict:
+def verify_job(evidence_dir: Path, expected_image: str,
+               expected_course_source: str, required_tags=REAL08_TAGS) -> dict:
     """Require fresh per-job exec and inspect originals for EVERY declared step."""
     directory = Path(evidence_dir).resolve()
     require(directory.is_dir(), "EXEC_EVIDENCE_DIRECTORY_MISSING")
@@ -106,10 +114,12 @@ def verify_job(evidence_dir: Path, expected_image: str, required_tags=REAL08_TAG
         require(isinstance(declared, list), "EXEC_REPORTED_MOUNTS_MISSING")
         require("/var/run/docker.sock" not in declared, "EXEC_DOCKER_SOCKET_EXPOSED")
         inspection = read_json(directory / f"{tag}.inspect.json")
-        found[tag] = verify_exec(record, inspection, expected_image)
+        found[tag] = verify_exec(record, inspection, expected_image,
+                                 expected_course_source)
     missing = set(tags) - set(found)
     require(not missing, "EXEC_REQUIRED_STEPS_MISSING: " + ",".join(sorted(missing)))
     return {"status": "EXECUTION_ATTESTED", "image": expected_image,
+            "course_source": expected_course_source,
             "required_tags": list(tags), "verified_tags": sorted(found),
             "containers": found, "downstream_container_attested": True}
 
@@ -118,10 +128,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence-dir", type=Path, required=True)
     parser.add_argument("--expected-image", required=True)
+    parser.add_argument("--course-source", required=True,
+                        help="Exact host worktree directory expected at /course")
     parser.add_argument("--tag", action="append", dest="tags")
     args = parser.parse_args()
     try:
         result = verify_job(args.evidence_dir, args.expected_image,
+                            args.course_source,
                             args.tags if args.tags else REAL08_TAGS)
     except (ValueError, OSError, json.JSONDecodeError) as exc:
         print(json.dumps({"status": "EXECUTION_ATTESTATION_FAILED",

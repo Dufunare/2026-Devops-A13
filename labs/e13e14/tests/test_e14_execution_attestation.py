@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "labs/e13e14"))
 from execution_attestation import REAL08_TAGS, verify_exec, verify_job
 
+SOURCE = "/root/e14-isolated"
 IMAGE = "sha256:" + "a" * 64
 CID = "b" * 64
 
@@ -28,7 +29,7 @@ def good(tag="scan-target"):
 class AttestationContract(unittest.TestCase):
     def test_genuine_identity_and_isolated_mounts_pass(self):
         record, inspect = good()
-        checked = verify_exec(record, inspect, IMAGE)
+        checked = verify_exec(record, inspect, IMAGE, SOURCE)
         self.assertEqual(CID, checked["container_id"])
         self.assertEqual(["/course"], checked["mount_destinations"])
 
@@ -36,14 +37,14 @@ class AttestationContract(unittest.TestCase):
         record, inspect = good()
         inspect[0]["Image"] = "sha256:" + "c" * 64
         with self.assertRaisesRegex(ValueError, "EXEC_ACTUAL_IMAGE_MISMATCH"):
-            verify_exec(record, inspect, IMAGE)
+            verify_exec(record, inspect, IMAGE, SOURCE)
 
     def test_original_inspect_mounts_cannot_be_hidden_by_reported_mounts(self):
         record, inspect = good()
         inspect[0]["Mounts"].append({"Destination": "/var/run/docker.sock",
                                       "Source": "/var/run/docker.sock", "Type": "bind"})
         with self.assertRaisesRegex(ValueError, "EXEC_MOUNTS_RECORD_MISMATCH"):
-            verify_exec(record, inspect, IMAGE)
+            verify_exec(record, inspect, IMAGE, SOURCE)
 
     def test_legacy_socket_inheritance_is_explicitly_rejected(self):
         record, inspect = good()
@@ -51,18 +52,23 @@ class AttestationContract(unittest.TestCase):
         inspect[0]["Mounts"].append({"Destination": "/var/run/docker.sock",
                                      "Source": "/var/run/docker.sock", "Type": "bind"})
         with self.assertRaisesRegex(ValueError, "EXEC_DOCKER_SOCKET_EXPOSED"):
-            verify_exec(record, inspect, IMAGE)
+            verify_exec(record, inspect, IMAGE, SOURCE)
 
     def test_exit_cleanup_and_container_identity_must_match(self):
         for field in ("exit", "inspect_exit_code", "cleanup_exit"):
             record, inspect = good()
             record[field] = 1
             with self.subTest(field=field), self.assertRaises(ValueError):
-                verify_exec(record, inspect, IMAGE)
+                verify_exec(record, inspect, IMAGE, SOURCE)
         record, inspect = good()
         inspect[0]["Id"] = "d" * 64
         with self.assertRaisesRegex(ValueError, "EXEC_CONTAINER_ID_MISMATCH"):
-            verify_exec(record, inspect, IMAGE)
+            verify_exec(record, inspect, IMAGE, SOURCE)
+
+    def test_course_host_source_must_match_exact_worktree(self):
+        record, inspect = good()
+        with self.assertRaisesRegex(ValueError, "EXEC_COURSE_SOURCE_MISMATCH"):
+            verify_exec(record, inspect, IMAGE, "/root/unrelated")
 
     def test_extra_mounts_rejected_even_without_socket(self):
         record, inspect = good()
@@ -70,7 +76,7 @@ class AttestationContract(unittest.TestCase):
         inspect[0]["Mounts"].append({"Destination": "/unapproved",
                                      "Source": "/root/other", "Type": "bind"})
         with self.assertRaisesRegex(ValueError, "EXEC_UNAPPROVED_MOUNT"):
-            verify_exec(record, inspect, IMAGE)
+            verify_exec(record, inspect, IMAGE, SOURCE)
 
     def test_directory_requires_every_step_and_inspect_original(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -78,11 +84,11 @@ class AttestationContract(unittest.TestCase):
             record, inspected = good()
             (root / "scan-target.exec.json").write_text(json.dumps(record))
             with self.assertRaisesRegex(ValueError, "EXEC_EVIDENCE_MISSING"):
-                verify_job(root, IMAGE, ["scan-target"])
+                verify_job(root, IMAGE, SOURCE, ["scan-target"])
             (root / "scan-target.inspect.json").write_text(json.dumps(inspected))
-            self.assertTrue(verify_job(root, IMAGE, ["scan-target"])["downstream_container_attested"])
+            self.assertTrue(verify_job(root, IMAGE, SOURCE, ["scan-target"])["downstream_container_attested"])
             with self.assertRaisesRegex(ValueError, "EXEC_REQUIRED_STEPS_MISSING"):
-                verify_job(root, IMAGE, ["scan-target", "full-check-recheck"])
+                verify_job(root, IMAGE, SOURCE, ["scan-target", "full-check-recheck"])
 
     def test_legacy_handoff_summary_fails_without_raw_inspect(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -91,7 +97,7 @@ class AttestationContract(unittest.TestCase):
             record["inspect_mounts"] = ["/var/run/docker.sock", "/course"]
             (root / "scan-target.exec.json").write_text(json.dumps(record))
             with self.assertRaisesRegex(ValueError, "EXEC_DOCKER_SOCKET_EXPOSED"):
-                verify_job(root, IMAGE, ["scan-target"])
+                verify_job(root, IMAGE, SOURCE, ["scan-target"])
 
     def test_real08_full_required_tag_set_is_declared(self):
         self.assertIn("full-check-recheck", REAL08_TAGS)
