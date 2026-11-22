@@ -81,6 +81,18 @@ def artifact_bytes_check(root: Path, result: dict) -> int:
     return len(seen)
 
 
+def c8_manifest_entries(result: dict, job: str) -> list[dict]:
+    """Reject a successful C8 HTTP job that has no downloadable artifacts."""
+    require(isinstance(result, dict) and result.get("job_id") == job,
+            "C8 artifact manifest job mismatch")
+    items = result.get("artifacts")
+    require(isinstance(items, list) and len(items) > 0,
+            "C8 successful job returned an empty artifact manifest")
+    require(all(isinstance(item, dict) for item in items),
+            "C8 artifact manifest contains a non-object entry")
+    return items
+
+
 def run_local(request: Path, out: Path, label: str, evidence: Path, timeout: int = 1200) -> tuple[int, dict]:
     require(request.is_file() and not out.exists(), f"Missing request / existing OUT: {request} {out}")
     log = evidence / f"{label}.console.log"
@@ -276,7 +288,7 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
         write_json(evidence / "c8-artifact-index.json", result)
         prefix = f"artifact://{job}/"
         names = set()
-        for entry in result["artifacts"]:
+        for entry in c8_manifest_entries(result, job):
             uri = entry["uri"]
             require(uri.startswith(prefix), "C8 wrong artifact URI")
             name = uri[len(prefix):]

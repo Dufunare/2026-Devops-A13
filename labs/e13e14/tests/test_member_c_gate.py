@@ -86,6 +86,28 @@ class MemberCStaticTests(unittest.TestCase):
             with self.assertRaisesRegex(gate.GateError, "hash mismatch"):
                 gate.artifact_bytes_check(root, report)
 
+    def test_c8_success_rejects_empty_http_artifact_manifest(self):
+        job = "job-123"
+        # The terminal state is SUCCEEDED, but the API has no artifacts to fetch.
+        for items in ([], None, {}, "not-a-list"):
+            with self.subTest(items=items):
+                report = {"job_id": job, "status": "SUCCEEDED", "artifacts": items}
+                with self.assertRaisesRegex(gate.GateError, "empty artifact manifest"):
+                    gate.c8_manifest_entries(report, job)
+        # A missing key must also fail closed, not silently count as zero files.
+        with self.assertRaisesRegex(gate.GateError, "empty artifact manifest"):
+            gate.c8_manifest_entries({"job_id": job, "status": "SUCCEEDED"}, job)
+
+    def test_c8_manifest_accepts_nonempty_list_only_for_matching_job(self):
+        job = "job-123"
+        item = {"uri": "artifact://job-123/result.json", "sha256": "0" * 64, "bytes": 4}
+        report = {"job_id": job, "status": "SUCCEEDED", "artifacts": [item]}
+        self.assertEqual([item], gate.c8_manifest_entries(report, job))
+        with self.assertRaisesRegex(gate.GateError, "job mismatch"):
+            gate.c8_manifest_entries(report, "job-other")
+        with self.assertRaisesRegex(gate.GateError, "non-object entry"):
+            gate.c8_manifest_entries(dict(report, artifacts=["not-an-object"]), job)
+
     def test_snapshot_changes_when_content_changes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
