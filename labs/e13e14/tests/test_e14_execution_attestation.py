@@ -90,6 +90,29 @@ class AttestationContract(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "EXEC_REQUIRED_STEPS_MISSING"):
                 verify_job(root, IMAGE, SOURCE, ["scan-target", "full-check-recheck"])
 
+    def test_nested_validation_steps_are_counted_in_same_job(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for tag, folder in (("scan-target", root / "inimage"),
+                                ("validate-01-make", root / "validation" / "inimage")):
+                folder.mkdir(parents=True)
+                rec, inspected = good(tag)
+                (folder / f"{tag}.exec.json").write_text(json.dumps(rec))
+                (folder / f"{tag}.inspect.json").write_text(json.dumps(inspected))
+            result = verify_job(root, IMAGE, SOURCE, ["scan-target", "validate-01-make"])
+            self.assertEqual(2, len(result["verified_tags"]))
+
+    def test_duplicate_tags_from_different_subdirectories_fail(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rec, inspected = good()
+            for folder in (root / "a", root / "b"):
+                folder.mkdir()
+                (folder / "scan-target.exec.json").write_text(json.dumps(rec))
+                (folder / "scan-target.inspect.json").write_text(json.dumps(inspected))
+            with self.assertRaisesRegex(ValueError, "EXEC_TAG_INVALID"):
+                verify_job(root, IMAGE, SOURCE, ["scan-target"])
+
     def test_legacy_handoff_summary_fails_without_raw_inspect(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

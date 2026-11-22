@@ -94,7 +94,7 @@ The historical B real08 package intentionally fails this inspection:
 
 ```bash
 python3 labs/e13e14/execution_attestation.py \\
-  --evidence-dir /root/devops-materials/real08-b-handoff/real08/inimage \\
+  --evidence-dir /root/devops-materials/real08-b-handoff/real08 \\
   --expected-image sha256:da792170afbe9cdf3075f3973ac4746c723a285cf2976992b6f29ce65141da23 \\
   --course-source /root/devops-students/241830217/e14-profile-review
 ```
@@ -102,3 +102,8 @@ python3 labs/e13e14/execution_attestation.py \\
 Expected nonzero return and `EXEC_DOCKER_SOCKET_EXPOSED`. Do not alter the
 historic evidence to force acceptance; the historic ZIP lacks raw inspect
 originals and explicitly records the socket mount.
+
+The scan root is one job's `real08/` directory (recursive):
+`inimage/` contains BuildChecker and EChecker records while
+`validation/inimage/` contains MDFixer validation steps. Duplicate step tags
+across subdirectories and symlinks escaping the root are rejected.

@@ -99,11 +99,14 @@ def verify_job(evidence_dir: Path, expected_image: str,
     require(bool(tags) and len(set(tags)) == len(tags)
             and all(isinstance(t, str) and TAG_RE.fullmatch(t) for t in tags),
             "EXEC_REQUIRED_TAGS_INVALID")
-    files = sorted(directory.glob("*.exec.json"))
+    # B real08 has full-check/scan under inimage/, but validation steps
+    # under validation/inimage/. Scan a single job root recursively.
+    files = sorted(directory.rglob("*.exec.json"))
     require(bool(files), "EXEC_RECORDS_MISSING")
     found = {}
     for path in files:
-        require(not path.is_symlink(), "EXEC_SYMLINK_REJECTED")
+        require(not path.is_symlink() and path.parent.resolve().is_relative_to(directory),
+                "EXEC_SYMLINK_REJECTED")
         tag = path.name.removesuffix(".exec.json")
         require(TAG_RE.fullmatch(tag) and tag not in found, "EXEC_TAG_INVALID")
         record = read_json(path)
@@ -113,7 +116,10 @@ def verify_job(evidence_dir: Path, expected_image: str,
         declared = record.get("inspect_mounts", [])
         require(isinstance(declared, list), "EXEC_REPORTED_MOUNTS_MISSING")
         require("/var/run/docker.sock" not in declared, "EXEC_DOCKER_SOCKET_EXPOSED")
-        inspection = read_json(directory / f"{tag}.inspect.json")
+        inspection_path = path.with_name(f"{tag}.inspect.json")
+        require(inspection_path.parent.resolve().is_relative_to(directory),
+                "EXEC_SYMLINK_REJECTED")
+        inspection = read_json(inspection_path)
         found[tag] = verify_exec(record, inspection, expected_image,
                                  expected_course_source)
     missing = set(tags) - set(found)
