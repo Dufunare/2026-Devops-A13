@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'labs/e8e10'), str(ROOT / 'labs/e11e12/vendor'), '/app']
 from lab import scan, patch, validate, resolve_profile
+from exchange_profile import check_scan_flags, check_snapshot, digest, load_exchange_profile
 
 class Failure(ValueError):
     def __init__(self, code, message):
@@ -115,10 +116,12 @@ def execute(request, out, job_id=None):
     out.mkdir(parents=True, exist_ok=True)
     result = {'schema_version':'e11e12-1','job_id':job_id,'trace_id':trace_id,'status':'RUNNING','stages':[]}
     save(out/'request.json',request)
-    def stage(name, commit, payload, files=()):
+    def stage(name, commit, payload, files=(), profile_sha=None):
         envelope = {'schema_version':'e11e12-1','job_id':job_id,'trace_id':trace_id,'kind':name,
                     'commit':commit,'status':'SUCCEEDED','data':payload,
                     'artifacts':[artifact(p,out,job_id) for p in files]}
+        if profile_sha is not None:
+            envelope['profile_sha256'] = profile_sha
         save(out/(name+'.json'),envelope)
         result['stages'].append({'name':name,'artifact':artifact(out/(name+'.json'),out,job_id)})
         return envelope
@@ -126,8 +129,9 @@ def execute(request, out, job_id=None):
         mode=request['mode']
         if mode not in ('e11-a','e11-b','e12'):
             raise Failure('INVALID_REQUEST','Unknown mode')
+        exchange_bytes, runtime_profile, exchange = load_exchange_profile(request)
         try:
-            profile=resolve_profile(request.get('profile'))
+            profile=resolve_profile(runtime_profile)
         except ValueError as exc:
             raise Failure('UNSUPPORTED_PROFILE', str(exc))
         repo=Path(request['repo']).resolve()
@@ -137,6 +141,10 @@ def execute(request, out, job_id=None):
         base_sha=snapshot(repo,request['base'],base,out/'logs',profile)
         target_sha=snapshot(repo,request['target'],target,out/'logs',profile)
         result.update(base_commit=base_sha,target_commit=target_sha,profile=profile)
+        if exchange is not None:
+            check_snapshot(base, exchange)
+            check_snapshot(target, exchange)
+            (out/'exchange-profile.json').write_bytes(exchange_bytes)
         if mode == 'e11-b':
             fixed_envelope, fixed_raw = read_fixed_report(request, target_sha)
         if mode in ('e11-b','e12'):
@@ -185,6 +193,8 @@ def execute(request, out, job_id=None):
         if mode in ('e11-a','e12'):
             base_full=run_full(base,out/'baseline-full','full-check-baseline')
             old=run_scan(base,None,out/'baseline-cache.json','scan-baseline')
+            if exchange is not None:
+                check_scan_flags(old, exchange)
             edges=json.loads((out/'baseline-full/actual-graph.json').read_text())
             targets=[t for t,_s in profile['units']]
             projected={t:sorted({e['dependency'] for e in edges if e['target']==t}) for t in targets}
@@ -198,7 +208,14 @@ def execute(request, out, job_id=None):
             reference=run_full(target,out/'target-full','full-check-target')
             if normalized(reference['findings'],profile) != normalized(current['findings'],profile):
                 raise Failure('FINDINGS_MISMATCH','Incremental/full object-target findings differ')
-            md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'])
+            profile_sha = None
+            if exchange is not None:
+                check_scan_flags(current, exchange)
+                profile_sha = digest(exchange_bytes)
+                current['profile_sha256'] = profile_sha
+                save(out/'incremental-report.json', current)
+                result.update(exchange_profile_id=exchange['id'], profile_sha256=profile_sha)
+            md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'],profile_sha=profile_sha)
         else:
             # E11-B still consumes a fixed MD input, separately from A's live output.
             envelope=fixed_envelope
