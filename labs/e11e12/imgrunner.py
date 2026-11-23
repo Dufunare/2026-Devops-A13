@@ -1,8 +1,7 @@
 """在 DRAFT 镜像内执行下游阶段，并留下容器级证据。
 
 设计：编排容器（course-e11e12）已把仓库挂成 /course、并挂了宿主 docker socket。
-这里在编排容器内再起容器，用 `--volumes-from <自身容器>` 共享同一批挂载，
-路径（/course/...）在两层完全一致。
+下游容器显式挂载课程目录和工作目录，保留 /course/... 路径。
 
 证据（B13 五项补齐第 2 条要求）：
   - 每次执行写 <tag>.exec.json：image、完整 argv、cwd、容器 ID、退出码
@@ -48,10 +47,31 @@ def self_container():
     return socket.gethostname()
 
 
+
+def child_mount_args():
+    """Share only this run's writable /course worktree with the child."""
+    inspection = subprocess.run(
+        ['docker', 'inspect', self_container()],
+        check=True, capture_output=True, text=True,
+    )
+    mounts = json.loads(inspection.stdout)[0]['Mounts']
+    course = [m for m in mounts if m.get('Destination') == '/course']
+    if len(course) != 1 or course[0].get('Type') != 'bind':
+        raise ValueError('Expected one bind mount at /course')
+    mount = course[0]
+    source = mount.get('Source', '')
+    if not mount.get('RW') or not Path(source).is_absolute():
+        raise ValueError('Expected writable /course with an absolute host source')
+    if any(m.get('Destination', '').startswith('/course/') for m in mounts):
+        raise ValueError('Nested mounts under /course are unsupported')
+    spec = f'type=bind,src={source},dst=/course,bind-recursive=disabled'
+    return ['--mount', spec]
+
+
 def run(image, argv, cwd=None, timeout=900, ptrace=True, evidence=None, tag='step'):
     """在指定镜像内执行命令，返回 (exit_code, 合并输出)；evidence 非空时记录容器级原件。"""
     cmd = ['docker', 'run', '--network', 'none',
-           '--volumes-from', self_container(),
+           *child_mount_args(),
            '-u', '%d:%d' % (os.getuid(), os.getgid()),
            '-e', 'HOME=/tmp']
     if ptrace:
