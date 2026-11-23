@@ -1,0 +1,20 @@
+{
+  "incoming_zip_sha256": "677f6f3fbce9518cc783c9fe84b4718ed0427863788d8b007968dc17dba2b5ee",
+  "incoming_zip_bytes": 1861132,
+  "package_entries_verified": 10,
+  "package_mismatches": [],
+  "server_archive_bytes": 1862662,
+  "server_archive_sha256": "d940611981eba84412e8a203d1118f68bd5e4655e0ef32fb37c329dcfb511df5",
+  "server_manifest_entries_verified": 2640,
+  "server_manifest_mismatches": [],
+  "client_server_artifacts_byte_identical": 2216,
+  "client_server_mismatches": [],
+  "job_id": "job-123a2b27e494473586a2c5a984ab914f",
+  "trace_id": "trace-67a686ea138b46ae9d7cbf1c16e3b4db",
+  "draft_image_id": "sha256:fcecaea1dbdab83cacd22b350e93969cdd0c27398a4c1645e7e5f0ee4acb53ae",
+  "member1_formal_acceptance_received": true,
+  "member2_and_member3_not_signed_by_this_receipt": true,
+  "rerun_required_by_member1": false,
+  "scope": "toml.o MD0; complete residual retained",
+  "received_code_executed": false
+}

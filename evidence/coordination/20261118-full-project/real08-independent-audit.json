@@ -1,0 +1,14 @@
+{
+  "sha256": "6e0b7a34e8652b8dd8f2a9acd208a9d64291e55d9ab5b838a212aabb4194c82b",
+  "manifest_entries": 6823,
+  "manifest_mismatches": [],
+  "actual_operations": 10,
+  "validation_scan_record_present": true,
+  "flags_source": "make",
+  "flags": "-std=c99 -Wall -Wextra -fpic -O2 -DNDEBUG",
+  "profile_sha256_payload": null,
+  "profile_sha256_envelope": null,
+  "job": "job-0580ce2248c24db5aafcedd30a9fff30",
+  "trace": "trace-b6d8ea73fc02456baef770f5566d763b",
+  "image_id": "sha256:da792170afbe9cdf3075f3973ac4746c723a285cf2976992b6f29ce65141da23"
+}

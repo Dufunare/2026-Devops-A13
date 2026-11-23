@@ -1,0 +1,32 @@
+{
+  "schema_version": "a13-draft-image-export-1",
+  "image_id": "sha256:de2ea79e001d88ce6e40f38cd9d73025af12aeda21269ec6d9170738c36258e3",
+  "role": "DRAFT successful candidate from e12-real-03",
+  "route": "e12-real-03",
+  "job_id": "job-ad419a2431ee402b9f04babd9be60e57",
+  "trace_id": "trace-1a694e497826474689c53575e441000f",
+  "project_base": "592fc6f3d2463a58fe7f60b8d255ed242740bec0",
+  "project_target": "b2dda5513fe4a7d250493528800fe425cae459a5",
+  "original_evidence_sha256": "076db4e996fa568a14c3f259b964331250116c9ae253d2a98570daf89a473b5f",
+  "export_filename": "A13_E12_real03_DRAFT_de2ea79e_20261116.tar.gz",
+  "export_bytes": 156689439,
+  "export_sha256": "3417910047ff2192172745ab5880e7bf09413f9241cfe8bbb4feff49f3006bd2",
+  "docker_save_command": [
+    "docker",
+    "save",
+    "--output",
+    "image-export.tar",
+    "sha256:de2ea79e001d88ce6e40f38cd9d73025af12aeda21269ec6d9170738c36258e3"
+  ],
+  "gzip_mtime": 0,
+  "architecture": "amd64",
+  "os": "linux",
+  "original_image_unchanged": true,
+  "source": "Existing original image from A13 course server; no rebuild/retag/install performed",
+  "not_proven": [
+    "B13 load",
+    "current pipeline compatibility",
+    "historical orchestrator source binding",
+    "formal HTTP acceptance"
+  ]
+}

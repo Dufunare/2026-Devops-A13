@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "before_findings": [
+    {
+      "type": "MISSING",
+      "target": "toml.o",
+      "dependency": "toml.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.15",
+          "line": 98,
+          "pid": 15,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.16",
+          "line": 20,
+          "pid": 16,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "toml.c"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "toml.o",
+      "dependency": "toml_extra.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.15",
+          "line": 673,
+          "pid": 15,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.16",
+          "line": 20,
+          "pid": 16,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "toml.c"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "toml_cat",
+      "dependency": "toml.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.27",
+          "line": 98,
+          "pid": 27,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.30",
+          "line": 70,
+          "pid": 30,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "libtoml.a",
+        "toml_cat.c"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "toml_json",
+      "dependency": "toml.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.22",
+          "line": 98,
+          "pid": 22,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.25",
+          "line": 70,
+          "pid": 25,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "libtoml.a",
+        "toml_json.c"
+      ]
+    },
+    {
+      "type": "MISSING",
+      "target": "toml_sample",
+      "dependency": "toml.h",
+      "evidence": [
+        {
+          "source": "system_call",
+          "trace_file": "t.32",
+          "line": 98,
+          "pid": 32,
+          "operation": "openat"
+        },
+        {
+          "source": "system_call",
+          "trace_file": "t.35",
+          "line": 70,
+          "pid": 35,
+          "operation": "openat"
+        }
+      ],
+      "declared_dependencies": [
+        "libtoml.a",
+        "toml_sample.c"
+      ]
+    }
+  ],
+  "after_findings": [],
+  "remaining_md": [],
+  "observed_targets": [
+    "libtoml.a",
+    "libtoml.so.1.0",
+    "toml.o",
+    "toml_cat",
+    "toml_json",
+    "toml_sample"
+  ],
+  "build_target": "all",
+  "image_id": "sha256:da792170afbe9cdf3075f3973ac4746c723a285cf2976992b6f29ce65141da23",
+  "implementation_sha": "dadcc74ad13c3460644486a5b1411318d6b1c9c9",
+  "project_c1": "b2dda5513fe4a7d250493528800fe425cae459a5",
+  "changed_tracked_files": [
+    "Makefile"
+  ],
+  "does_not_replace_original_http_job": true
+}

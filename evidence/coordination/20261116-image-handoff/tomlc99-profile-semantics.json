@@ -1,0 +1,101 @@
+{
+  "schema_version": "a13-tomlc99-handoff-semantics-1",
+  "status": "A13_CONFIRMED_OBSERVED_SCOPE_PENDING_B13_NEW_PROFILE_MAPPING",
+  "project_upstream": "https://github.com/cktan/tomlc99",
+  "upstream_commit": "62ce93ceb713dc49909d0fef1411f9d37bef83f2",
+  "C0": "592fc6f3d2463a58fe7f60b8d255ed242740bec0",
+  "C1": "b2dda5513fe4a7d250493528800fe425cae459a5",
+  "C1_changes": [
+    "toml.c include change",
+    "new toml_extra.h",
+    "new Dockerfile.broken"
+  ],
+  "original_profile_preserved": {
+    "units": [
+      [
+        "toml.o",
+        "toml.c"
+      ]
+    ],
+    "config_file": "toml.h",
+    "config_after": "\n/* e11e12 dependency probe */\n",
+    "config_mode": "append",
+    "header_check": "rebuild",
+    "expected_output": "{}",
+    "expected_output_after": "{}",
+    "build_target": "toml_json",
+    "clean_target": "clean",
+    "flags_allowed": [
+      "-std=c99 -Wall -Wextra -fpic"
+    ],
+    "strict_sources": false,
+    "recursive_scan": false
+  },
+  "confirmed_semantics": {
+    "analysis_units": [
+      [
+        "toml.o",
+        "toml.c"
+      ]
+    ],
+    "build_argv": [
+      "make",
+      "toml_json"
+    ],
+    "clean_argv": [
+      "make",
+      "clean"
+    ],
+    "run_argv": [
+      "./toml_json"
+    ],
+    "stdin_hex": "",
+    "stdout_hex": "7b7d0a",
+    "exit_code": 0,
+    "header_probe": {
+      "path": "toml.h",
+      "operation": "append",
+      "bytes_hex": "0a2f2a2065313165313220646570656e64656e63792070726f6265202a2f0a",
+      "expected": "toml.o recompiled; stdout remains 7b7d0a; binary hash may remain identical when only a comment changes"
+    },
+    "strict_sources": false,
+    "recursive_scan": false,
+    "success_scope": [
+      "toml.o"
+    ],
+    "whole_project_residual_required": [
+      {
+        "type": "MISSING",
+        "target": "toml_json",
+        "dependency": "toml.h"
+      }
+    ]
+  },
+  "flags_policy": {
+    "mode": "release; DEBUG unset; no CFLAGS/CC command-line or environment override",
+    "declared_base_flags": "-std=c99 -Wall -Wextra -fpic",
+    "makefile_release_append": [
+      "-O2",
+      "-DNDEBUG"
+    ],
+    "observed_make_database_effective_CFLAGS": "-std=c99 -Wall -Wextra -fpic -O2 -DNDEBUG",
+    "required_new_analysis_flags": [
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-fpic",
+      "-O2",
+      "-DNDEBUG"
+    ],
+    "required_new_cache_key": "effective ordered compiler arguments + compiler version + profile/build target; reject or version unconfirmed DEBUG/override configurations",
+    "legacy_limitation": "Original A13 declarations parser reads simple CFLAGS= only, ignores conditional +=; original scan used base flags. Historical profile/JSON remains unchanged; do not claim full effective flag validation for historical runs. B13 must map these semantic fields to its versioned new profile and expose actual argv."
+  },
+  "historical_source_binding": "Unproven exact runtime bytes; recovered overlay/current PR17 matches do not establish historical job binding",
+  "image_dependency_gap": {
+    "original_successful_DRAFT": "sha256:de2ea79e001d88ce6e40f38cd9d73025af12aeda21269ec6d9170738c36258e3",
+    "git": false,
+    "strace": false,
+    "disposition": "Deliver original unchanged. B13 to confirm a new explicit tool-complete DRAFT build/execution version with a new image ID if required; no silent modification or fallback."
+  },
+  "not_a_pipeline_request": "This is handoff semantics metadata, not directly POST-able input-confirmed.json."
+}

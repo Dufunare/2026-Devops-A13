@@ -1,0 +1,22 @@
+{
+  "before_mtime_ns": {
+    "toml.o": 1794934567650506483,
+    "libtoml.a": 1794934567654506494,
+    "libtoml.so.1.0": 1794934567662506516,
+    "toml_json": 1794934567714506663,
+    "toml_cat": 1794934567786506866,
+    "toml_sample": 1794934567814506945
+  },
+  "after_mtime_ns": {
+    "toml.o": 1794934569294511112,
+    "libtoml.a": 1794934569298511123,
+    "libtoml.so.1.0": 1794934569322511191,
+    "toml_json": 1794934569402511416,
+    "toml_cat": 1794934569506511709,
+    "toml_sample": 1794934569566511878
+  },
+  "program_stdout_hex": "7b7d0a",
+  "program_exit": 0,
+  "make_exit": 0,
+  "flags": "-std=c99 -Wall -Wextra -fpic -O2 -DNDEBUG"
+}
