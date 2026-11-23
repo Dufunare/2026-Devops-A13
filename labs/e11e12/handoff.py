@@ -59,6 +59,12 @@ def same_json(one, two):
     return canonical(one) == canonical(two)
 
 
+def validate_incremental_payload(payload, stage_data, target):
+    require(payload.get('schema_version') == 'e8e10-1', 'SCHEMA_MISMATCH', 'Payload schema')
+    require(payload.get('commit') == target, 'STALE_REPORT', 'Payload commit')
+    require(same_json(stage_data, payload), 'REPORT_DATA_MISMATCH', 'Envelope data and payload differ')
+
+
 def command(args, cwd=None):
     result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=120)
     require(result.returncode == 0, 'GIT_FAILED', result.stderr.strip())
@@ -153,9 +159,7 @@ def validate_run(run_dir, repo, source_sha, image_id, toolchain):
     require(len(matches) == 1, 'ARTIFACT_REFERENCE_MISMATCH', 'Need exactly one payload reference')
     require('incremental-report.json' in originals, 'INVALID_ARTIFACT', 'Missing payload')
     payload = strict_json(originals['incremental-report.json'])
-    require(payload.get('schema_version') == 'e8e10-1', 'SCHEMA_MISMATCH', 'Payload schema')
-    require(payload.get('commit') == target, 'STALE_REPORT', 'Payload commit')
-    require(same_json(incremental.get('data'), payload), 'REPORT_DATA_MISMATCH', 'Envelope data and payload differ')
+    validate_incremental_payload(payload, incremental.get('data'), target)
     findings = payload.get('findings')
     require(isinstance(findings, list) and all(isinstance(item, dict)
         and item.get('type') in ('MISSING', 'REDUNDANT')
@@ -169,6 +173,8 @@ def export_handoff(run_dir, repo, source_sha, image_id, toolchain, out):
     out = Path(out).absolute()
     require(not out.exists() and not out.is_symlink(), 'OUTPUT_EXISTS', 'Use a fresh output path')
     run_dir, repo, toolchain, result, originals = validate_run(run_dir, repo, source_sha, image_id, toolchain)
+    require(command(['git', 'rev-parse', '--is-shallow-repository'], repo) == 'false',
+            'INCOMPLETE_HISTORY', 'Complete project history before exporting a portable bundle')
     require(not out.resolve().is_relative_to(run_dir) and not out.resolve().is_relative_to(repo), 'INVALID_OUTPUT', 'Export outside input run/repository')
     out.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='a13-handoff-', dir=out.parent) as directory:
@@ -186,6 +192,11 @@ def export_handoff(run_dir, repo, source_sha, image_id, toolchain, out):
         command(['git', 'bundle', 'create', str(destination / 'project.bundle'),
                  'refs/heads/handoff-base', 'refs/heads/handoff-target'], cloned)
         command(['git', 'bundle', 'verify', str(destination / 'project.bundle')], cloned)
+        restored = temporary / 'restored'
+        command(['git', 'clone', '--no-checkout', str(destination / 'project.bundle'), str(restored)])
+        for revision in (result['base_commit'], result['target_commit']):
+            require(command(['git', 'rev-parse', '--verify', revision + '^{commit}'], restored) == revision,
+                    'INCOMPLETE_HISTORY', 'Bundle cannot independently restore the pinned commit')
         provenance = strict_json(originals['input-provenance.json']) if 'input-provenance.json' in originals else {}
         manifest = {'schema_version': 'a13-handoff-1', 'student_id': '241830088',
             'state': 'READY_FOR_DELIVERY_NOT_ACKNOWLEDGED',

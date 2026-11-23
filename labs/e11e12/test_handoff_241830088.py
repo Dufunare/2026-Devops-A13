@@ -207,6 +207,29 @@ class Student241830088HandoffTests(unittest.TestCase):
         p.write_text(json.dumps(data))
         self.reject('ARTIFACT_REFERENCE_MISMATCH')
 
+    def test_shallow_history_is_rejected_before_publishing_bundle(self):
+        shallow = self.root / 'shallow'
+        self.git('clone', '--quiet', '--depth', '2', self.repo.as_uri(), str(shallow))
+        self.assertEqual(self.git('rev-parse', '--is-shallow-repository', cwd=shallow), 'true')
+        self.repo = shallow
+        self.reject('INCOMPLETE_HISTORY')
+
+    def test_explicit_shallow_archive_restores_exact_project_commits(self):
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'e13e14'))
+        from export_pair_241830088 import export_project
+        shallow = self.root / 'shallow-archive-input'
+        self.git('clone', '--quiet', '--depth', '2', self.repo.as_uri(), str(shallow))
+        result = export_project(self.run, shallow, self.source, self.image, self.toolchain, self.out)
+        self.assertTrue(result['shallow_history'])
+        self.assertTrue(result['fresh_restore_and_exact_commits_verified'])
+        self.assertEqual(result['target_commit'], self.target)
+        self.assertEqual(result['base_commit'], self.base)
+        self.assertTrue((self.out / 'project.git.tar.gz').is_file())
+        self.assertFalse((self.out / 'project.bundle').exists())
+        self.assertEqual((self.out / 'incremental-report.json').read_bytes(),
+                         (self.run / 'incremental-report.json').read_bytes())
+
     def test_artifact_uri_cannot_escape_the_source_run(self):
         reference = self.reference('incremental-report.json')
         reference['uri'] = f'artifact://{self.job}/../incremental-report.json'
