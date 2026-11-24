@@ -207,8 +207,13 @@ def service_containers(out: Path, project: str, image: str, phase: str):
         started = state.get('StartedAt')
         require(state.get('Running') is True and isinstance(started, str),
                 f'{phase}: {role} is not running or has no start time')
+        # Python 3.10 accepts only three or six fractional digits. Docker
+        # reports up to nine, so normalize for validation and keep the raw
+        # value for the continuity comparison below.
+        iso_started = re.sub(r'\.([0-9]+)(?=Z$|[+-][0-9]{2}:[0-9]{2}$)',
+                             lambda part: '.' + part[1].ljust(6, '0')[:6], started)
         try:
-            stamp = datetime.fromisoformat(started.replace('Z', '+00:00'))
+            stamp = datetime.fromisoformat(iso_started.replace('Z', '+00:00'))
         except ValueError as exc:
             raise GateError(f'{phase}: malformed State.StartedAt for {role}') from exc
         require(stamp.tzinfo is not None and stamp.astimezone(timezone.utc).year > 2000,
