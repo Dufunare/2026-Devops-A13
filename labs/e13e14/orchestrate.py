@@ -22,7 +22,7 @@ sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
 from lab import resolve_profile
 from pipeline import shape_ok
 from contract import checked_incremental, findings_by_scope, profile_sha256, successful_draft_image
-from draft_executor import check_profile, verify_receipts
+from draft_executor import check_profile, full_timeout, verify_receipts
 
 
 def resolve_project_profile(raw):
@@ -110,6 +110,13 @@ def call(role, payload, evidence):
             evidence.with_name(evidence.stem + '-error-body.txt').write_bytes(raw)
         body = raw.decode(errors='replace')
         save(evidence, {'role': role, 'http': exc.code, 'error': body})
+        if real and exc.code == 422:
+            from handoff import strict_json
+            error = strict_json(raw)
+            if (error.get('error_code') == 'TIMEOUT' and error.get('status') == 'FAILED'
+                    and error.get('role') == role and all(error.get(key) == payload.get(key)
+                        for key in ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id'))):
+                raise TimeoutError(f'{role} HTTP {exc.code}: {body}') from exc
         raise ValueError(f'{role} HTTP {exc.code}: {body}') from exc
     if not real:
         save(evidence, data)
@@ -133,6 +140,7 @@ def execute(request, out, request_bytes=None):
     if not repo.resolve().is_relative_to((ROOT / 'data').resolve()) or not candidate.resolve().is_relative_to((ROOT / 'data').resolve()):
         raise ValueError('Input project and candidate must be in data/')
     profile = resolve_project_profile(request.get('profile'))
+    full_timeout(request, profile)
     profile_hash = profile_sha256(profile)
     candidate_hash = digest(candidate)
     out.mkdir(parents=True)
@@ -231,6 +239,8 @@ def execute(request, out, request_bytes=None):
         result['status'] = 'SUCCEEDED'
     except Exception as exc:
         result.update(status='FAILED', error=str(exc))
+        if isinstance(exc, TimeoutError):
+            result['error_code'] = 'TIMEOUT'
     result['artifacts'] = [{'uri': path.relative_to(out).as_posix(), 'sha256': digest(path),
                             'bytes': path.stat().st_size} for path in sorted(out.rglob('*'))
                            if path.is_file() and '.git' not in path.parts and not path.is_symlink()]

@@ -118,6 +118,19 @@ class Concurrency(unittest.TestCase):
             self.assertEqual('SUCCEEDED', good['status'])
 
 
+    def test_typed_timeout_preserves_identity_and_error_code(self):
+        from draft_executor import DownstreamTimeout
+        body = b'{"job_id":"bad","trace_id":"trace","profile_sha256":"profile","draft_image_id":"image"}'
+        with patch.object(self.service, 'run', side_effect=DownstreamTimeout('test timeout')):
+            status, error = self.post(body)
+        self.assertEqual(422, status)
+        self.assertEqual('TIMEOUT', error['error_code'])
+        self.assertEqual('bad', error['job_id'])
+        self.assertEqual('trace', error['trace_id'])
+        self.assertEqual('profile', error['profile_sha256'])
+        self.assertEqual('image', error['draft_image_id'])
+
+
 class HttpTimeoutContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

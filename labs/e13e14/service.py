@@ -18,7 +18,7 @@ from buildchecker.fullcheck import full_check
 from contract import (checked_incremental, findings_by_scope,
                       profile_sha256, successful_draft_image, verify_request_identity)
 
-from draft_executor import DraftExecutor, delegate, identity
+from draft_executor import DraftExecutor, DownstreamTimeout, delegate, identity
 
 ROOT = Path('/course').resolve()
 ROLE = os.environ['E14_ROLE']
@@ -197,11 +197,15 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(200, result)
         except Exception as exc:
             traceback.print_exc()
-            code = 'TIMEOUT' if 'TIMED_OUT' in str(exc) else type(exc).__name__.upper()
+            code = ('TIMEOUT' if isinstance(exc, DownstreamTimeout) or
+                    (ROLE == 'draft' and self.path == '/v1/run' and
+                     str(exc).startswith('DRAFT_TIMED_OUT:')) else type(exc).__name__.upper())
             print(json.dumps({'role': ROLE, 'job_id': data.get('job_id'),
                               'trace_id': data.get('trace_id'), 'status': 'FAILED',
                               'error_code': code, 'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
-            self.reply(422, {'status': 'FAILED', 'role': ROLE, 'error_code': code, 'error': str(exc)})
+            self.reply(422, {'status': 'FAILED', 'role': ROLE, 'error_code': code, 'error': str(exc),
+                             **{key: data.get(key) for key in ('job_id', 'trace_id', 'profile_sha256',
+                                                               'draft_image_id', 'operation')}})
         finally:
             RUN_LOCK.release()
 

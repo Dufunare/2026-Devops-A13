@@ -8,7 +8,8 @@ from unittest.mock import patch
 from test_e14_runtime import ROOT, load_module
 ORCH = load_module(ROOT / 'labs/e13e14/orchestrate.py', 'e14_broker_orchestrator')
 from draft_executor import (DraftExecutor, OPERATIONS, check_profile,
-                            operation_tags, sha, save, verify_receipts, evidence_files)
+                            operation_tags, sha, save, verify_receipts, evidence_files,
+                            DownstreamTimeout, full_timeout)
 from contract import profile_sha256
 from lab import resolve_profile
 
@@ -110,6 +111,42 @@ class ExecutorTests(unittest.TestCase):
             self.broker.execute(self.request('full-check-baseline'))
         self.assertTrue(self.broker.active['failed'])
         self.assertFalse((self.job / 'execution-receipts').exists())
+
+    def test_full_timeout_is_bound_and_validated(self):
+        self.assertEqual(900, full_timeout({}, self.profile))
+        self.assertEqual(20, full_timeout({'downstream_full_timeout': 20}, self.profile))
+        for bad in (0, True, 901, float('nan'), '20', None):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, 'EXEC_FULL_TIMEOUT_INVALID'):
+                full_timeout({'downstream_full_timeout': bad}, self.profile)
+        with self.assertRaisesRegex(ValueError, 'EXEC_FULL_TIMEOUT_INVALID'):
+            full_timeout({'downstream_full_timeout': 20}, {'exec_image': 'orchestrator'})
+
+    def test_timeout_closes_job_and_requires_cleanup(self):
+        def timeout(*_args, **kwargs):
+            self.assertEqual(900, kwargs['timeout'])
+            save(self.job / 'inimage/full-check-baseline.exec.json',
+                 {'timed_out': True, 'command_exit': 124, 'exit': 124,
+                  'cleanup_verified': True, 'cleanup_exit': 0,
+                  'cleanup_lookup_exit': 0, 'cleanup_remaining': []})
+            raise ValueError('synthetic outer timeout')
+        with patch('imgrunner.full_in_image', side_effect=timeout), \
+                self.assertRaises(DownstreamTimeout):
+            self.broker.execute(self.request('full-check-baseline'))
+        self.assertTrue(self.broker.active['failed'])
+        self.assertFalse((self.job / 'execution-receipts').exists())
+        with self.assertRaisesRegex(ValueError, 'EXEC_NO_ACTIVE_JOB'):
+            self.broker.execute(self.request('full-check-baseline'))
+
+    def test_unconfirmed_cleanup_is_not_timeout_pass(self):
+        def timeout(*_args, **_kwargs):
+            save(self.job / 'inimage/full-check-baseline.exec.json',
+                 {'timed_out': True, 'command_exit': 124, 'exit': 125,
+                  'cleanup_verified': False})
+            raise ValueError('synthetic cleanup failure')
+        with patch('imgrunner.full_in_image', side_effect=timeout), \
+                self.assertRaisesRegex(ValueError, 'EXEC_CLEANUP_UNCONFIRMED'):
+            self.broker.execute(self.request('full-check-baseline'))
+        self.assertTrue(self.broker.active['failed'])
 
     def test_final_receipts_bind_all_steps_to_same_job_and_originals(self):
         report_sha = 'e' * 64

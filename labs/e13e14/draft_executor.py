@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import subprocess
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -39,6 +40,43 @@ def save(path, value):
 def load(path):
     need(path.is_file() and not path.is_symlink(), 'EXEC_INPUT_MISSING: ' + path.name)
     return json.loads(path.read_bytes())
+
+
+class DownstreamTimeout(TimeoutError):
+    """A bound execution timed out, with cleanup confirmed."""
+
+
+def full_timeout(request, profile):
+    """Optional full-check child timeout, not the DRAFT build timeout."""
+    if 'downstream_full_timeout' not in request:
+        return 900
+    value = request['downstream_full_timeout']
+    need(profile['exec_image'] == 'draft' and type(value) in (int, float)
+         and 1 <= value <= 900, 'EXEC_FULL_TIMEOUT_INVALID')
+    return value
+
+
+def operation_failure(root, op, profile):
+    """Classify from this operation's own originals, never exception text."""
+    folder = root / ('repair-work/validation/inimage' if op == 'validate' else 'inimage')
+    timed_out = []
+    for tag in operation_tags(profile)[op]:
+        path = folder / (tag + '.exec.json')
+        if not path.exists():
+            continue
+        record = load(path)
+        if record.get('cleanup_verified') is False:
+            raise ValueError('EXEC_CLEANUP_UNCONFIRMED: ' + tag)
+        if record.get('timed_out') is True:
+            need(record.get('command_exit') == 124 and record.get('exit') == 124
+                 and record.get('cleanup_verified') is True
+                 and record.get('cleanup_exit') == 0
+                 and record.get('cleanup_lookup_exit') == 0
+                 and record.get('cleanup_remaining') == [],
+                 'EXEC_TIMEOUT_CLEANUP_UNCONFIRMED: ' + tag)
+            timed_out.append(tag)
+    if timed_out:
+        raise DownstreamTimeout('DOWNSTREAM_TIMED_OUT: ' + ','.join(timed_out))
 
 
 def safe_relative(value):
@@ -147,6 +185,7 @@ class DraftExecutor:
              and original.get('expected_output', profile['expected_output']) == profile['expected_output']
              and data.get('build_timeout', 600) == original.get('build_timeout', 600),
              'EXEC_EXPECTED_OUTPUT_OR_TIMEOUT_MISMATCH')
+        full_timeout(original, profile)
         for name, commit_key in (('base-project', 'base_commit'), ('target-project', 'target_commit')):
             path = job / name
             need(path.is_dir() and path.resolve() == path, 'EXEC_SNAPSHOT_PATH_INVALID')
@@ -162,8 +201,10 @@ class DraftExecutor:
 
     def activate(self, prepared, profile, image):
         job, meta = prepared
+        need(sha(job / 'request.json') == meta['request_sha256'], 'EXEC_REQUEST_CHANGED')
         self.active = {'root': job, 'identity': identity({**meta, 'draft_image_id': image}),
-                       'profile': profile, 'next': 0, 'failed': False}
+                       'profile': profile, 'full_timeout': full_timeout(load(job / 'request.json'), profile),
+                       'next': 0, 'failed': False}
 
     def execute(self, request):
         need(isinstance(request, dict), 'EXEC_REQUEST_INVALID')
@@ -191,8 +232,11 @@ class DraftExecutor:
                 folder = root / name
                 need(not folder.exists(), 'EXEC_OUTPUT_EXISTS')
                 full_in_image(image, project, folder, 'make ' + profile['clean_target'],
-                              'make ' + profile['build_target'], evidence=root / 'inimage', tag=op)
+                              'make ' + profile['build_target'], timeout=active['full_timeout'],
+                              evidence=root / 'inimage', tag=op)
                 result = load(folder / 'findings.json')
+                if result.get('status') == 'TIMED_OUT':
+                    raise DownstreamTimeout('BUILDCHECKER_TIMED_OUT: ' + op)
                 need(result.get('status') == 'SUCCEEDED', 'EXEC_FULL_CHECK_FAILED')
             elif op in ('scan-baseline', 'scan-target'):
                 folder = root / 'incremental'
@@ -230,6 +274,7 @@ class DraftExecutor:
             return {'status': 'SUCCEEDED', 'operation': op, 'identity': meta, 'result': result}
         except Exception:
             active['failed'] = True
+            operation_failure(root, op, profile)
             raise
 
 
@@ -241,8 +286,28 @@ def delegate(op, data, report_sha=None):
     req = urllib.request.Request('http://draft:8080/v1/execute',
         data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    with opener.open(req, timeout=6000) as response:
-        reply = json.load(response)
+    try:
+        with opener.open(req, timeout=6000) as response:
+            reply = json.load(response)
+    except urllib.error.HTTPError as exc:
+        raw = exc.read()
+        # Keep the inner HTTP exchange separate from the outer stage response.
+        folder = Path(body['job_root']) / 'broker-errors'
+        folder.mkdir(exist_ok=True)
+        with (folder / (op + '-request.json')).open('xb') as stream:
+            stream.write(req.data)
+        with (folder / (op + '-response.json')).open('xb') as stream:
+            stream.write(raw)
+        from handoff import strict_json
+        error = strict_json(raw)
+        need(exc.code == 422 and error.get('status') == 'FAILED'
+             and error.get('role') == 'draft' and error.get('operation') == op
+             and all(error.get(key) == meta[key] for key in
+                     ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id')),
+             'EXEC_BROKER_ERROR_IDENTITY_MISMATCH')
+        if error.get('error_code') == 'TIMEOUT':
+            raise DownstreamTimeout('BROKER_TIMEOUT: ' + op) from exc
+        raise ValueError('EXEC_BROKER_FAILED: ' + op + ': ' + str(error.get('error'))) from exc
     need(reply.get('status') == 'SUCCEEDED' and reply.get('operation') == op
          and reply.get('identity') == meta, 'EXEC_BROKER_RESPONSE_MISMATCH')
     return reply['result']
