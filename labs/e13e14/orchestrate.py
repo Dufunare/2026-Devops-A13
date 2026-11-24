@@ -89,19 +89,30 @@ def http_timeout(role, payload):
 
 
 def call(role, payload, evidence):
-    if payload.get('profile', {}).get('exec_image') == 'draft':
-        save(evidence.with_name(evidence.stem + '-request.json'), payload)
+    real = payload.get('profile', {}).get('exec_image') == 'draft'
+    body = json.dumps(payload).encode()
+    if real:
+        evidence.with_name(evidence.stem + '-request.json').write_bytes(body)
     req = urllib.request.Request(f'http://127.0.0.1:{PORTS[role]}/v1/run',
-                                 data=json.dumps(payload).encode(),
-                                 headers={'Content-Type': 'application/json'})
+                                 data=body, headers={'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=http_timeout(role, payload)) as resp:
-            data = json.load(resp)
+            if real:
+                from handoff import strict_json
+                raw = resp.read()
+                evidence.write_bytes(raw)
+                data = strict_json(raw)
+            else:
+                data = json.load(resp)
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode(errors='replace')
+        raw = exc.read()
+        if real:
+            evidence.with_name(evidence.stem + '-error-body.txt').write_bytes(raw)
+        body = raw.decode(errors='replace')
         save(evidence, {'role': role, 'http': exc.code, 'error': body})
         raise ValueError(f'{role} HTTP {exc.code}: {body}') from exc
-    save(evidence, data)
+    if not real:
+        save(evidence, data)
     for key in ('job_id', 'trace_id', 'profile_sha256'):
         if data.get(key) != payload.get(key):
             raise ValueError(f'{role} response {key} mismatch')
@@ -151,6 +162,9 @@ def execute(request, out, request_bytes=None):
 
     def stage(name, commit, data):
         item = {'name': name, 'commit': commit, 'job_id': job, 'trace_id': trace, 'status': 'SUCCEEDED', 'data': data}
+        if profile['exec_image'] == 'draft':
+            from draft_executor import identity
+            item['execution_identity'] = identity(result)
         path = out / (name + '.json')
         save(path, item)
         result['stages'].append({'name': name, 'artifact': {'uri': path.name, 'sha256': digest(path)}})

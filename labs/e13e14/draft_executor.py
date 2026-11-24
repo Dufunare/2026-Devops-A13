@@ -99,6 +99,8 @@ def verify_receipts(root, expected, profile, course_source, report_sha):
     """Re-read all originals and receipts before E14 can claim success."""
     root = Path(root).resolve()
     expected = identity(expected)
+    need(sha(root / 'request.json') == expected['request_sha256'], 'EXEC_REQUEST_CHANGED')
+    need(profile_sha256(profile) == expected['profile_sha256'], 'EXEC_PROFILE_MISMATCH')
     tags = [t for op in OPERATIONS for t in operation_tags(profile)[op]]
     attested = verify_job(root, expected['draft_image_id'], course_source, tags)
     need(set(attested['verified_tags']) == set(tags), 'EXEC_UNEXPECTED_STEP')
@@ -209,6 +211,8 @@ class DraftExecutor:
                 report = root / 'incremental/incremental-check.json'
                 envelope = checked_incremental(report.read_bytes(), report_sha,
                     meta['job_id'], meta['trace_id'], meta['target_commit'], meta['profile_sha256'], image)
+                need(envelope['data'] == load(root / 'incremental/target-scan.json'),
+                     'EXEC_REPORT_SCAN_MISMATCH')
                 patchfile = root / 'repair-work/candidate.patch'
                 need(patchfile.is_file() and not patchfile.is_symlink(), 'EXEC_PATCH_MISSING')
                 diff, _ = patch(target, envelope['data'])

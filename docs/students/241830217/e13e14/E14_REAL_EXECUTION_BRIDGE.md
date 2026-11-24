@@ -23,3 +23,16 @@ paired inputs, real-engine execution evidence and final ECS acceptance. The
 existing validation assumes the build target is executable, so draft mode rejects
 make all rather than invoking ./all or silently falling back to orchestrator.
 Offline synthetic evidence tests are not proof of real container execution.
+
+## Independent controlled-fixture execution gate
+
+real_job_gate.py requires expected original request and candidate hashes; checks
+all five stages, all six HTTP exchanges, raw DRAFT image inspect, report payload,
+validation output, complete findings, attestation receipts and exact artifact
+manifest coverage (nonempty, no fixed item count). It also checks the four
+services before/after the job and preserves logs. CI runs a new controlled
+fixture request with exec_image=draft and a separate candidate adding Git and
+strace. The original fixture stays unchanged. CI runs that new job as root to
+match ECS/Compose snapshot ownership; no wildcard Git trust is added.
+The new gate is a single-job success preflight, not a substitute for formal
+paired inputs or the real-project timeout/recovery campaign.
