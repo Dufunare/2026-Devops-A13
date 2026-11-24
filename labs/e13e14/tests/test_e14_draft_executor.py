@@ -148,6 +148,18 @@ class ExecutorTests(unittest.TestCase):
             self.broker.execute(self.request('full-check-baseline'))
         self.assertTrue(self.broker.active['failed'])
 
+    def test_abort_is_identity_bound_and_idempotent(self):
+        with self.assertRaisesRegex(ValueError, 'EXEC_JOB_IDENTITY_MISMATCH'):
+            self.broker.execute(self.request('abort', job_id='job-' + '9' * 32))
+        self.assertFalse(self.broker.active['failed'])
+        for _ in range(2):
+            answer = self.broker.execute(self.request('abort'))
+            self.assertEqual({'aborted': True}, answer['result'])
+        self.assertTrue(self.broker.active['failed'])
+        self.assertFalse((self.job / 'execution-receipts').exists())
+        with self.assertRaisesRegex(ValueError, 'EXEC_NO_ACTIVE_JOB'):
+            self.broker.execute(self.request('full-check-baseline'))
+
     def test_final_receipts_bind_all_steps_to_same_job_and_originals(self):
         report_sha = 'e' * 64
         for index, op in enumerate(OPERATIONS):

@@ -212,9 +212,17 @@ class DraftExecutor:
         allowed = set(IDENTITY) | {'operation', 'job_root'} | ({'report_sha256'} if op == 'validate' else set())
         need(set(request) == allowed, 'EXEC_REQUEST_FIELDS_INVALID')
         active = self.active
-        need(active is not None and not active['failed'], 'EXEC_NO_ACTIVE_JOB')
+        need(active is not None, 'EXEC_NO_ACTIVE_JOB')
+        if op != 'abort':
+            need(not active['failed'], 'EXEC_NO_ACTIVE_JOB')
         need(identity(request) == active['identity'], 'EXEC_JOB_IDENTITY_MISMATCH')
         need(request['job_root'] == str(active['root']), 'EXEC_JOB_ROOT_MISMATCH')
+        # An orchestrator may fail before a downstream role reaches DRAFT.
+        # Abort is identity-bound, idempotent, and performs no Docker action.
+        if op == 'abort':
+            active['failed'] = True
+            return {'status': 'SUCCEEDED', 'operation': 'abort',
+                    'identity': active['identity'], 'result': {'aborted': True}}
         index = active['next']
         need(index < len(OPERATIONS) and op == OPERATIONS[index], 'EXEC_OPERATION_ORDER')
         root, profile, meta = active['root'], active['profile'], active['identity']

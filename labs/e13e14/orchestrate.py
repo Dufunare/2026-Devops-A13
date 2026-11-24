@@ -22,7 +22,7 @@ sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
 from lab import resolve_profile
 from pipeline import shape_ok
 from contract import checked_incremental, findings_by_scope, profile_sha256, successful_draft_image
-from draft_executor import check_profile, full_timeout, verify_receipts
+from draft_executor import check_profile, full_timeout, identity, verify_receipts
 
 
 def resolve_project_profile(raw):
@@ -88,6 +88,37 @@ def http_timeout(role, payload):
     return max(720, int(2 * per_build + 120))
 
 
+class ServiceUnavailable(ValueError):
+    def __init__(self, role, reason):
+        self.role = role
+        super().__init__('SERVICE_UNAVAILABLE: ' + role + ': ' + str(reason))
+
+
+def abort_bound_job(result, out):
+    meta = identity(result)
+    body = {**meta, 'operation': 'abort', 'job_root': container_path(out)}
+    raw = json.dumps(body).encode()
+    (out / 'abort-request.json').write_bytes(raw)
+    req = urllib.request.Request(f'http://127.0.0.1:{PORTS["draft"]}/v1/execute',
+                                 data=raw, headers={'Content-Type': 'application/json'})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(req, timeout=30) as response:
+            status, answer = response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        status, answer = exc.code, exc.read()
+    (out / 'abort-response.json').write_bytes(answer)
+    from handoff import strict_json
+    data = strict_json(answer)
+    if (status != 200 or data.get('status') != 'SUCCEEDED'
+            or data.get('operation') != 'abort' or data.get('identity') != meta
+            or data.get('result') != {'aborted': True}
+            or any(data.get(k) != meta[k] for k in
+                   ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id'))):
+        raise ValueError('BROKER_ABORT_NOT_CONFIRMED')
+    return {'status': 'SUCCEEDED', 'operation': 'abort'}
+
+
 def call(role, payload, evidence):
     real = payload.get('profile', {}).get('exec_image') == 'draft'
     body = json.dumps(payload).encode()
@@ -118,6 +149,12 @@ def call(role, payload, evidence):
                         for key in ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id'))):
                 raise TimeoutError(f'{role} HTTP {exc.code}: {body}') from exc
         raise ValueError(f'{role} HTTP {exc.code}: {body}') from exc
+    except urllib.error.URLError as exc:
+        if real:
+            save(evidence, {'role': role, 'error_code': 'SERVICE_UNAVAILABLE',
+                            'error': str(exc.reason)})
+            raise ServiceUnavailable(role, exc.reason) from exc
+        raise
     if not real:
         save(evidence, data)
     for key in ('job_id', 'trace_id', 'profile_sha256'):
@@ -241,6 +278,15 @@ def execute(request, out, request_bytes=None):
         result.update(status='FAILED', error=str(exc))
         if isinstance(exc, TimeoutError):
             result['error_code'] = 'TIMEOUT'
+        if isinstance(exc, ServiceUnavailable):
+            result.update(error_code='SERVICE_UNAVAILABLE', failed_role=exc.role)
+        if profile['exec_image'] == 'draft' and draft_image_id is not None:
+            try:
+                result['broker_abort'] = abort_bound_job(result, out)
+            except Exception as abort_exc:
+                # An unreachable DRAFT cannot be declared aborted. Preserve
+                # the original stage failure and the independent abort error.
+                result['broker_abort'] = {'status': 'FAILED', 'error': str(abort_exc)}
     result['artifacts'] = [{'uri': path.relative_to(out).as_posix(), 'sha256': digest(path),
                             'bytes': path.stat().st_size} for path in sorted(out.rglob('*'))
                            if path.is_file() and '.git' not in path.parts and not path.is_symlink()]

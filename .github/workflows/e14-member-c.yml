@@ -144,17 +144,32 @@ jobs:
             --success-out work/ci-e14-draft-child \
             --out work/ci-e14-draft-fault \
             --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Isolated EChecker outage, abort, and same-container recovery
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          sudo python3 labs/e13e14/real_job_service_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --prior-fault-out work/ci-e14-draft-fault \
+            --out work/ci-e14-service-fault \
+            --project "$E14_PROJECT" --image "$E14_IMAGE" \
+            --allow-stop-echecker
       - name: Scan image history, source and emitted runtime evidence
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault
           CHILD_IMAGES=$(python3 - <<'PY'
           import json
           from pathlib import Path
           paths = [Path('work/ci-e14-draft-child/job/result.json'),
                    Path('work/ci-e14-draft-fault/fault/result.json'),
-                   Path('work/ci-e14-draft-fault/recovery/result.json')]
+                   Path('work/ci-e14-draft-fault/recovery/result.json'),
+                   Path('work/ci-e14-service-fault/fault/result.json'),
+                   Path('work/ci-e14-service-fault/recovery/result.json')]
           print('\n'.join(sorted({json.loads(p.read_text())['draft_image_id'] for p in paths})))
           PY
           )
@@ -182,6 +197,7 @@ jobs:
             work/ci-e14-member-c/
             work/ci-e14-draft-child/
             work/ci-e14-draft-fault/
+            work/ci-e14-service-fault/
             data/integration-sample/e14-child-request.json
             data/integration-sample/candidate-e14-child.Dockerfile
             work/ci-e14-image/

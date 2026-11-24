@@ -82,3 +82,23 @@ increment ran there. Archive /root/devops-materials/e14-pr28-241830217-20261124T
 28e24ac62725440eb6f2cb9e931b3eff2d1bf3b9ce1ad28c009064b4ea4ee608).
 C supplied the ECS terminal record; independent archive verification by A is
 pending. The new code and CI must be verified separately.
+
+
+## Orchestrator failure closure and isolated EChecker outage
+
+The broker supports only one extra non-execution operation, abort, bound to
+the exact active identity and job root. It closes the context idempotently,
+with no Docker action. A real-mode orchestrator that fails after DRAFT success
+records its raw abort exchange; an unconfirmed abort stays explicitly failed.
+Network errors are recorded with the failing service, not mislabeled as build
+timeouts. Successful paths still use the original six broker operations.
+
+real_job_service_gate.py requires an explicit --allow-stop-echecker option
+and prior fault gate from the same isolated deployment. It stops only the
+verified EChecker container ID, proves the other three roles stay healthy,
+runs a normal request that must fail at EChecker, checks abort and rejection
+of the next pending scan operation, restores that exact container in finally,
+and runs a fresh successful five-stage job. It verifies only EChecker's
+StartedAt changes, and all historical evidence stays unchanged.
+CI uses its disposable Compose project. Do not run this fault on a shared
+deployment or without a designated outage scope on ECS.

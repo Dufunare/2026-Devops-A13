@@ -193,7 +193,7 @@ class Handler(BaseHTTPRequestHandler):
                 result['draft_image_id'] = data['draft_image_id']
             print(json.dumps({'role': ROLE, 'job_id': data.get('job_id'),
                               'trace_id': data.get('trace_id'), 'status': 'SUCCEEDED',
-                              'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
+                              'operation': data.get('operation'), 'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
             self.reply(200, result)
         except Exception as exc:
             traceback.print_exc()
@@ -202,7 +202,7 @@ class Handler(BaseHTTPRequestHandler):
                      str(exc).startswith('DRAFT_TIMED_OUT:')) else type(exc).__name__.upper())
             print(json.dumps({'role': ROLE, 'job_id': data.get('job_id'),
                               'trace_id': data.get('trace_id'), 'status': 'FAILED',
-                              'error_code': code, 'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
+                              'operation': data.get('operation'), 'error_code': code, 'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)
             self.reply(422, {'status': 'FAILED', 'role': ROLE, 'error_code': code, 'error': str(exc),
                              **{key: data.get(key) for key in ('job_id', 'trace_id', 'profile_sha256',
                                                                'draft_image_id', 'operation')}})

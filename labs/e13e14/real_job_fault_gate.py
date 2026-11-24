@@ -136,6 +136,19 @@ def confirm_absent(out, cid, name, phase):
             'FAULT_CHILD_STILL_PRESENT')
 
 
+def verify_abort(job, meta):
+    result = load(job / 'result.json')
+    require(result.get('broker_abort') == {'status': 'SUCCEEDED', 'operation': 'abort'},
+            'FAULT_BROKER_ABORT_NOT_CONFIRMED')
+    require(load(job / 'abort-request.json') ==
+            {**identity(meta), 'operation': 'abort', 'job_root': container_path(job)},
+            'FAULT_ABORT_REQUEST_MISMATCH')
+    response = load(job / 'abort-response.json')
+    require(response.get('operation') == 'abort' and response.get('status') == 'SUCCEEDED'
+            and response.get('identity') == identity(meta) and response.get('result') == {'aborted': True},
+            'FAULT_ABORT_RESPONSE_MISMATCH')
+
+
 def verify_fault(job, request, candidate_sha):
     r = load(job / 'result.json')
     meta = identity(r)
@@ -177,6 +190,7 @@ def verify_fault(job, request, candidate_sha):
     marker = job / 'baseline-full/project' / MARKER
     require(marker.is_file() and marker.read_text().strip() == 'started' and
             not marker.with_name(LATE).exists(), 'FAULT_DELAY_NOT_INTERRUPTED')
+    verify_abort(job, meta)
     count = verify_manifest(job, r)
     return {'status': 'PASS', **meta, 'container_id': cid, 'container_name': name,
             'artifacts_verified': count, 'timeout_s': TIMEOUT}
@@ -215,8 +229,8 @@ def run_job(request, job, log, expect_rc, during=None):
             'FAULT_ORCHESTRATOR_UNEXPECTED_EXIT: ' + str(rc))
 
 
-def replay(out, job, meta, phase, expected):
-    body = {**identity(meta), 'operation': TAG, 'job_root': container_path(job)}
+def replay(out, job, meta, phase, expected, operation=TAG):
+    body = {**identity(meta), 'operation': operation, 'job_root': container_path(job)}
     raw = json.dumps(body).encode()
     (out / ('replay-' + phase + '-request.json')).write_bytes(raw)
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -237,7 +251,7 @@ def replay(out, job, meta, phase, expected):
             time.sleep(0.05)
             continue
         require(status == 422 and decoded.get('status') == 'FAILED' and expected in decoded.get('error', '')
-                and decoded.get('role') == 'draft' and decoded.get('operation') == TAG
+                and decoded.get('role') == 'draft' and decoded.get('operation') == operation
                 and all(decoded.get(k) == body[k] for k in
                         ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id')),
                 'FAULT_OLD_JOB_REPLAY_ACCEPTED_OR_WRONG_ERROR')
@@ -319,7 +333,8 @@ def main():
         fault_events = events(out / 'four-services.log', fault['job_id'], fault['trace_id'])
         require(sorted(e['role'] for e in fault_events if e.get('error_code') == 'TIMEOUT') ==
                 ['buildchecker', 'draft'] and
-                [e['role'] for e in fault_events if e.get('status') == 'SUCCEEDED'] == ['draft'],
+                [(e['role'], e.get('operation')) for e in fault_events if e.get('status') == 'SUCCEEDED'] ==
+                [('draft', None), ('draft', 'abort')],
                 'FAULT_SERVICE_TRACE_MISMATCH')
         recovery_events = events(out / 'four-services.log', recovery['job_id'], recovery['trace_id'])
         require(all(e.get('status') == 'SUCCEEDED' for e in recovery_events) and
