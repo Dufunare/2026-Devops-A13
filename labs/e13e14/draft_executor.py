@@ -133,8 +133,18 @@ class DraftExecutor:
         need(profile_sha256(profile) == meta['profile_sha256'], 'EXEC_PROFILE_MISMATCH')
         need(sha(job / 'request.json') == meta['request_sha256']
              and sha(candidate) == meta['candidate_sha256'], 'EXEC_INPUT_HASH_MISMATCH')
-        need(data.get('expected_output', profile['expected_output']) == profile['expected_output'],
-             'EXEC_EXPECTED_OUTPUT_MISMATCH')
+        from lab import resolve_profile
+        from handoff import strict_json
+        original = strict_json((job / 'request.json').read_bytes())
+        need(original.get('base') == meta['base_commit']
+             and original.get('target') == meta['target_commit']
+             and resolve_profile(original.get('profile')) == profile
+             and original.get('candidate') == str(candidate),
+             'EXEC_ORIGINAL_REQUEST_MISMATCH')
+        need(data.get('expected_output', profile['expected_output']) == profile['expected_output']
+             and original.get('expected_output', profile['expected_output']) == profile['expected_output']
+             and data.get('build_timeout', 600) == original.get('build_timeout', 600),
+             'EXEC_EXPECTED_OUTPUT_OR_TIMEOUT_MISMATCH')
         for name, commit_key in (('base-project', 'base_commit'), ('target-project', 'target_commit')):
             path = job / name
             need(path.is_dir() and path.resolve() == path, 'EXEC_SNAPSHOT_PATH_INVALID')

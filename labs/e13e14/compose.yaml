@@ -43,6 +43,7 @@ services:
     <<: *common
     environment:
       E14_ROLE: draft
+      E14_HOST_COURSE_SOURCE: ${E14_ROOT:?set E14_ROOT}
       PYTHONDONTWRITEBYTECODE: "1"
       # Default: existing E11/E12 mirror policy for ECS. Override via
       # E14_SOURCE_POLICY to switch CI to an upstream/no-op policy file.

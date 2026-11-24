@@ -2,9 +2,9 @@ name: E14 member C four-service fixture and recovery gate
 
 on:
   push:
-    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121]
+    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121, student/241830217/e14-real-integration-20261124]
   pull_request:
-    branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120]
+    branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120, coord/e13-e14-integration-20261124]
   workflow_dispatch:
 
 permissions:

@@ -18,8 +18,11 @@ from buildchecker.fullcheck import full_check
 from contract import (checked_incremental, findings_by_scope,
                       profile_sha256, successful_draft_image, verify_request_identity)
 
+from draft_executor import DraftExecutor, delegate, identity
+
 ROOT = Path('/course').resolve()
 ROLE = os.environ['E14_ROLE']
+EXECUTOR = DraftExecutor(ROOT, os.environ.get('E14_HOST_COURSE_SOURCE', ''))
 # Keep /health available while a role processes a long build.
 # One /v1/run at a time per role avoids concurrent writes and Docker contention.
 RUN_LOCK = threading.Lock()
@@ -49,20 +52,36 @@ def run(data):
         raise ValueError('Output already exists')
     profile = resolve_profile(data.get('profile'))
     image_id = verify_request_identity(data, profile)
-    if profile['exec_image'] != 'orchestrator' and ROLE != 'draft':
-        raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
+    use_image = profile['exec_image'] == 'draft'
+    if use_image and ROLE != 'draft':
+        identity(data)
+        job = out.parent
+        expected = job / ('base-project' if out.name == 'baseline-full' else 'target-project')
+        if project != expected:
+            raise ValueError('EXEC_JOB_LAYOUT_INVALID')
     if ROLE == 'draft':
+        EXECUTOR.active = None
         candidate = local(data['candidate'], 'data')
+        prepared = EXECUTOR.prepare(data, project, out, profile, candidate) if use_image else None
         result = auto_build(project, candidate, out, data.get('expected_output', profile['expected_output']),
                             timeout=float(data.get('build_timeout', 600)))
         if result['status'] != 'SUCCEEDED':
             raise ValueError('DRAFT_' + result['status'] + ': ' + str(result.get('error')))
         draft_id = successful_draft_image({'status': 'SUCCEEDED', 'result': result})
+        if use_image:
+            EXECUTOR.activate(prepared, profile, draft_id)
         return {'status': 'SUCCEEDED', 'result': result, 'draft_image_id': draft_id,
                 'artifact': str(out / 'result.json')}
     if ROLE == 'buildchecker':
-        result = full_check(project, out, clean_command='make ' + profile['clean_target'],
-                            build_command='make ' + profile['build_target'])
+        if use_image:
+            operation = {'baseline-full': 'full-check-baseline', 'target-full': 'full-check-target',
+                         'final-full': 'full-check-recheck'}.get(out.name)
+            if operation is None:
+                raise ValueError('EXEC_OPERATION_INVALID')
+            result = delegate(operation, data)
+        else:
+            result = full_check(project, out, clean_command='make ' + profile['clean_target'],
+                                build_command='make ' + profile['build_target'])
         if result['status'] != 'SUCCEEDED':
             raise ValueError('BUILDCHECKER_' + result['status'] + ': ' + str(result.get('error')))
         return {'status': 'SUCCEEDED', 'result': result, 'artifact': str(out / 'findings.json'),
@@ -71,7 +90,14 @@ def run(data):
         base = local(data['base'])
         baseline_graph = local(data['baseline_graph'])
         target_findings = local(data['target_findings'])
-        old = scan(base, profile=profile)
+        if use_image:
+            if (out.name != 'incremental' or base != out.parent / 'base-project'
+                    or baseline_graph != out.parent / 'baseline-full/actual-graph.json'
+                    or target_findings != out.parent / 'target-full/findings.json'):
+                raise ValueError('EXEC_JOB_LAYOUT_INVALID')
+            old = delegate('scan-baseline', data)
+        else:
+            old = scan(base, profile=profile)
         graph = json.loads(baseline_graph.read_text())
         targets = {t for t, _source in profile['units']}
         projected = {t: sorted({e['dependency'] for e in graph if e['target'] == t})
@@ -79,14 +105,18 @@ def run(data):
         if old['actual'] != projected:
             raise ValueError('Baseline BuildChecker/GCC graph mismatch')
         old['actual'] = projected
-        current = scan(project, old, profile)
+        if use_image:
+            save(out / 'baseline-cache.json', old)
+            current = delegate('scan-target', data)
+        else:
+            current = scan(project, old, profile)
         reference = json.loads(target_findings.read_text())
         normalize = lambda fs: sorted((x['type'], x['target'], x['dependency']) for x in fs
                                       if x['target'] in targets)
         if reference['status'] != 'SUCCEEDED' or normalize(current['findings']) != normalize(reference['findings']):
             raise ValueError('Incremental/full findings mismatch')
         scope = findings_by_scope(reference['findings'], profile)
-        out.mkdir(parents=True)
+        out.mkdir(parents=True, exist_ok=use_image)
         save(out / 'baseline-cache.json', old)
         envelope = {'schema_version': 'e11e12-1', 'kind': 'incremental-check',
                     'status': 'SUCCEEDED', 'commit': data['target_commit'],
@@ -100,6 +130,8 @@ def run(data):
                 **scope}
     if ROLE == 'mdfixer':
         report = local(data['report'])
+        if use_image and (out.name != 'repair-work' or report != out.parent / 'incremental/incremental-check.json'):
+            raise ValueError('EXEC_JOB_LAYOUT_INVALID')
         envelope = checked_incremental(report.read_bytes(), data['report_sha256'],
                                        data['job_id'], data['trace_id'], data['target_commit'],
                                        data.get('profile_sha256'), image_id)
@@ -110,7 +142,8 @@ def run(data):
         candidate = out / 'candidate.patch'
         candidate.write_text(diff, encoding='utf-8')
         save(out / 'repair-plan.json', edits)
-        verdict = validate(project, candidate, out / 'validation', profile=profile)
+        verdict = (delegate('validate', data, data['report_sha256']) if use_image
+                   else validate(project, candidate, out / 'validation', profile=profile))
         if not verdict['accepted']:
             raise ValueError('Patch rejected: ' + str(verdict))
         return {'status': 'SUCCEEDED', 'patch': str(candidate),
@@ -138,7 +171,7 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(404, {'error': 'NOT_FOUND'})
 
     def do_POST(self):
-        if self.path != '/v1/run':
+        if self.path != '/v1/run' and not (ROLE == 'draft' and self.path == '/v1/execute'):
             self.reply(404, {'error': 'NOT_FOUND'})
             return
         if not RUN_LOCK.acquire(blocking=False):
@@ -153,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
             if length < 1 or length > 100000:
                 raise ValueError('Invalid request size')
             data = json.loads(self.rfile.read(length))
-            result = run(data)
+            result = EXECUTOR.execute(data) if self.path == '/v1/execute' else run(data)
             result.update(job_id=data.get('job_id'), trace_id=data.get('trace_id'),
                           profile_sha256=data.get('profile_sha256'))
             if 'draft_image_id' in data:

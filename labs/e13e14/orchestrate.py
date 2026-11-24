@@ -22,13 +22,13 @@ sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
 from lab import resolve_profile
 from pipeline import shape_ok
 from contract import checked_incremental, findings_by_scope, profile_sha256, successful_draft_image
+from draft_executor import check_profile, verify_receipts
 
 
 def resolve_project_profile(raw):
     profile = resolve_profile(raw)
-    # B owns DRAFT-image downstream execution. Do not silently claim it here.
-    if profile['exec_image'] != 'orchestrator':
-        raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
+    if profile['exec_image'] == 'draft':
+        check_profile(profile)
     return profile
 
 
@@ -81,7 +81,7 @@ def snapshot(repo, revision, target, logs, profile=None):
 def http_timeout(role, payload):
     # DRAFT runs up to two Docker builds, each with its own timeout.
     if role != 'draft':
-        return 720
+        return 6100 if payload.get('profile', {}).get('exec_image') == 'draft' else 720
     per_build = float(payload.get('build_timeout', 600))
     if not 0 < per_build <= 3600:
         raise ValueError('DRAFT build_timeout must be in (0, 3600] seconds')
@@ -89,6 +89,8 @@ def http_timeout(role, payload):
 
 
 def call(role, payload, evidence):
+    if payload.get('profile', {}).get('exec_image') == 'draft':
+        save(evidence.with_name(evidence.stem + '-request.json'), payload)
     req = urllib.request.Request(f'http://127.0.0.1:{PORTS[role]}/v1/run',
                                  data=json.dumps(payload).encode(),
                                  headers={'Content-Type': 'application/json'})
@@ -110,7 +112,7 @@ def call(role, payload, evidence):
     return data
 
 
-def execute(request, out):
+def execute(request, out, request_bytes=None):
     if out.exists():
         raise ValueError('Use a new output directory')
     if not out.resolve().is_relative_to((ROOT / 'work').resolve()):
@@ -130,7 +132,12 @@ def execute(request, out):
               'profile_sha256': profile_hash, 'candidate_sha256': candidate_hash,
               'downstream_execution_environment': 'orchestrator',
               'downstream_container_attested': False}
-    save(out / 'request.json', request)
+    if profile['exec_image'] == 'draft' and request_bytes is not None:
+        if json.loads(request_bytes) != request:
+            raise ValueError('Original request bytes differ from parsed request')
+        (out / 'request.json').write_bytes(request_bytes)
+    else:
+        save(out / 'request.json', request)
     result['request_sha256'] = digest(out / 'request.json')
     draft_image_id = None
 
@@ -138,6 +145,8 @@ def execute(request, out):
         return {'project': container_path(project), 'out': container_path(folder),
                 'job_id': job, 'trace_id': trace, 'profile': profile,
                 'profile_sha256': profile_hash,
+                **({k: result[k] for k in ('base_commit', 'target_commit', 'request_sha256', 'candidate_sha256')}
+                   if profile['exec_image'] == 'draft' else {}),
                 **({'draft_image_id': draft_image_id} if draft_image_id else {}), **extra}
 
     def stage(name, commit, data):
@@ -161,6 +170,8 @@ def execute(request, out):
                        out / 'draft-response.json')
         draft_image_id = successful_draft_image(drafted)
         result['draft_image_id'] = draft_image_id
+        if profile['exec_image'] == 'draft':
+            result['downstream_execution_environment'] = 'image:' + draft_image_id
         stage('draft', target_sha, drafted)
 
         base_full = call('buildchecker', payload(base, out / 'baseline-full'), out / 'baseline-response.json')
@@ -194,6 +205,13 @@ def execute(request, out):
         result['recheck_scope'] = scope
         if scope['remaining_missing_full']:
             raise ValueError(f"Recheck has {scope['remaining_missing_full']} full-project missing dependencies")
+        if profile['exec_image'] == 'draft':
+            if digest(report_path) != result['report_transfer']['sha256']:
+                raise ValueError('REPORT_HASH_MISMATCH: original changed after repair')
+            attestation = verify_receipts(out, result, profile, str(ROOT.resolve()),
+                                          result['report_transfer']['sha256'])
+            save(out / 'execution-attestation.json', attestation)
+            result['downstream_container_attested'] = True
         stage('recheck', target_sha, {'result': final, 'remaining_missing': 0,
                                      **scope})
         result['status'] = 'SUCCEEDED'
@@ -211,7 +229,9 @@ def main():
     parser.add_argument('--request', required=True, type=Path)
     parser.add_argument('--out', required=True, type=Path)
     args = parser.parse_args()
-    result = execute(json.loads(args.request.read_text(encoding='utf-8')), args.out.resolve())
+    from handoff import strict_json
+    raw = args.request.read_bytes()
+    result = execute(strict_json(raw), args.out.resolve(), request_bytes=raw)
     print(json.dumps({'status': result['status'], 'job_id': result['job_id'],
                       'stages': [x['name'] for x in result['stages']],
                       'error': result.get('error')}, ensure_ascii=False))

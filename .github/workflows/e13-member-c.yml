@@ -2,7 +2,7 @@ name: E13 member C fixture and protection gate
 
 on:
   pull_request:
-    branches: [main, e11-e12-integration]
+    branches: [main, e11-e12-integration, coord/e13-e14-integration-20261124]
   push:
     branches: [student/241830217/e13e14-c]
   workflow_dispatch:
