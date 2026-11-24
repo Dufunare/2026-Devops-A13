@@ -7,6 +7,7 @@ from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
 SCANNER_PATH = ROOT / "labs/e13e14/scan_runtime_logs.py"
@@ -107,6 +108,41 @@ class MemberCStaticTests(unittest.TestCase):
             gate.c8_manifest_entries(report, "job-other")
         with self.assertRaisesRegex(gate.GateError, "non-object entry"):
             gate.c8_manifest_entries(dict(report, artifacts=["not-an-object"]), job)
+
+    def test_explicit_input_pins_original_request_candidate_and_commit_shape(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "data/repo").mkdir(parents=True)
+            candidate = root / "data/candidate.Dockerfile"
+            candidate.write_bytes(b"FROM scratch\n")
+            request = root / "data/request.json"
+            body = {"mode": "e12", "repo": "/course/data/repo",
+                    "candidate": "/course/data/candidate.Dockerfile",
+                    "base": "a" * 40, "target": "b" * 40}
+            request.write_text(json.dumps(body))
+            digest = gate.sha_bytes(request.read_bytes())
+            candidate_sha = gate.sha_bytes(candidate.read_bytes())
+            with patch.object(gate, "ROOT", root):
+                self.assertEqual(body, gate.validate_pair_input(request, digest, candidate_sha)[1])
+                with self.assertRaisesRegex(gate.GateError, "request hash"):
+                    gate.validate_pair_input(request, "0" * 64, candidate_sha)
+                with self.assertRaisesRegex(gate.GateError, "candidate hash"):
+                    gate.validate_pair_input(request, digest, "0" * 64)
+                body["base"] = "short"
+                request.write_text(json.dumps(body))
+                with self.assertRaisesRegex(gate.GateError, "complete C0/C1"):
+                    gate.validate_pair_input(request, gate.sha_bytes(request.read_bytes()), candidate_sha)
+
+    def test_complete_manifest_rejects_omissions_and_symlinks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "a").write_bytes(b"a")
+            report = {"job_id": "job-1", "artifacts": [
+                {"uri": "artifact://job-1/a", "sha256": gate.sha_bytes(b"a"), "bytes": 1}]}
+            self.assertEqual(1, gate.artifact_bytes_check(root, report, complete=True))
+            (root / "omitted").write_bytes(b"b")
+            with self.assertRaisesRegex(gate.GateError, "coverage"):
+                gate.artifact_bytes_check(root, report, complete=True)
 
     def test_snapshot_changes_when_content_changes(self):
         with tempfile.TemporaryDirectory() as temp:

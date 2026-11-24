@@ -102,3 +102,34 @@ and runs a fresh successful five-stage job. It verifies only EChecker's
 StartedAt changes, and all historical evidence stays unchanged.
 CI uses its disposable Compose project. Do not run this fault on a shared
 deployment or without a designated outage scope on ECS.
+
+
+## E13 explicit-input protection preflight
+
+member_c_gate.py keeps its default fixture gate. An optional explicit E12
+request and independently supplied request/candidate SHA256 reuse the existing
+pipeline and B's profile resolver. C4 changes only build_timeout in a derived
+request; C7 uses an invalid base in a separate request; successful C4/C7/C8
+runs use the same original input. Complete manifests, C0/C1 and declared
+profile identity are checked; DRAFT-mode results must contain actual child
+execution originals for the current executable-target contract.
+The C8 API now uses a CLI-only private Store path below /course/work instead
+of a nested mount. The default API Store path is unchanged; the isolated
+test server mounts /course exactly once, saves actual POST/response bytes,
+and retains verified downloaded files and response hashes. CI exercises
+both the old fixture and a separate controlled E12 DRAFT request.
+
+For formal paired inputs, do not invent a profile or rewrite the original
+request. Use the agreed merged B profile contract and the original hashes:
+
+    python3 labs/e13e14/member_c_gate.py \
+      --image course-e11e12:241830217 --api-port "$FREE_PORT" \
+      --paired-request "$PAIRED_REQUEST" \
+      --paired-request-sha256 "$REQUEST_SHA" \
+      --paired-candidate-sha256 "$CANDIDATE_SHA" \
+      --out "$NEW_OUT"
+
+This remains a local preflight, not a cross-machine B13 receipt. The E13
+C4 process observation is a bounded file-stability/task-path check, not
+proof of all BuildKit internal daemon activity. The real-project build/run
+target contract and formal cross-team input still require B/A confirmation.

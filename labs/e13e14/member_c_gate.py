@@ -1,4 +1,4 @@
-"""Member C (241830217) repeatable E13 *teaching-fixture* checks.
+"""Member C (241830217) repeatable E13 fixture and explicit-input preflight checks.
 
 C4 timeout/cleanup + recovery; C7 failed-to-successful task isolation;
 C8 isolated single-worker HTTP API, replay, 409 and downloaded artifact hashes.
@@ -14,6 +14,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -59,7 +60,34 @@ def command(args: list[str], *, timeout: int = 40) -> str:
     return result.stdout.strip()
 
 
-def artifact_bytes_check(root: Path, result: dict) -> int:
+def validate_pair_input(request_path, request_hash, candidate_hash):
+    """Verify caller-pinned originals without interpreting B's profile."""
+    require(isinstance(request_hash, str) and re.fullmatch(r'[0-9a-f]{64}', request_hash)
+            and isinstance(candidate_hash, str) and re.fullmatch(r'[0-9a-f]{64}', candidate_hash),
+            "Explicit request and candidate SHA256 are required")
+    raw = request_path.read_bytes()
+    require(sha_bytes(raw) == request_hash, "Paired request hash mismatch")
+    request = load_json(request_path)
+    require(request.get("mode") == "e12", "Explicit preflight requires an E12 request")
+    for key in ("base", "target"):
+        require(isinstance(request.get(key), str) and re.fullmatch(r'[0-9a-f]{40}', request[key]),
+                "Explicit input requires complete C0/C1 SHA")
+    def under_data(value):
+        require(isinstance(value, str) and value.startswith("/course/data/"),
+                "Explicit input path must be under /course/data")
+        source = ROOT / value[len("/course/"):]
+        path = source.resolve()
+        require(path == source and path.is_relative_to(ROOT / "data"),
+                "Explicit input path escapes data or uses a symlink")
+        return path
+    require(under_data(request.get("repo")).is_dir(), "Explicit repo missing")
+    candidate = under_data(request.get("candidate"))
+    require(candidate.is_file() and sha_bytes(candidate.read_bytes()) == candidate_hash,
+            "Paired candidate hash mismatch")
+    return raw, request, candidate
+
+
+def artifact_bytes_check(root: Path, result: dict, complete=False) -> int:
     job = result["job_id"]
     prefix = f"artifact://{job}/"
     items = result.get("artifacts")
@@ -72,13 +100,52 @@ def artifact_bytes_check(root: Path, result: dict) -> int:
         require(relative not in seen and relative != "", f"Duplicate/empty URI: {relative}")
         require(all(x not in ("", ".", "..", ".git") for x in relative.split("/"))
                 and "\\" not in relative, "Unsafe artifact path")
-        path = (root / relative).resolve()
-        require(path.is_relative_to(root.resolve()) and path.is_file(), f"Artifact missing: {relative}")
+        path = root.resolve() / relative
+        require(path.resolve() == path and path.is_relative_to(root.resolve()) and path.is_file(),
+                f"Artifact missing or unsafe: {relative}")
         raw = path.read_bytes()
         require(sha_bytes(raw) == item["sha256"] and len(raw) == item["bytes"],
                 f"Artifact bytes/hash mismatch: {relative}")
         seen.add(relative)
+    if complete:
+        actual = set()
+        for path in root.rglob("*"):
+            rel = path.relative_to(root)
+            if ".git" in rel.parts:
+                continue
+            require(not path.is_symlink(), "Artifact symlink")
+            if path.is_file() and rel.as_posix() != "result.json":
+                actual.add(rel.as_posix())
+        require(seen == actual, "Artifact manifest coverage mismatch")
     return len(seen)
+
+
+def verify_success(root, result, request_path, explicit):
+    count = artifact_bytes_check(root, result, complete=explicit)
+    if not explicit:
+        return count
+    request = load_json(request_path)
+    require((result.get("base_commit"), result.get("target_commit")) ==
+            (request["base"], request["target"]), "Explicit input commit mismatch")
+    require([stage["name"] for stage in result["stages"]] ==
+            ["draft", "full-check", "incremental-check", "repair", "recheck"],
+            "Explicit E12 stages incomplete")
+    for field in ("exchange_profile_id", "profile_sha256"):
+        if field in request:
+            require(result.get(field) == request[field], "Explicit profile binding mismatch")
+    profile = result["profile"]
+    if request.get("profile", {}).get("exec_image") == "draft":
+        require(profile.get("exec_image") == "draft", "Explicit DRAFT mode was dropped")
+    if profile.get("exec_image") == "draft":
+        from execution_attestation import verify_job
+        from draft_executor import operation_tags, OPERATIONS
+        image = result.get("draft_image_id")
+        require(result.get("downstream_executed_in") == "image:" + str(image),
+                "Explicit DRAFT execution was not used")
+        tags = [tag for op in OPERATIONS for tag in operation_tags(profile)[op]]
+        checked = verify_job(root, image, str(ROOT.resolve()), tags)
+        require(set(checked["verified_tags"]) == set(tags), "Explicit child evidence mismatch")
+    return count
 
 
 def c8_manifest_entries(result: dict, job: str) -> list[dict]:
@@ -119,13 +186,13 @@ def file_snapshot(root: Path) -> dict:
     return data
 
 
-def c4(evidence: Path) -> dict:
-    src = load_json(SAMPLE / "e12.json")
+def c4(evidence: Path, normal=None, local_timeout=1200) -> dict:
+    src = load_json(normal or SAMPLE / "e12.json")
     src["build_timeout"] = 0.01
     request = evidence / "inputs/c4-timeout.json"
     write_json(request, src)
     bad_out = evidence / "c4-timeout"
-    rc, bad = run_local(request, bad_out, "c4-timeout", evidence)
+    rc, bad = run_local(request, bad_out, "c4-timeout", evidence, timeout=local_timeout)
     inner = load_json(bad_out / "draft-build/result.json")
     require(rc != 0 and bad.get("status") == "FAILED", "C4 timeout reported success")
     require(bad.get("error", {}).get("code") == "DRAFT_FAILED", "C4 outer error mismatch")
@@ -143,59 +210,69 @@ def c4(evidence: Path) -> dict:
                              capture_output=True, text=True, timeout=15)
     require(process.returncode == 0, "Unable to inspect process list for C4")
     build_processes = [line for line in process.stdout.splitlines()
-                       if "docker build" in line and str(bad_out) in line]
+                       if "docker build" in line and (str(bad_out) in line or
+                           ("/course/" + bad_out.relative_to(ROOT).as_posix()) in line)]
     (evidence / "c4-build-process-check.txt").write_text(
         "\n".join(build_processes) + "\n", encoding="utf-8")
     require(not build_processes, "C4 task-specific Docker build process remains")
 
     # A normal task proves the failed run did not poison subsequent work.
-    good_request = SAMPLE / "e11-a.json"
+    good_request = normal or SAMPLE / "e11-a.json"
     good_out = evidence / "c4-recovery"
-    good_rc, good = run_local(good_request, good_out, "c4-recovery", evidence)
+    good_rc, good = run_local(good_request, good_out, "c4-recovery", evidence, timeout=local_timeout)
     require(good_rc == 0 and good["status"] == "SUCCEEDED", "C4 recovery failed")
     require(good["job_id"] != bad["job_id"] and good["trace_id"] != bad["trace_id"],
             "C4 recovery reused failed task identity")
-    count = artifact_bytes_check(good_out, good)
+    count = verify_success(good_out, good, good_request, normal is not None)
+    require(file_snapshot(bad_out / "draft-build") == before, "C4 old evidence changed after recovery")
     result = {"status": "PASS", "timeout_rc": rc, "timeout_error": bad["error"],
               "draft_status": inner["status"], "timeout_job": bad["job_id"],
               "recovery_job": good["job_id"], "recovery_trace": good["trace_id"],
               "recovery_artifacts_verified": count, "late_file_writes_observed": False,
               "task_specific_build_processes_observed": len(build_processes),
+              "draft_image_id": good.get("draft_image_id"),
               "note": "3-second file stability and task-path process sample; not full daemon attestation"}
     write_json(evidence / "c4-summary.json", result)
     print("C4_TIMEOUT_AND_RECOVERY=PASS", flush=True)
     return result
 
 
-def c7(evidence: Path) -> dict:
-    src = load_json(SAMPLE / "e11-a.json")
+def c7(evidence: Path, normal=None, local_timeout=1200) -> dict:
+    good_request = normal or SAMPLE / "e11-a.json"
+    src = load_json(good_request)
     src["base"] = "0" * 40
     request = evidence / "inputs/c7-invalid-base.json"
     write_json(request, src)
     bad_out = evidence / "c7-failed"
-    bad_rc, bad = run_local(request, bad_out, "c7-failed", evidence)
+    bad_rc, bad = run_local(request, bad_out, "c7-failed", evidence, timeout=local_timeout)
     require(bad_rc != 0 and bad.get("status") == "FAILED", "C7 negative task did not fail")
+    bad_snapshot = file_snapshot(bad_out)
     good_out = evidence / "c7-success"
-    good_rc, good = run_local(SAMPLE / "e11-a.json", good_out, "c7-success", evidence)
+    good_rc, good = run_local(good_request, good_out, "c7-success", evidence, timeout=local_timeout)
     require(good_rc == 0 and good["status"] == "SUCCEEDED", "C7 success task failed")
     require(bad["job_id"] != good["job_id"] and bad["trace_id"] != good["trace_id"],
             "C7 identities not isolated")
-    count = artifact_bytes_check(good_out, good)
+    count = verify_success(good_out, good, good_request, normal is not None)
+    require(file_snapshot(bad_out) == bad_snapshot, "C7 failed job evidence changed")
     result = {"status": "PASS", "negative_exit": bad_rc,
               "negative_error": bad.get("error"), "negative_job": bad["job_id"],
               "positive_job": good["job_id"], "positive_trace": good["trace_id"],
-              "positive_artifacts_verified": count,
-              "scope": "Sequential invalid-base-to-success fixture, not concurrent build-crash isolation"}
+              "positive_artifacts_verified": count, "draft_image_id": good.get("draft_image_id"),
+              "scope": "Sequential invalid-base-to-success, not concurrent build-crash isolation"}
     write_json(evidence / "c7-summary.json", result)
     print("C7_FAILURE_ISOLATION=PASS", flush=True)
     return result
 
 
 def http_call(base: str, method: str, path: str, payload: dict | None = None,
-              timeout: int = 30) -> tuple[int, dict | bytes, dict]:
+              timeout: int = 30, wire: Path | None = None) -> tuple[int, dict | bytes, dict]:
     data = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
     headers = {"Content-Type": "application/json"} if data is not None else {}
     req = Request(base + path, data=data, method=method, headers=headers)
+    if wire is not None:
+        wire.parent.mkdir(parents=True, exist_ok=True)
+        if data is not None:
+            wire.with_suffix('.request.json').write_bytes(data)
     try:
         response = urlopen(req, timeout=timeout)
     except HTTPError as err:
@@ -204,6 +281,9 @@ def http_call(base: str, method: str, path: str, payload: dict | None = None,
         status = response.status
         raw = response.read()
         response_headers = {k.lower(): v for k, v in response.headers.items()}
+    if wire is not None:
+        wire.with_suffix('.response.json').write_bytes(raw)
+        write_json(wire.with_suffix('.headers.json'), {"status": status, "headers": response_headers})
     if path.find("/files/") >= 0:
         return status, raw, response_headers
     try:
@@ -214,9 +294,9 @@ def http_call(base: str, method: str, path: str, payload: dict | None = None,
     return status, body, response_headers
 
 
-def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
-    # Use a distinct host port and a *separate* /course/work mount to ensure this
-    # server cannot share the Store database with another student's API process.
+def c8(evidence: Path, image: str, port: int, wait_seconds: int, normal=None) -> dict:
+    # A separate CLI-selected Store below the single /course bind prevents
+    # sharing the database without giving children a nested /course mount.
     server_work = evidence / "c8-api-private-work"
     server_work.mkdir(parents=True, exist_ok=False)
     require(not any(server_work.iterdir()), "C8 private work is not empty")
@@ -231,9 +311,11 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
             "-v", "/var/run/docker.sock:/var/run/docker.sock",
             "-p", f"127.0.0.1:{port}:8080", "-e", "HOME=/tmp",
             "-e", "PYTHONPATH=/course/labs/e11e12:/course/labs/e8e10:/course/labs/e11e12/vendor:/app",
-            "-v", f"{ROOT}:/course", "-v", f"{server_work.resolve()}:/course/work",
-            "-w", "/course", image, "python3", "labs/e11e12/server.py",
-            "--host", "0.0.0.0"]
+            *(["-e", "EXPERIMENTAL_BUILDKIT_SOURCE_POLICY=/course/labs/e11e12/environment/source-policy.json"]
+              if os.environ.get("E11E12_USE_SOURCE_POLICY", "1") == "1" else []),
+            "-v", f"{ROOT}:/course", "-w", "/course", image, "python3", "labs/e11e12/server.py",
+            "--host", "0.0.0.0", "--store",
+            "/course/" + (server_work / "api-jobs").relative_to(ROOT).as_posix()]
     created = False
     try:
         output = command(args, timeout=40)
@@ -250,21 +332,23 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
             time.sleep(1)
         else:
             raise GateError("C8 isolated API did not become healthy")
-        original = load_json(SAMPLE / "e11-a.json")
+        normal_request = normal or SAMPLE / "e11-a.json"
+        original = load_json(normal_request)
+        wire = evidence / "c8-wire"
         key = "e13-c-241830217-" + uuid.uuid4().hex
         payload = {"input": original, "idempotency_key": key}
         write_json(evidence / "c8-request.json", payload)
-        first_code, first, _ = http_call(base, "POST", "/v1/jobs", payload)
+        first_code, first, _ = http_call(base, "POST", "/v1/jobs", payload, wire=wire / "first")
         write_json(evidence / "c8-first.json", first)
         require(first_code == 202 and first.get("job_id", "").startswith("job-"), "C8 first POST invalid")
         job = first["job_id"]
-        duplicate_code, dup, _ = http_call(base, "POST", "/v1/jobs", payload)
+        duplicate_code, dup, _ = http_call(base, "POST", "/v1/jobs", payload, wire=wire / "duplicate")
         write_json(evidence / "c8-duplicate.json", dup)
         require(duplicate_code == 202 and dup.get("job_id") == job, "C8 duplicate created job")
         conflict = copy.deepcopy(payload)
         conflict["input"]["target"] = "0" * 40
         write_json(evidence / "c8-conflict-request.json", conflict)
-        conflict_code, refused, _ = http_call(base, "POST", "/v1/jobs", conflict)
+        conflict_code, refused, _ = http_call(base, "POST", "/v1/jobs", conflict, wire=wire / "conflict")
         write_json(evidence / "c8-conflict-response.json", refused)
         require(conflict_code == 409 and refused.get("error") == "IDEMPOTENCY_CONFLICT",
                 "C8 same key with different input was not rejected")
@@ -283,24 +367,41 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
         write_json(evidence / "c8-polls.json", polls)
         write_json(evidence / "c8-terminal-state.json", state)
         require(state["status"] == "SUCCEEDED", f"C8 API job did not succeed: {state}")
-        code, result, _ = http_call(base, "GET", f"/v1/jobs/{job}/artifacts")
+        code, result, _ = http_call(base, "GET", f"/v1/jobs/{job}/artifacts", wire=wire / "artifacts")
         require(code == 200 and result.get("job_id") == job, "C8 artifact manifest failed")
         write_json(evidence / "c8-artifact-index.json", result)
         prefix = f"artifact://{job}/"
         names = set()
+        downloaded = evidence / "c8-downloads"
+        downloaded.mkdir(exist_ok=False)
+        download_headers = {}
         for entry in c8_manifest_entries(result, job):
             uri = entry["uri"]
             require(uri.startswith(prefix), "C8 wrong artifact URI")
             name = uri[len(prefix):]
             require(name not in names and name != "" and
-                    all(p not in ("", ".", "..", ".git") for p in name.split("/")),
+                    all(p not in ("", ".", "..", ".git") for p in name.split("/")) and "\\" not in name,
                     "C8 duplicate/unsafe artifact")
             names.add(name)
             status, raw, headers = http_call(base, "GET", f"/v1/jobs/{job}/files/{quote(name, safe='/')}")
             require(status == 200 and isinstance(raw, bytes), f"C8 HTTP file error: {name}")
             require(sha_bytes(raw) == entry["sha256"] == headers.get("x-content-sha256")
                     and len(raw) == entry["bytes"], f"C8 HTTP file hash mismatch: {name}")
-        after_code, after, _ = http_call(base, "POST", "/v1/jobs", payload)
+            target = downloaded / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open("xb") as stream:
+                stream.write(raw)
+            download_headers[name] = {"http": status, "bytes": len(raw), "sha256": sha_bytes(raw),
+                                      "x-content-sha256": headers["x-content-sha256"]}
+        write_json(evidence / "c8-download-headers.json", download_headers)
+        require(result.get("status") == "SUCCEEDED" and result.get("trace_id") == state.get("trace_id"),
+                "C8 manifest identity/status mismatch")
+        require(verify_success(downloaded, result, normal_request, normal is not None) == len(names),
+                "C8 downloaded originals incomplete")
+        require(artifact_bytes_check(server_work / "api-jobs" / job / "evidence", result,
+                                     complete=normal is not None) == len(names),
+                "C8 server originals do not match downloads")
+        after_code, after, _ = http_call(base, "POST", "/v1/jobs", payload, wire=wire / "completed-replay")
         require(after_code == 202 and after.get("job_id") == job and after.get("status") == "SUCCEEDED",
                 "C8 repeat after completion failed")
         write_json(evidence / "c8-completed-replay.json", after)
@@ -311,6 +412,7 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int) -> dict:
                           "first_http": first_code, "duplicate_http": duplicate_code,
                           "conflict_http": conflict_code, "completed_replay_http": after_code,
                           "new_jobs": len(jobs), "http_artifacts_verified": len(names),
+                          "draft_image_id": result.get("draft_image_id"),
                           "api_container_name": ident, "api_private_store": str(server_work),
                           "scope": "Single local API; not cross-machine B13 formal receipt"}
         write_json(evidence / "c8-summary.json", result_summary)
@@ -343,6 +445,10 @@ def main() -> int:
     p.add_argument("--image", required=True, help="Built course-e11e12:<numeric-id> tag")
     p.add_argument("--api-port", type=int, default=18095)
     p.add_argument("--max-wait", type=int, default=600)
+    p.add_argument("--local-timeout", type=int, default=1200)
+    p.add_argument("--paired-request", type=Path)
+    p.add_argument("--paired-request-sha256")
+    p.add_argument("--paired-candidate-sha256")
     args = p.parse_args()
     out = (ROOT / args.out).resolve()
     work = (ROOT / "work").resolve()
@@ -352,23 +458,39 @@ def main() -> int:
     sid = command(["git", "config", "--local", "user.name"])
     require(sid.isdigit() and args.image == f"course-e11e12:{sid}",
             f"Image must match git config user.name: {sid}")
-    for name in ("e11-a.json", "e12.json"):
-        require((SAMPLE / name).is_file(), f"Missing prepared request: {name}; run prepare first")
+    require(1 <= args.max_wait <= 12000 and 1 <= args.local_timeout <= 12000,
+            "Invalid bounded timeout")
+    explicit = any((args.paired_request, args.paired_request_sha256, args.paired_candidate_sha256))
+    if explicit:
+        require(args.paired_request is not None, "Explicit request path required")
+        raw, original, candidate = validate_pair_input(args.paired_request.resolve(),
+            args.paired_request_sha256, args.paired_candidate_sha256)
+    else:
+        for name in ("e11-a.json", "e12.json"):
+            require((SAMPLE / name).is_file(), f"Missing prepared request: {name}; run prepare first")
     image_id = command(["docker", "image", "inspect", args.image, "--format", "{{.Id}}"])
     out.mkdir(parents=True)
+    normal = None
+    if explicit:
+        normal = out / "inputs/paired-request.original.json"
+        normal.parent.mkdir()
+        normal.write_bytes(raw)
+        (normal.parent / "paired-candidate.original.Dockerfile").write_bytes(candidate.read_bytes())
     write_json(out / "environment.json", {
         "student": sid, "source_commit": command(["git", "rev-parse", "HEAD"]),
         "working_tree_status": command(["git", "status", "--porcelain"]),
         "image_tag": args.image, "image_id": image_id,
-        "input_sha256": {name: sha_bytes((SAMPLE / name).read_bytes())
-                         for name in ("e11-a.json", "e12.json")},
-        "scope": "Fixed teaching fixture gate (not final pair E13 acceptance)"
+        "input_sha256": ({"request": args.paired_request_sha256, "candidate": args.paired_candidate_sha256}
+                         if explicit else {name: sha_bytes((SAMPLE / name).read_bytes())
+                         for name in ("e11-a.json", "e12.json")}),
+        "scope": ("Explicit E12 input preflight; not final paired acceptance" if explicit else
+                  "Fixed teaching fixture gate (not final pair E13 acceptance)")
     })
     sections = {}
     try:
-        sections["C4"] = c4(out)
-        sections["C7"] = c7(out)
-        sections["C8"] = c8(out, args.image, args.api_port, args.max_wait)
+        sections["C4"] = c4(out, normal, args.local_timeout)
+        sections["C7"] = c7(out, normal, args.local_timeout)
+        sections["C8"] = c8(out, args.image, args.api_port, args.max_wait, normal)
         scan = subprocess.run([sys.executable, str(SCANNER), str(out)], cwd=ROOT,
                               capture_output=True, text=True, timeout=120)
         (out / "runtime-log-scan.txt").write_text(scan.stdout + scan.stderr, encoding="utf-8")
@@ -376,12 +498,14 @@ def main() -> int:
         sections["C6_LOGS"] = {"status": "PASS", "exit_code": scan.returncode,
                                "note": "This covers generated work logs only; source/history/image audited separately"}
         write_json(out / "summary.json", {"passed": True, "sections": sections})
-        print("E13_MEMBER_C_FIXTURE_GATE=PASS", flush=True)
+        print("E13_MEMBER_C_EXPLICIT_INPUT_GATE=PASS" if explicit else
+              "E13_MEMBER_C_FIXTURE_GATE=PASS", flush=True)
         return 0
     except (GateError, OSError, ValueError, subprocess.TimeoutExpired, AssertionError) as error:
         write_json(out / "summary.json", {"passed": False, "sections": sections,
                                           "error_type": type(error).__name__, "error": str(error)})
-        print("E13_MEMBER_C_FIXTURE_GATE=FAIL", type(error).__name__, str(error), file=sys.stderr)
+        print("E13_MEMBER_C_EXPLICIT_INPUT_GATE=FAIL" if explicit else "E13_MEMBER_C_FIXTURE_GATE=FAIL",
+              type(error).__name__, str(error), file=sys.stderr)
         return 1
 
 
