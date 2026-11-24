@@ -132,13 +132,35 @@ jobs:
             --request "$REQUEST" --request-sha256 "$REQUEST_SHA" \
             --candidate-sha256 "$CANDIDATE_SHA" \
             --out work/ci-e14-draft-child --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Actual DRAFT downstream timeout, cleanup, old-job rejection and recovery
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          sudo python3 labs/e13e14/real_job_fault_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --success-out work/ci-e14-draft-child \
+            --out work/ci-e14-draft-fault \
+            --project "$E14_PROJECT" --image "$E14_IMAGE"
       - name: Scan image history, source and emitted runtime evidence
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child
-          CHILD_IMAGE=$(python3 -c 'import json; print(json.load(open("work/ci-e14-draft-child/job/result.json"))["draft_image_id"])')
-          python3 scripts/secret_scan.py . --history --image "$CHILD_IMAGE"
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault
+          CHILD_IMAGES=$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          paths = [Path('work/ci-e14-draft-child/job/result.json'),
+                   Path('work/ci-e14-draft-fault/fault/result.json'),
+                   Path('work/ci-e14-draft-fault/recovery/result.json')]
+          print('\n'.join(sorted({json.loads(p.read_text())['draft_image_id'] for p in paths})))
+          PY
+          )
+          for CHILD_IMAGE in $CHILD_IMAGES; do
+            python3 scripts/secret_scan.py . --history --image "$CHILD_IMAGE"
+          done
       - name: Collect service logs on success or failure
         if: always()
         run: |
@@ -159,6 +181,7 @@ jobs:
           path: |
             work/ci-e14-member-c/
             work/ci-e14-draft-child/
+            work/ci-e14-draft-fault/
             data/integration-sample/e14-child-request.json
             data/integration-sample/candidate-e14-child.Dockerfile
             work/ci-e14-image/
