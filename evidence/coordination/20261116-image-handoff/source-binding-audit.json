@@ -1,0 +1,47 @@
+{
+  "purpose": "Recovered candidate snapshots for code review; NOT proof these exact bytes executed the historical jobs",
+  "historical_runtime_source_bound": false,
+  "image_record_HEAD": "52222b3a8342ae29103fcf031194fb5db752ea0d",
+  "current_HEAD": "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c",
+  "files": {
+    "run_e11e12.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "70645538da0cfcdf4e35b2629b5303b6ed951a300ff74ab05888b943bec66e0c",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "cde92fd18f1346322fc52ab0dc731ef3cca94a3a24f4d9134ad594d9e606dba4"
+    },
+    "labs/e11e12/pipeline.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "a873b5f222123a31cbcb1aa3c0fd09f72a6f1081a929013fe6fae80bf8ed590f",
+      "current_overlay_sha256": "a942e7b72dd76bee638651699db3e7931ad9050d974e4e172fe2215168de61e1",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "a942e7b72dd76bee638651699db3e7931ad9050d974e4e172fe2215168de61e1"
+    },
+    "labs/e8e10/lab.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "bcabd793111f497259ba58c8aebe4d7df0165ba1f85d174ce0c70ba66a41d634",
+      "current_overlay_sha256": "b20f2b414a2c6e6f8aa9d5b85e7f8bc8903e42763832ee606be46ae1de3cc943",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "b20f2b414a2c6e6f8aa9d5b85e7f8bc8903e42763832ee606be46ae1de3cc943"
+    },
+    "labs/e11e12/prepare.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "867d6616cc8792e2c7f309634d2e63a210c68759fb329881d0dfccb131c3a8c4",
+      "current_overlay_sha256": "867d6616cc8792e2c7f309634d2e63a210c68759fb329881d0dfccb131c3a8c4",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "867d6616cc8792e2c7f309634d2e63a210c68759fb329881d0dfccb131c3a8c4"
+    },
+    "labs/e11e12/test_real_profile.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "d3c90e4c3015e38a7757babcc07895a73e6d8e043c87a4a26b895dc8f28ba784",
+      "current_overlay_sha256": "eaf6b59f45b71e6b3ac58e4e5f5f330a15cb0bf2e7d01dfe7f3e31d0ceea35de",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "eaf6b59f45b71e6b3ac58e4e5f5f330a15cb0bf2e7d01dfe7f3e31d0ceea35de"
+    },
+    "labs/e11e12/vendor/draft/autobuild.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "46afe8c9016f78f217372e6cdfef70ed495f9577677806ee87712e49160ff6fd",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "46afe8c9016f78f217372e6cdfef70ed495f9577677806ee87712e49160ff6fd"
+    },
+    "labs/e11e12/environment/services/buildchecker/buildchecker/fullcheck.py": {
+      "52222b3a8342ae29103fcf031194fb5db752ea0d": "21a66422856be2d46a28db3569a9645864a83622d552841873e3c6a82fdea0e9",
+      "13f61cdec4ed0496d58ddfcdff9a39b9e656f99c": "21a66422856be2d46a28db3569a9645864a83622d552841873e3c6a82fdea0e9"
+    }
+  },
+  "evidence_observations": [
+    "Original server_run.py installs overlay after checking Git HEAD and records HEAD without file hashes",
+    "Current overlay four source files match PR17 fixed head",
+    "Stored run2-1931.log covers teaching job IDs, not original real-03/real-01 job IDs",
+    "No preserved before/after source-file hash manifest was found for the two historical real-project jobs"
+  ],
+  "disposition": "Keep old results with explicit provenance limitation; new fixed-version runs must record actual source file hashes and runtime image identity before and after execution"
+}

@@ -12,7 +12,12 @@ ENV LC_ALL=C.UTF-8 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN sed -i 's@http://deb.debian.org/debian-security@https://mirrors.aliyun.com/debian-security@g; s@http://deb.debian.org/debian@https://mirrors.aliyun.com/debian@g' /etc/apt/sources.list.d/debian.sources \
+# The course server defaults to its reachable mirror. CI can pass an empty
+# APT_MIRROR to retain the pinned base image's upstream Debian sources.
+ARG APT_MIRROR=mirrors.aliyun.com
+RUN if [ -n "$APT_MIRROR" ]; then \
+      sed -i "s@http://deb.debian.org/debian-security@https://${APT_MIRROR}/debian-security@g; s@http://deb.debian.org/debian@https://${APT_MIRROR}/debian@g" /etc/apt/sources.list.d/debian.sources; \
+    fi \
  && apt-get update \
  && apt-get install -y --no-install-recommends gcc make libc6-dev strace git \
  && rm -rf /var/lib/apt/lists/* \

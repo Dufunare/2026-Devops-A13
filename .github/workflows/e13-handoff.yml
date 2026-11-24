@@ -1,0 +1,19 @@
+name: E13 report handoff
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  report-handoff:
+    name: e13-report-handoff
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Report transfer and provenance contracts
+        env:
+          PYTHONPATH: labs/e11e12:labs/e8e10:labs/e11e12/vendor
+        run: |
+          python3 -m py_compile labs/e13e14/*.py labs/e11e12/pipeline.py
+          python3 -m unittest discover -s labs/e11e12 -p test_e13_handoff_241830088.py -v
+          python3 -m unittest discover -s labs/e11e12 -p test_handoff_241830088.py -v
+          python3 -m unittest discover -s labs/e11e12 -p test_exchange_profile.py -v
+          python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v

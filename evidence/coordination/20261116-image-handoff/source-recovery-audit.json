@@ -1,0 +1,25 @@
+{
+  "recovery_zip_sha256": "e8b5b0aca05f149e26c7b7202e1e16306804d630b49cc44043f682ac29408841",
+  "fsck_exit": 0,
+  "is_shallow": "true",
+  "revisions": {
+    "upstream": "62ce93ceb713dc49909d0fef1411f9d37bef83f2",
+    "C0": "592fc6f3d2463a58fe7f60b8d255ed242740bec0",
+    "C1": "b2dda5513fe4a7d250493528800fe425cae459a5"
+  },
+  "tracked_file_counts": {
+    "upstream": 152,
+    "C0": 152,
+    "C1": 154
+  },
+  "C0_C1_source_byte_matches": {
+    "C0": 152,
+    "C1": 154
+  },
+  "code_executed": false,
+  "C1_changed_paths": [
+    "Dockerfile.broken",
+    "toml.c",
+    "toml_extra.h"
+  ]
+}

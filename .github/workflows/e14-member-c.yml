@@ -1,0 +1,133 @@
+name: E14 member C four-service fixture and recovery gate
+
+on:
+  push:
+    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121]
+  pull_request:
+    branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: e14-c-static-contracts-and-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Python contracts including concurrent /health and BUSY behavior
+        run: |
+          set -euo pipefail
+          python3 -m py_compile labs/e13e14/*.py labs/e13e14/tests/*.py
+          python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v
+          python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
+      - name: Compose configuration and tracked source / Git history scan
+        env:
+          E14_IMAGE: course-e11e12:999999999
+          E14_SOURCE_POLICY: /course/labs/e13e14/source-policy-ci.json
+        run: |
+          set -euo pipefail
+          E14_ROOT="$PWD" docker compose -f labs/e13e14/compose.yaml config --quiet
+          python3 scripts/secret_scan.py . --history
+
+  runtime:
+    name: e14-c-compose-success-timeout-recovery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      E14_IMAGE: course-e11e12:999999999
+      E14_SOURCE_POLICY: /course/labs/e13e14/source-policy-ci.json
+      E14_PROJECT: e14-ci-241830217
+      E11E12_USE_SOURCE_POLICY: '0'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Configure numeric identity and build pinned teaching image using CI-only mirror overlay
+        run: |
+          set -euo pipefail
+          git config --local user.name 999999999
+          git config --local user.email ci@example.invalid
+          mkdir -p work/ci-e14-image
+          cp labs/e11e12/environment/services/buildchecker/Dockerfile \
+            work/ci-e14-image/Dockerfile.original
+          sed \
+            -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian-security#https://deb.debian.org/debian-security#g' \
+            -e 's#https://mirrors.tuna.tsinghua.edu.cn/debian#https://deb.debian.org/debian#g' \
+            -e 's#https://pypi.tuna.tsinghua.edu.cn/simple#https://pypi.org/simple#g' \
+            work/ci-e14-image/Dockerfile.original > work/ci-e14-image/Dockerfile.ci
+          sha256sum work/ci-e14-image/Dockerfile.* | tee work/ci-e14-image/SHA256SUMS
+          docker build --progress=plain \
+            --build-arg BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74 \
+            --build-arg DOCKER_CLI_IMAGE=docker:28.5.1-cli@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad \
+            -f work/ci-e14-image/Dockerfile.ci \
+            -t "$E14_IMAGE" labs/e11e12/environment
+          docker image inspect "$E14_IMAGE" --format '{{.Id}}' > work/ci-e14-image/image-id.txt
+          python3 run_e11e12.py prepare
+          sha256sum data/integration-sample/e12.json > work/ci-e14-image/fixture-request.sha256
+      - name: Start exactly four isolated HTTP services
+        run: |
+          set -euo pipefail
+          export E14_ROOT="$PWD"
+          docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" config --quiet
+          docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" up -d --wait --wait-timeout 120
+          docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" ps
+          docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" exec -T draft sh -c \
+            'test "$EXPERIMENTAL_BUILDKIT_SOURCE_POLICY" = /course/labs/e13e14/source-policy-ci.json'
+      - name: Trust only generated CI snapshot repositories
+        run: |
+          set -euo pipefail
+          export E14_ROOT="$PWD"
+          for role in echecker mdfixer; do
+            for case_name in success recovery; do
+              for snapshot in base-project target-project; do
+                repo_path="/course/work/ci-e14-member-c/${case_name}/${snapshot}"
+                docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+                  exec -T "$role" git config --global --add safe.directory "$repo_path"
+              done
+            done
+            docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+              exec -T "$role" git config --global --get-all safe.directory
+          done
+      - name: Five-stage success, timeout failure, health and new-job recovery
+        run: |
+          set -euo pipefail
+          python3 labs/e13e14/e14_gate.py \
+            --request data/integration-sample/e12.json \
+            --out work/ci-e14-member-c \
+            --image "$E14_IMAGE" \
+            --project "$E14_PROJECT"
+      - name: Scan image history, source and emitted runtime evidence
+        run: |
+          set -euo pipefail
+          python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c
+      - name: Collect service logs on success or failure
+        if: always()
+        run: |
+          mkdir -p work/ci-e14-diagnostics
+          E14_ROOT="$PWD" docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+            ps > work/ci-e14-diagnostics/compose-ps.txt 2>&1 || true
+          E14_ROOT="$PWD" docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" \
+            logs --no-color --timestamps > work/ci-e14-diagnostics/compose-logs.txt 2>&1 || true
+      - name: Stop only the CI Compose project
+        if: always()
+        run: |
+          E14_ROOT="$PWD" docker compose -f labs/e13e14/compose.yaml -p "$E14_PROJECT" down || true
+      - name: Preserve E14 evidence including failed runs and CI-only Dockerfile
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: e14-member-c-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/ci-e14-member-c/
+            work/ci-e14-image/
+            work/ci-e14-diagnostics/
+          if-no-files-found: warn
+          retention-days: 14
