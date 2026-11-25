@@ -35,6 +35,17 @@ class ManifestTests(unittest.TestCase):
         with self.assertRaisesRegex(GATE.GateError, 'HASH_OR_SIZE'):
             GATE.verify_manifest(self.root, {'artifacts': [self.entry]})
 
+    def test_peer_location_must_be_complete_and_safe(self):
+        candidate = self.root / 'a.json'
+        uri = '/course/work/peer/job'
+        expected = '/srv/peer/course'
+        self.assertEqual((candidate, uri, expected), GATE.audit_location(
+            self.root, candidate, uri, expected))
+        for args in ((candidate, None, expected), (candidate, '/course/work/../job', expected),
+                     (candidate, uri, 'relative'), (candidate, uri, '/srv/../course')):
+            with self.subTest(args=args), self.assertRaises(GATE.GateError):
+                GATE.audit_location(self.root, *args)
+
     def test_rejects_symlink_even_if_not_in_manifest(self):
         (self.root / 'alias').symlink_to(self.path)
         with self.assertRaisesRegex(GATE.GateError, 'SYMLINK'):

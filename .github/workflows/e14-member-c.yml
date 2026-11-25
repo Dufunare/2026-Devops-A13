@@ -2,7 +2,7 @@ name: E14 member C four-service fixture and recovery gate
 
 on:
   push:
-    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121, student/241830217/e14-real-integration-20261124]
+    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121, student/241830217/e14-real-integration-20261124, student/241830217/e14-cross-machine-prep-20261125]
   pull_request:
     branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120, coord/e13-e14-integration-20261124]
   workflow_dispatch:
@@ -132,6 +132,17 @@ jobs:
             --request "$REQUEST" --request-sha256 "$REQUEST_SHA" \
             --candidate-sha256 "$CANDIDATE_SHA" \
             --out work/ci-e14-draft-child --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Operator-side C5 real validator rejection, rollback and new-job recovery
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          sudo python3 labs/e13e14/pair_c5_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --success-out work/ci-e14-draft-child \
+            --out work/ci-e14-c5 --project "$E14_PROJECT" --image "$E14_IMAGE"
       - name: Actual DRAFT downstream timeout, cleanup, old-job rejection and recovery
         run: |
           set -euo pipefail
@@ -157,11 +168,27 @@ jobs:
             --out work/ci-e14-service-fault \
             --project "$E14_PROJECT" --image "$E14_IMAGE" \
             --allow-stop-echecker
+      - name: Peer offline verification from a relocated copy
+        run: |
+          set -euo pipefail
+          mkdir -p work/ci-e14-peer-audit
+          git rev-parse HEAD > work/ci-e14-peer-audit/source-commit.txt
+          TMP=$(mktemp -d)
+          trap 'sudo rm -rf -- "$TMP"' EXIT
+          sudo cp -a work/ci-e14-draft-child/job "$TMP/job"
+          cp data/integration-sample/candidate-e14-child.Dockerfile "$TMP/candidate.Dockerfile"
+          sudo python3 labs/e13e14/pair_sync_audit.py \
+            --job "$TMP/job" --candidate "$TMP/candidate.Dockerfile" \
+            --request-sha256 "$(sha256sum data/integration-sample/e14-child-request.json | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$TMP/candidate.Dockerfile" | cut -d ' ' -f 1)" \
+            --original-job-uri /course/work/ci-e14-draft-child/job \
+            --course-source "$PWD" --source-record work/ci-e14-peer-audit/source-commit.txt \
+            --expected-source "$(git rev-parse HEAD)" --out work/ci-e14-peer-audit/receipt.json
       - name: Scan image history, source and emitted runtime evidence
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault work/ci-e14-c5 work/ci-e14-peer-audit
           CHILD_IMAGES=$(python3 - <<'PY'
           import json
           from pathlib import Path
@@ -169,7 +196,8 @@ jobs:
                    Path('work/ci-e14-draft-fault/fault/result.json'),
                    Path('work/ci-e14-draft-fault/recovery/result.json'),
                    Path('work/ci-e14-service-fault/fault/result.json'),
-                   Path('work/ci-e14-service-fault/recovery/result.json')]
+                   Path('work/ci-e14-service-fault/recovery/result.json'),
+                   Path('work/ci-e14-c5/recovery/result.json')]
           print('\n'.join(sorted({json.loads(p.read_text())['draft_image_id'] for p in paths})))
           PY
           )
@@ -198,6 +226,8 @@ jobs:
             work/ci-e14-draft-child/
             work/ci-e14-draft-fault/
             work/ci-e14-service-fault/
+            work/ci-e14-c5/
+            work/ci-e14-peer-audit/
             data/integration-sample/e14-child-request.json
             data/integration-sample/candidate-e14-child.Dockerfile
             work/ci-e14-image/

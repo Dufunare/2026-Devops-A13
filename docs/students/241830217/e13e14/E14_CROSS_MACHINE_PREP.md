@@ -106,3 +106,29 @@ CI generates a credential in memory and checks that it never occurs in
 client originals. This is local real Docker validation, not SSH or B13
 acceptance. The CLI additionally checks clean tracked source, candidate
 bytes and both full Git commit objects before startup.
+
+
+## Four-role health receipt, relocated synchronous originals, and C5
+
+pair_health_client.py checks the four agreed local forwards independently,
+including unauthenticated rejection and blocked raw role write routes.
+It produces a health-only receipt and does not claim a five-stage job.
+
+pair_sync_audit.py reuses the E14 success verifier on a copied job directory
+with independently supplied original /course/work job URI, host bind path,
+candidate original and expected request/candidate/source hashes. It verifies
+the same five stages, six HTTP originals, reports, receipts and actual
+exec/inspect without replaying requests or changing the originals. The
+source record is a declared identity, not cryptographic proof of the
+server's running code. Run the peer auditor on Linux/WSL.
+
+pair_c5_gate.py is a controlled, operator-only validator preflight. It
+derives a wrong dependency from the original verified good patch in a
+fresh C1 clone, invokes B's existing validate inside the verified DRAFT
+service with the actual successful image, and requires build/test/header
+checks to pass but missing main.o -> extra.h to remain. It checks rollback,
+unchanged tracked source, actual child inspect and new successful five-stage
+recovery without restarting services or changing prior evidence. It does
+not add an HTTP bad-patch injection endpoint or change B's algorithm.
+The formal C5 project/patch/expected missing set must be approved by B,
+and the formal remote invocation arrangement remains to be agreed.

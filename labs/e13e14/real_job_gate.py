@@ -47,8 +47,28 @@ def verify_manifest(job, result):
     return len(seen)
 
 
-def verify_result(job, expected_request_sha, expected_candidate_sha):
+def audit_location(job, candidate_path=None, original_job_uri=None, course_source=None):
+    """All-or-none peer audit options; defaults retain host-mode behavior."""
+    values = (candidate_path, original_job_uri, course_source)
+    if all(value is None for value in values):
+        return None, '/course/' + job.relative_to(ROOT).as_posix(), str(ROOT.resolve())
+    require(all(value is not None for value in values), 'PEER_AUDIT_LOCATION_INCOMPLETE')
+    candidate = Path(candidate_path)
+    require(candidate.is_file() and not candidate.is_symlink(), 'PEER_CANDIDATE_MISSING')
+    require(isinstance(original_job_uri, str) and original_job_uri.startswith('/course/work/')
+            and all(p not in ('', '.', '..', '.git') for p in original_job_uri[1:].split('/'))
+            and '\\' not in original_job_uri, 'PEER_JOB_URI_INVALID')
+    require(isinstance(course_source, str) and course_source.startswith('/')
+            and str(Path(course_source)) == course_source
+            and '..' not in Path(course_source).parts, 'PEER_COURSE_SOURCE_INVALID')
+    return candidate, original_job_uri, course_source
+
+
+def verify_result(job, expected_request_sha, expected_candidate_sha, *,
+                  candidate_path=None, original_job_uri=None, course_source=None):
     job = Path(job).resolve()
+    candidate_override, job_uri, course_source = audit_location(
+        job, candidate_path, original_job_uri, course_source)
     r = load(job / 'result.json')
     require(r.get('schema_version') == 'e14-compose-1' and r.get('status') == 'SUCCEEDED',
             'E14_REAL_JOB_FAILED')
@@ -58,7 +78,8 @@ def verify_result(job, expected_request_sha, expected_candidate_sha):
     require(profile['exec_image'] == 'draft' and profile == r.get('profile')
             and profile_sha256(profile) == meta['profile_sha256'], 'PROFILE_MISMATCH')
     require(sha(job / 'request.json') == expected_request_sha == meta['request_sha256']
-            and sha(host_path(request['candidate'])) == expected_candidate_sha == meta['candidate_sha256'],
+            and sha(candidate_override if candidate_override is not None else host_path(request['candidate']))
+            == expected_candidate_sha == meta['candidate_sha256'],
             'INPUT_HASH_MISMATCH')
     require((request['base'], request['target']) == (meta['base_commit'], meta['target_commit']),
             'COMMIT_MISMATCH')
@@ -81,7 +102,6 @@ def verify_result(job, expected_request_sha, expected_candidate_sha):
                 and stage['execution_identity'] == meta, 'STAGE_IDENTITY_MISMATCH')
         stages[name] = stage['data']
     responses = {}
-    job_uri = '/course/' + job.relative_to(ROOT).as_posix()
     for name, project, folder in (
             ('draft', 'target-project', 'draft-build'),
             ('baseline', 'base-project', 'baseline-full'),
@@ -148,7 +168,7 @@ def verify_result(job, expected_request_sha, expected_candidate_sha):
     require(isinstance(findings, list) and not any(f['type'] == 'MISSING' for f in findings)
             and r['recheck_scope']['remaining_missing_full'] == 0,
             'FULL_PROJECT_MISSING_REMAINS')
-    attested = verify_receipts(job, r, profile, str(ROOT.resolve()), report_sha)
+    attested = verify_receipts(job, r, profile, course_source, report_sha)
     require(attested == load(job / 'execution-attestation.json'), 'ATTESTATION_ORIGINAL_MISMATCH')
     return {'status': 'PASS', **meta, 'artifacts_verified': count,
             'stages': STAGES, 'downstream_containers_verified': len(attested['verified_tags']),
