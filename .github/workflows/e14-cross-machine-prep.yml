@@ -24,17 +24,36 @@ jobs:
           python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
       - name: Source and Git history scan
         run: python3 scripts/secret_scan.py . --history
+      - name: Package exact tracked B13 consumer files for Windows
+        run: |
+          set -euo pipefail
+          mkdir -p work/ci-b13-windows
+          git rev-parse HEAD > work/ci-b13-windows/source-commit.txt
+          git archive --format=zip -o work/ci-b13-windows/client.zip HEAD labs/e13e14
+          (cd work/ci-b13-windows && sha256sum client.zip > client.zip.sha256)
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: b13-consumer-windows-input
+          path: work/ci-b13-windows/
+          if-no-files-found: error
+          retention-days: 14
   windows-b13-consumer:
+    needs: contract
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
-          persist-credentials: false
-          sparse-checkout: labs/e13e14
-          sparse-checkout-cone-mode: true
-      - name: B13 consumer protocol regression on Windows
+          name: b13-consumer-windows-input
+          path: input
+      - name: Verify archive and execute B13 client tests on Windows
         shell: pwsh
         run: |
-          python -m unittest discover -s labs/e13e14/tests -p 'test_b13_clients.py' -v
+          $expected = (Get-Content input/client.zip.sha256 -Raw).Trim().Split(' ')[0]
+          $actual = (Get-FileHash input/client.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Client archive SHA256 mismatch" }
+          $source = (Get-Content input/source-commit.txt -Raw).Trim()
+          if ($source -ne $env:GITHUB_SHA) { throw "Client archive source mismatch" }
+          Expand-Archive -LiteralPath input/client.zip -DestinationPath consumer
+          python -m unittest discover -s consumer/labs/e13e14/tests -p 'test_b13_clients.py' -v
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

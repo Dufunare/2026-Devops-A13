@@ -139,6 +139,10 @@ not an independently queried B13 daemon or proof that no unrelated job
 exists. The B13 consumer-only tests also run on Windows; Git attributes
 preserve test fixture bytes on checkout.
 
-Windows consumer CI uses a sparse checkout of labs/e13e14. The repository
-has an existing papers/*:Zone.Identifier path that Windows cannot check
-out. No other member's files or NTFS security configuration are changed.
+Windows consumer CI receives an exact tracked labs/e13e14 Git archive from
+the same workflow's Linux job, verifies its SHA256 and source commit, and
+runs the consumer tests without Git checkout. Both full and sparse Windows
+checkout failed on the existing papers/*:Zone.Identifier path. No other
+member's files or NTFS security configuration are changed. On Windows,
+obtain the CI archive or use git archive from a fetched commit without
+checking out the full tree.
