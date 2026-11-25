@@ -4,7 +4,9 @@ Unlike A13 pair_c8_client this API has no Bearer facade or /v1/session.
 B13 must approve the exact request and the 8081 forward beforehand.
 """
 import argparse
+import http.client
 import json
+import re
 import time
 import uuid
 from pathlib import Path
@@ -15,11 +17,73 @@ from b13_wire import (Wire,pinned_file,pin,record,canonical,digest,strict_json,n
 from pair_session import artifact_index, STAGES
 
 
-def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_image,wait=1500,key=None):
+def verify_downloaded_operations(out,files,result,request,image):
+    """Check the actual downloaded B13 ImageRuntime originals, not only summary IDs."""
+    operations=result.get('image_operations')
+    expected=['full','scan','scan','full','validate','full']
+    need(isinstance(operations,list) and len(operations)==len(expected),'IMAGE_OPERATIONS_MISSING')
+    ids=[]
+    def read(name,object_only=True):
+        need(name in files,'IMAGE_ORIGINAL_MISSING')
+        raw=(out/'downloads'/name).read_bytes()
+        return strict_json(raw) if object_only else raw
+    for i,(op,kind) in enumerate(zip(operations,expected),1):
+        prefix='image-execution/%02d-%s/'%(i,kind)
+        cid=op.get('container_id','')
+        commit=request['base'] if i<=2 else request['target']
+        need(isinstance(cid,str) and re.fullmatch(r'[0-9a-f]{64}',cid)
+             and op.get('operation')==kind and op.get('project_commit')==commit
+             and op.get('container_exit_code')==0
+             and op.get('image_id')==image and op.get('actual_container_image')==image
+             and op.get('profile_sha256')==request.get('profile_sha256'),
+             'IMAGE_OPERATION_MISMATCH')
+        need(read(prefix+'execution.json')==op,'IMAGE_WITNESS_ORIGINAL_MISMATCH')
+        commands={}
+        for name in files:
+            if name.startswith(prefix) and re.fullmatch(r'\d+-[a-z-]+\.command\.json',name[len(prefix):]):
+                commands[name.removesuffix('.command.json')]=read(name)['argv']
+        def one(action):
+            found=[(name,argv) for name,argv in commands.items()
+                   if isinstance(argv,list) and len(argv)>=2 and argv[:2]==['docker',action]]
+            need(len(found)==1,'IMAGE_COMMAND_ORIGINAL_MISSING_'+action)
+            name,argv=found[0]
+            need(read(name+'.exit.json').get('exit_code')==0,'IMAGE_COMMAND_FAILED_'+action)
+            return name,argv
+        create_name,create=one('create')
+        need(create[-2:]==[image,'/tmp/m2-input/image_worker.py']
+             and read(create_name+'.stdout.log',False).decode().strip()==cid
+             and '--label' in create,'IMAGE_CREATE_ID_MISMATCH')
+        label=create[create.index('--label')+1]
+        need(re.fullmatch(r'devops\.member2\.operation=[0-9a-f]{32}',label),
+             'IMAGE_OWNERSHIP_LABEL_INVALID')
+        _,start=one('start')
+        _,remove=one('rm')
+        need(start==['docker','start','--attach',cid] and
+             remove==['docker','rm','-f',cid],'IMAGE_START_REMOVE_ID_MISMATCH')
+        inspections=sorted((name,argv) for name,argv in commands.items()
+                           if argv==['docker','inspect',cid])
+        need(len(inspections)==2,'IMAGE_INSPECT_ORIGINALS_MISSING')
+        for name,_ in inspections:
+            need(read(name+'.exit.json').get('exit_code')==0,'IMAGE_INSPECT_FAILED')
+            items=json.loads(read(name+'.stdout.log',False))
+            need(isinstance(items,list) and len(items)==1,'IMAGE_INSPECT_INVALID')
+            info=items[0]
+            need(info['Id']==cid and info['Image']==image
+                 and info['Config']['Labels'].get('devops.member2.operation')==label.split('=',1)[1]
+                 and info['State']['Running'] is False,'IMAGE_INSPECT_BINDING_MISMATCH')
+        final=json.loads(read(inspections[-1][0]+'.stdout.log',False))[0]
+        need(final['State']['ExitCode']==0,'IMAGE_INSPECT_EXIT_MISMATCH')
+        ids.append(cid)
+    need(len(ids)==len(set(ids)),'IMAGE_OPERATION_CONTAINER_REUSED')
+    return ids
+
+
+def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_image,
+             wait=1500,key=None,profile_raw=None,profile_raw_sha=None):
     out=Path(out)
     request=strict_json(raw)
     need(request.get('mode')=='e12' and all(COMMIT.fullmatch(request[k]) for k in ('base','target'))
-         and request['base']!=request['target'],'E12_COMMIT_PINS_REQUIRED')
+         and request['base']!=request['target'] and request['target']!='0'*40,'E12_COMMIT_PINS_REQUIRED')
     need(all(isinstance(request.get(k),str) and request[k].startswith('/course/data/')
              and all(p not in ('','.','..','.git') for p in request[k][1:].split('/'))
              and '\\' not in request[k] for k in ('repo','candidate')),'E12_PATH_INVALID')
@@ -28,9 +92,17 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
     if request.get('profile') is not None:
         need(isinstance(request['profile'],dict),'PROFILE_INVALID')
         pin(canonical(request['profile']),request.get('profile_sha256'),'PROFILE_CANONICAL')
+        need(profile_raw is not None and profile_raw_sha is not None,'PROFILE_ORIGINAL_REQUIRED')
+        pin(profile_raw,profile_raw_sha,'PROFILE_RAW')
+        need(strict_json(profile_raw)==request['profile'],'PROFILE_ORIGINAL_CONTENT_MISMATCH')
+    else:
+        need(request.get('profile_sha256') is None and profile_raw is None and
+             profile_raw_sha is None,'UNEXPECTED_PROFILE_ORIGINAL')
     need(type(wait) is int and 1<=wait<=7200,'INVALID_WAIT')
     save(out/'inputs/request.original.json',raw)
     save(out/'inputs/candidate.original.Dockerfile',candidate_raw)
+    if profile_raw is not None:
+        save(out/'inputs/profile.original.json',profile_raw)
     key=key or 'a13-c8-'+uuid.uuid4().hex
     wire=Wire(out,port,timeout=30)
     h=wire.obj('001-health','GET','/health')
@@ -89,7 +161,8 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
         return out/'downloads'/name
     need('request.json' in files and strict_json((out/'downloads/request.json').read_bytes())==request,
          'EXECUTED_REQUEST_MISMATCH')
-    for stage in result['stages']:
+    incremental_ref=None
+    for stage,prefix_count in zip(result['stages'],(0,2,4,4,6)):
         name=stage['name'];env=strict_json(ref(stage['artifact']).read_bytes())
         need(env.get('schema_version')=='e11e12-1' and env.get('kind')==name and
              env.get('job_id')==job and env.get('trace_id')==trace and env.get('status')=='SUCCEEDED'
@@ -98,27 +171,24 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
              'STAGE_IDENTITY_MISMATCH')
         if request.get('profile') is not None:
             need(env.get('profile_sha256')==request['profile_sha256'],'STAGE_PROFILE_MISMATCH')
+        need(env.get('image_operations')==result.get('image_operations',[])[:prefix_count],
+             'STAGE_IMAGE_OPERATIONS_MISMATCH')
         for item in env['artifacts']:
             ref(item)
+        if name=='incremental-check':
+            incremental_ref=stage['artifact']
         if name=='draft':
             need(env['data']['candidate_sha256']==candidate_sha and
                  env['data']['attempts'][-1]['image_id']==image,'DRAFT_CANDIDATE_MISMATCH')
         if name=='repair':
-            ref(env['data']['input_report'])
+            repair_ref=env['data']['input_report']
+            need(repair_ref==incremental_ref,'REPAIR_INPUT_NOT_INCREMENTAL_ORIGINAL')
+            ref(repair_ref)
         if name=='recheck':
             need(env['data']['validation']['accepted'] is True and
                  not any(x['type']=='MISSING' for x in env['data']['findings']),
                  'FULL_RECHECK_NOT_CLEAN')
-    operations=result.get('image_operations')
-    need(isinstance(operations,list) and len(operations)>=6,'IMAGE_OPERATIONS_MISSING')
-    ids=[]
-    for op in operations:
-        cid=op.get('container_id','')
-        need(isinstance(cid,str) and __import__('re').fullmatch(r'[0-9a-f]{64}',cid)
-             and op.get('image_id')==image and op.get('actual_container_image')==image,
-             'IMAGE_OPERATION_MISMATCH')
-        ids.append(cid)
-    need(len(ids)==len(set(ids)),'IMAGE_OPERATION_CONTAINER_REUSED')
+    ids=verify_downloaded_operations(out,files,result,request,image)
     after=wire.obj('%05d-completed-replay'%counter,'POST','/v1/jobs',payload,202)
     check_state(after)
     need(after.get('status')=='SUCCEEDED' and after.get('trace_id')==trace,'COMPLETED_REPLAY_MISMATCH')
@@ -126,7 +196,8 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
              'conflict_http':409,'http_artifacts_verified':len(files),'image_operations':len(ids),
              'request_raw_sha256':digest(raw),'request_canonical_sha256':digest(canonical(request)),
              'store_request_hash':expected_store_hash,'candidate_sha256':candidate_sha,
-             'profile_sha256':request.get('profile_sha256'),'draft_image_id':image,
+             'profile_sha256':request.get('profile_sha256'),'profile_raw_sha256':profile_raw_sha,
+             'downloaded_inspect_originals_verified':2*len(ids),'draft_image_id':image,
              'declared_service_source_sha':service_source,'declared_service_image_id':service_image,
              'server_store_job_count_verified':False,'formal_pair_acceptance':False}
     record(out/'summary.json',summary)
@@ -140,6 +211,8 @@ def main():
     p.add_argument('--request-sha256',required=True)
     p.add_argument('--candidate',type=Path,required=True)
     p.add_argument('--candidate-sha256',required=True)
+    p.add_argument('--profile',type=Path)
+    p.add_argument('--profile-raw-sha256')
     p.add_argument('--service-source-sha',required=True)
     p.add_argument('--service-image-id',required=True)
     p.add_argument('--out',type=Path,required=True)
@@ -147,12 +220,14 @@ def main():
     a=p.parse_args()
     raw=pinned_file(a.request,a.request_sha256,'REQUEST')
     candidate=pinned_file(a.candidate,a.candidate_sha256,'CANDIDATE')
+    profile_raw=a.profile.read_bytes() if a.profile is not None else None
     a.out.mkdir(parents=True,exist_ok=False)
     try:
         summary=campaign(a.out,a.port,raw,candidate,a.candidate_sha256,
-                         a.service_source_sha,a.service_image_id,a.wait)
+                         a.service_source_sha,a.service_image_id,a.wait,
+                         profile_raw=profile_raw,profile_raw_sha=a.profile_raw_sha256)
         print(canonical(summary).decode())
-    except (ValueError,KeyError,TypeError,OSError) as exc:
+    except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException) as exc:
         record(a.out/'failure.json',{'status':'FAIL','error_type':type(exc).__name__,
                'note':'Preserve originals and reconcile server; do not blindly submit a new key'})
         raise SystemExit('B13_C8_CLIENT_FAILED: '+type(exc).__name__)

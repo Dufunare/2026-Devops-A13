@@ -6,6 +6,8 @@ C5 explicitly runs bad-repair then good repair in its dedicated deployment.
 This is a client receipt, not proof of server cleanup or bilateral acceptance.
 """
 import argparse
+import http.client
+import json
 import re
 import uuid
 from pathlib import Path, PurePosixPath
@@ -165,7 +167,7 @@ class Client:
         target=self.full(original_response(self.out,'03-target-full'),'target')
         pin(graph_raw,graph_sha,'BASELINE_GRAPH')
         pin(findings_raw,findings_sha,'TARGET_FINDINGS')
-        graph=__import__('json').loads(graph_raw)
+        graph=json.loads(graph_raw)
         need(isinstance(graph,list) and all(isinstance(row,dict) and
              all(isinstance(row.get(k),str) and row[k] for k in ('target','dependency'))
              for row in graph),'BASELINE_GRAPH_INVALID')
@@ -270,7 +272,7 @@ def main():
                               a.findings.read_bytes(),a.findings_sha256))
         record(out/(a.phase+'.json'),result)
         print(canonical(result).decode('utf-8'))
-    except (ValueError,KeyError,TypeError,OSError) as exc:
+    except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException) as exc:
         record(out/('failure-'+uuid.uuid4().hex+'.json'),{'status':'FAIL',
                'phase':a.phase,'error_type':type(exc).__name__,
                'note':'Preserve wire originals; reconcile any attempted POST with B13 before retry'})

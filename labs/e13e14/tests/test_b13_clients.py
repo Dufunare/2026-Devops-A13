@@ -225,7 +225,7 @@ class Loopback(unittest.TestCase):
         self.assertFalse((self.root/'wire/probe/response.body').exists())
         self.assert_no_credential()
 
-    def async_backend(self,tamper=False):
+    def async_backend(self,tamper=False,bad_inspect=False):
         request={'mode':'e12','repo':'/course/data/project','candidate':'/course/data/candidate.Dockerfile',
                  'base':M['base'],'target':M['target'],'expected_output':'1'}
         raw=json.dumps(request,indent=2).encode()+b'\n'
@@ -233,8 +233,32 @@ class Loopback(unittest.TestCase):
         files={'request.json':raw,'draft-build/result.json':canonical({'status':'SUCCEEDED'})}
         def entry(name):
             return {'uri':'artifact://'+JOB+'/'+name,'bytes':len(files[name]),'sha256':digest(files[name])}
+        operations=[]
+        for i,kind in enumerate(('full','scan','scan','full','validate','full'),1):
+            cid='%064x'%i
+            label='%032x'%i
+            op={'operation':kind,'project_commit':M['base'] if i<=2 else M['target'],
+                'image_id':IMAGE,'actual_container_image':IMAGE,'container_id':cid,
+                'container_exit_code':0,'profile_sha256':None}
+            operations.append(op)
+            prefix='image-execution/%02d-%s/'%(i,kind)
+            files[prefix+'execution.json']=canonical(op)
+            def command(stem,argv,stdout=b''):
+                files[prefix+stem+'.command.json']=canonical({'argv':argv})
+                files[prefix+stem+'.exit.json']=canonical({'exit_code':0})
+                files[prefix+stem+'.stdout.log']=stdout
+            command('02-create',['docker','create','--label','devops.member2.operation='+label,
+                                  '--entrypoint','python3',IMAGE,'/tmp/m2-input/image_worker.py'],
+                    cid.encode()+b'\n')
+            info=[{'Id':cid,'Image':'sha256:'+'0'*64 if bad_inspect else IMAGE,
+                   'Config':{'Labels':{'devops.member2.operation':label}},
+                   'State':{'Running':False,'ExitCode':0}}]
+            command('05-inspect',['docker','inspect',cid],canonical(info))
+            command('06-start',['docker','start','--attach',cid])
+            command('07-inspect',['docker','inspect',cid],canonical(info))
+            command('09-rm',['docker','rm','-f',cid])
         stages=[]
-        for name in ('draft','full-check','incremental-check','repair','recheck'):
+        for name,prefix_count in zip(('draft','full-check','incremental-check','repair','recheck'),(0,2,4,4,6)):
             data={}
             if name=='draft':
                 data={'candidate_sha256':digest(CANDIDATE),'attempts':[{'image_id':IMAGE}]}
@@ -244,13 +268,13 @@ class Loopback(unittest.TestCase):
                 data={'validation':{'accepted':True},'findings':[]}
             files[name+'.json']=canonical({'schema_version':'e11e12-1','kind':name,'job_id':JOB,
                  'trace_id':TRACE,'status':'SUCCEEDED','commit':M['base' if name=='full-check' else 'target'],
-                 'image_id':IMAGE,'execution_environment':'draft-image','data':data,'artifacts':[]})
+                 'image_id':IMAGE,'execution_environment':'draft-image','data':data,'artifacts':[],
+                 'image_operations':operations[:prefix_count]})
             stages.append({'name':name,'artifact':entry(name+'.json')})
         result={'schema_version':'e11e12-1','job_id':JOB,'trace_id':TRACE,'status':'SUCCEEDED',
                 'base_commit':M['base'],'target_commit':M['target'],'stages':stages,
                 'draft_image_id':IMAGE,'execution_environment':'draft-image','draft_image_reused':True,
-                'image_operations':[{'container_id':'%064x'%i,'image_id':IMAGE,
-                     'actual_container_image':IMAGE} for i in range(1,7)],
+                'image_operations':operations,
                 'artifacts':[entry(n) for n in files]}
         key='example-c8-run'
         state={'job_id':JOB,'trace_id':TRACE,'status':'SUCCEEDED',
@@ -287,12 +311,20 @@ class Loopback(unittest.TestCase):
         self.assertEqual(self.posts[0],self.posts[1])
         self.assertEqual(self.posts[0],self.posts[3])
         self.assertEqual(409,s['conflict_http'])
-        self.assertEqual(7,s['http_artifacts_verified'])
+        self.assertEqual(103,s['http_artifacts_verified'])
+        self.assertEqual(12,s['downloaded_inspect_originals_verified'])
         self.assertEqual(6,s['image_operations'])
         self.assertNotEqual(s['request_raw_sha256'],s['request_canonical_sha256'])
         self.assertNotEqual(s['request_canonical_sha256'],s['store_request_hash'])
         self.assertFalse(s['server_store_job_count_verified'])
         self.assertFalse(s['formal_pair_acceptance'])
+
+    def test_async_rejects_self_consistent_manifest_with_wrong_inspect_image(self):
+        port,raw,key=self.async_backend(bad_inspect=True)
+        with self.assertRaisesRegex(ValueError,'IMAGE_INSPECT_BINDING_MISMATCH'):
+            campaign(self.root,port,raw,CANDIDATE,digest(CANDIDATE),SOURCE,SERVICE,10,key)
+        self.assertFalse((self.root/'summary.json').exists())
+        self.assertEqual(3,len(self.posts))
 
     def test_async_rejects_tampered_download(self):
         port,raw,key=self.async_backend(tamper=True)

@@ -125,3 +125,16 @@ and the current asynchronous profile resolver is not identical to the
 synchronous b13-level-v1 resolver. Require the operator-approved E12
 request, do not transform one profile into another or assume their
 implementation/image pins are the same.
+
+
+For a C8 request with an explicit profile, also provide --profile PROFILE.json
+--profile-raw-sha256 PROFILE_RAW_SHA, separately from the embedded canonical
+profile SHA. The current B13 asynchronous pipeline's six ImageRuntime
+operations are full(base), scan(base), scan(target), full(target),
+validate(target), full(target). The client checks exact stage operation
+prefixes, downloaded execution.json originals, create/start/rm commands,
+two actual container inspect outputs per child, immutable image/ID/owner
+label, and reported exits. These are peer-supplied original observations,
+not an independently queried B13 daemon or proof that no unrelated job
+exists. The B13 consumer-only tests also run on Windows; Git attributes
+preserve test fixture bytes on checkout.

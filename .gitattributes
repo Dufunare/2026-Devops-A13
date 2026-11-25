@@ -14,3 +14,6 @@ evidence/E6/241870063/** -text -whitespace
 evidence/E7/241830088/** -text -whitespace
 evidence/E7/241830088/**/*.log -whitespace
 evidence/E7/241830088/**/make-db.txt -whitespace
+
+# B13 exchange inputs are byte-pinned originals, including line endings.
+labs/e13e14/tests/fixtures/b13-level-v1/** -text
