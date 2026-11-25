@@ -138,3 +138,7 @@ label, and reported exits. These are peer-supplied original observations,
 not an independently queried B13 daemon or proof that no unrelated job
 exists. The B13 consumer-only tests also run on Windows; Git attributes
 preserve test fixture bytes on checkout.
+
+Windows consumer CI uses a sparse checkout of labs/e13e14. The repository
+has an existing papers/*:Zone.Identifier path that Windows cannot check
+out. No other member's files or NTFS security configuration are changed.
