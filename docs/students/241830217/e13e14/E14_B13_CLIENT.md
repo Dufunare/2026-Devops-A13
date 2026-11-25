@@ -109,3 +109,19 @@ Both sides exchange archives and SHA256, verify matching Job/Trace and raw
 HTTP originals. Client PASS never sets formal_pair_acceptance=true.
 The new clients are protocol-local preflight until actual B13 access,
 freeze and paired execution; no live credentials are used in CI.
+
+
+## Protocol regression scope
+
+test_b13_clients.py uses real HTTP listeners bound to 127.0.0.1 and a
+synthetic backend implementing the inspected B13 field shapes, not the
+B13 deployed services. The test-only manifest, profile and candidate are
+copied from the pinned B13 source and their actual byte counts/hashes
+checked. It covers six normal POSTs, C4 two POSTs, C5 seven POSTs, wrong
+image, invalid handoff hashes/content, wrong path/pins, credential echo
+rejection, C8 four POSTs including completed replay, and corrupted
+downloads. Production B13 support still depends on the frozen version,
+and the current asynchronous profile resolver is not identical to the
+synchronous b13-level-v1 resolver. Require the operator-approved E12
+request, do not transform one profile into another or assume their
+implementation/image pins are the same.
