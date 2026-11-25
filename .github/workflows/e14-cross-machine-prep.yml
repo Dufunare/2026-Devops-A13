@@ -1,0 +1,26 @@
+name: E14 cross-machine access preflight
+on:
+  push:
+    branches: [student/241830217/e14-cross-machine-prep-20261125]
+  pull_request:
+    branches: [student/241830217/e14-real-integration-20261124, coord/e13-e14-integration-20261124]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Existing offline regressions and actual loopback session tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile labs/e13e14/*.py labs/e13e14/tests/*.py
+          python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v
+          python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
+      - name: Source and Git history scan
+        run: python3 scripts/secret_scan.py . --history
