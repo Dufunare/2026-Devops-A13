@@ -132,6 +132,17 @@ jobs:
             --request "$REQUEST" --request-sha256 "$REQUEST_SHA" \
             --candidate-sha256 "$CANDIDATE_SHA" \
             --out work/ci-e14-draft-child --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Authenticated real four-role health via distinct loopback gateways
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          python3 labs/e13e14/pair_health_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --source-commit "$(git rev-parse HEAD)" \
+            --out work/ci-e14-peer-health --project "$E14_PROJECT" --image "$E14_IMAGE"
       - name: Operator-side C5 real validator rejection, rollback and new-job recovery
         run: |
           set -euo pipefail
@@ -188,7 +199,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault work/ci-e14-c5 work/ci-e14-peer-audit
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault work/ci-e14-c5 work/ci-e14-peer-audit work/ci-e14-peer-health
           CHILD_IMAGES=$(python3 - <<'PY'
           import json
           from pathlib import Path
@@ -228,6 +239,7 @@ jobs:
             work/ci-e14-service-fault/
             work/ci-e14-c5/
             work/ci-e14-peer-audit/
+            work/ci-e14-peer-health/
             data/integration-sample/e14-child-request.json
             data/integration-sample/candidate-e14-child.Dockerfile
             work/ci-e14-image/

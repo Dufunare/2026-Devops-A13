@@ -1,11 +1,10 @@
 """Authenticated preflight for four explicitly agreed loopback SSH forwards."""
 import argparse
-import getpass
 import json
 from pathlib import Path
 
 from pair_session import ROLES, COMMIT, HASH, canonical, strict_json, need
-from pair_c8_client import Recorder, save
+from pair_c8_client import Recorder, save, read_credential
 
 
 def probe(mapping, credential, out, source, request_sha, candidate_sha):
@@ -51,7 +50,7 @@ def main():
     p.add_argument('--candidate-sha256',required=True)
     p.add_argument('--out',type=Path,required=True)
     a=p.parse_args()
-    credential=getpass.getpass('Session credential (not recorded): ').encode('ascii')
+    credential=read_credential()
     a.out.mkdir(parents=True,exist_ok=False)
     result=probe({role:getattr(a,role) for role in ROLES},credential,a.out,
                  a.source_commit,a.request_sha256,a.candidate_sha256)

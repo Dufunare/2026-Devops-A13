@@ -132,3 +132,28 @@ recovery without restarting services or changing prior evidence. It does
 not add an HTTP bad-patch injection endpoint or change B's algorithm.
 The formal C5 project/patch/expected missing set must be approved by B,
 and the formal remote invocation arrangement remains to be agreed.
+
+
+## Proposed SSH plan generation and real role-health regression
+
+Once B13 confirms the actual connector, public key, two time windows and
+all ports, create a private JSON file with schema_version e14-access-plan-1,
+connector, ssh_user, ssh_host, windows (two {start,end} ISO8601 values with
+timezone), and ports (four role keys, plus api only if approved, each
+{backend,gateway,client} integer). Use the real public key file:
+
+    python3 labs/e13e14/pair_access_plan.py \
+      --plan PRIVATE_PLAN_JSON --public-key PEER_PUBLIC_KEY --out NEW_PRIVATE_PLAN_DIR
+
+The generator checks the public key fingerprint using ssh-keygen, rejects
+root, overlapping windows and server/client port collisions, produces a
+proposed Match block and two separate proposed key lines with UTC expiry.
+It does not install anything or prove the account is unprivileged.
+Inspect effective sshd settings and test with the actual authorized key;
+install ONLY during the selected window, terminate existing sessions and
+remove access at the end. Key expiry has no not-before guarantee and
+does not terminate existing sessions. Do not add unapproved ports.
+pair_health_gate.py exercises the four distinct authenticated loopback
+gateways against actual Compose roles in CI and compares service identities.
+The private gateway CLI rejects credential files under the course root;
+the client will not fall back to echoed credential input.

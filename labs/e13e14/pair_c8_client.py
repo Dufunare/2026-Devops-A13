@@ -10,6 +10,7 @@ import json
 import platform
 import time
 import uuid
+import warnings
 from pathlib import Path
 from urllib.parse import quote
 
@@ -158,6 +159,13 @@ def campaign(recorder, original, source, candidate_sha, wait=600, key=None):
     return summary
 
 
+def read_credential():
+    # Never permit getpass to fall back to an echoed input prompt.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error',getpass.GetPassWarning)
+        return getpass.getpass('Session credential (not recorded): ').encode('ascii')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--port', type=int, required=True)
@@ -170,7 +178,7 @@ def main():
     a = p.parse_args()
     raw = a.request.read_bytes()
     need(digest(raw) == a.request_sha256 and 1 <= a.wait <= 12000, 'INPUT_OR_WAIT_INVALID')
-    credential = getpass.getpass('Session credential (not recorded): ').encode('ascii')
+    credential = read_credential()
     a.out.mkdir(parents=True, exist_ok=False)
     try:
         result = campaign(Recorder(a.port,credential,a.out),raw,a.source_commit,a.candidate_sha256,a.wait)

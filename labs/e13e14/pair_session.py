@@ -319,6 +319,8 @@ def main():
     p.add_argument('--course-root', type=Path, default=Path(__file__).resolve().parents[2])
     a = p.parse_args()
     need(1024 <= a.listen_port <= 65535 and a.listen_port != a.upstream_port, 'PORT_INVALID')
+    need(not a.credential_file.resolve().is_relative_to(a.course_root.resolve()),
+         'CREDENTIAL_MUST_BE_OUTSIDE_COURSE')
     raw = a.approved_request.read_bytes()
     session = Session(raw, a.request_sha256, a.candidate_sha256, a.source_commit,
                       expiry(a.expires), private_credential(a.credential_file))
