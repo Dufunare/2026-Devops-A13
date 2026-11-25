@@ -41,7 +41,8 @@ class PairSession(unittest.TestCase):
         for name in ('draft','full-check','incremental-check','repair','recheck'):
             self.files[name+'.json'] = canonical({'kind':name,'job_id':self.job,
                  'trace_id':self.trace,'status':'SUCCEEDED',
-                 'commit':self.input['base' if name=='full-check' else 'target'],'artifacts':[]})
+                 'commit':self.input['base' if name=='full-check' else 'target'],'artifacts':[],
+                 'data':{'candidate_sha256':self.candidate} if name=='draft' else {}})
             self.result['stages'].append({'name':name,'artifact':entry(name+'.json')})
         self.result['artifacts'] = [entry(n) for n in self.files]
         self.session = Session(self.raw,digest(self.raw),self.candidate,self.source,

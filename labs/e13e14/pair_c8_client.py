@@ -142,6 +142,9 @@ def campaign(recorder, original, source, candidate_sha, wait=600, key=None):
              envelope['trace_id'] == trace and envelope['status'] == 'SUCCEEDED' and
              envelope['commit'] == request['base' if name == 'full-check' else 'target'],
              'STAGE_IDENTITY_MISMATCH')
+        if name == 'draft':
+            need(envelope.get('data',{}).get('candidate_sha256') == candidate_sha,
+                 'DRAFT_CANDIDATE_HASH_MISMATCH')
         for entry in envelope.get('artifacts',[]):
             reference(entry)
     after = call('POST','/v1/jobs',payload,202)

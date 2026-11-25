@@ -94,3 +94,15 @@ the DRAFT broker's exact generated patch check to permit arbitrary injection.
 B's full-project make all + independent run case and repair scope remain
 pending. No deployment, SSH authorization or token exchange performed by
 this increment.
+
+
+## Guarded real API regression
+
+The E13 explicit-input regression can select --guarded-c8. It starts the
+original private Docker API with a fresh Store; the client executes through
+a distinct loopback session listener. The server checks one Store entry,
+actual DRAFT exec/inspect and every downloaded artifact against the original.
+CI generates a credential in memory and checks that it never occurs in
+client originals. This is local real Docker validation, not SSH or B13
+acceptance. The CLI additionally checks clean tracked source, candidate
+bytes and both full Git commit objects before startup.

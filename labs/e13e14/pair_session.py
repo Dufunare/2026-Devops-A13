@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import re
 import stat
+import subprocess
 import threading
 import time
 from datetime import datetime, timezone
@@ -72,13 +73,44 @@ def private_credential(path):
     return raw
 
 
+def verify_deployment(root, request_raw, candidate_sha, source):
+    """Check local source, approved candidate and complete commit objects."""
+    root = Path(root).resolve()
+    def git(repo, *args):
+        proc = subprocess.run(['git','-C',str(repo),*args], capture_output=True,
+                              text=True, timeout=30)
+        need(proc.returncode == 0, 'DEPLOYMENT_GIT_CHECK_FAILED')
+        return proc.stdout.strip()
+    need(git(root,'rev-parse','HEAD') == source and
+         not git(root,'status','--porcelain','--untracked-files=no'),
+         'DEPLOYMENT_SOURCE_MISMATCH')
+    request = strict_json(request_raw)
+    def local(value):
+        need(isinstance(value,str) and value.startswith('/course/data/'),
+             'DEPLOYMENT_PATH_INVALID')
+        path = root / value[len('/course/'):]
+        need(path.resolve() == path and path.is_relative_to(root/'data'),
+             'DEPLOYMENT_PATH_ESCAPE')
+        return path
+    candidate = local(request.get('candidate'))
+    repo = local(request.get('repo'))
+    need(candidate.is_file() and digest(candidate.read_bytes()) == candidate_sha
+         and repo.is_dir(), 'DEPLOYMENT_INPUT_MISMATCH')
+    for field in ('base','target'):
+        revision = request.get(field)
+        need(isinstance(revision,str) and COMMIT.fullmatch(revision),'DEPLOYMENT_COMMIT_INVALID')
+        need(git(repo,'rev-parse','--verify',revision+'^{commit}') == revision,
+             'DEPLOYMENT_COMMIT_MISSING')
+    return True
+
+
 def artifact_index(result, job):
     need(result.get('job_id') == job and result.get('status') == 'SUCCEEDED',
          'ARTIFACT_JOB_NOT_SUCCEEDED')
     entries = result.get('artifacts')
     need(isinstance(entries, list) and bool(entries), 'EMPTY_MANIFEST')
     prefix = 'artifact://' + job + '/'
-    found = {}
+    found, folded = {}, set()
     for item in entries:
         need(isinstance(item, dict), 'ARTIFACT_RECORD_INVALID')
         uri = item.get('uri')
@@ -93,8 +125,8 @@ def artifact_index(result, job):
                  {'CON','PRN','AUX','NUL', *('COM'+str(i) for i in range(1,10)),
                   *('LPT'+str(i) for i in range(1,10))}
                  for part in components), 'UNSAFE_ARTIFACT_PATH')
-        need(name != 'result.json' and name.casefold() not in
-             {x.casefold() for x in found}, 'DUPLICATE_ARTIFACT')
+        need(name != 'result.json' and name.casefold() not in folded, 'DUPLICATE_ARTIFACT')
+        folded.add(name.casefold())
         need(type(item.get('bytes')) is int and 0 <= item['bytes'] <= MAX_RESPONSE
              and isinstance(item.get('sha256'), str) and HASH.fullmatch(item['sha256']),
              'ARTIFACT_DIGEST_INVALID')
@@ -147,6 +179,7 @@ class Session:
         need(isinstance(key, str) and KEY.fullmatch(key), 'KEY_INVALID')
         encoded = canonical(body['input'])
         with self.lock:
+            need(time.time() < self.expires, 'SESSION_EXPIRED')
             # Reserve before sending so a lost response cannot admit a second
             # key. The same approved POST may be retried to recover its job ID.
             if self.key is None:
@@ -169,6 +202,7 @@ class Session:
 
     def read(self, path, upstream):
         with self.lock:
+            need(time.time() < self.expires, 'SESSION_EXPIRED')
             need(self.job is not None, 'SESSION_NO_JOB')
             prefix = '/v1/jobs/' + self.job
             if path == prefix:
@@ -282,11 +316,13 @@ def main():
     p.add_argument('--source-commit', required=True)
     p.add_argument('--expires', required=True, help='ISO8601 with timezone, max 24 hours')
     p.add_argument('--credential-file', type=Path, required=True)
+    p.add_argument('--course-root', type=Path, default=Path(__file__).resolve().parents[2])
     a = p.parse_args()
     need(1024 <= a.listen_port <= 65535 and a.listen_port != a.upstream_port, 'PORT_INVALID')
-    session = Session(a.approved_request.read_bytes(), a.request_sha256,
-                      a.candidate_sha256, a.source_commit, expiry(a.expires),
-                      private_credential(a.credential_file))
+    raw = a.approved_request.read_bytes()
+    session = Session(raw, a.request_sha256, a.candidate_sha256, a.source_commit,
+                      expiry(a.expires), private_credential(a.credential_file))
+    verify_deployment(a.course_root, raw, a.candidate_sha256, a.source_commit)
     with make_server(a.listen_port, session, upstream_for(a.upstream_port), a.role) as server:
         # Check expiry even when no clients connect. Expiry blocks access; it
         # does not cancel an already submitted job in the private backend.
