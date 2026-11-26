@@ -82,13 +82,18 @@ class Loopback(unittest.TestCase):
                          (len(CANDIDATE),digest(CANDIDATE)))
 
     def sync(self,scenario='normal',wrong_image=False):
+        m=copy.deepcopy(M)
+        self.source_bytes={name:('synthetic original '+name+'\n').encode() for name in m['target_files']}
+        if scenario=='C5':
+            m['target_files']={name:digest(raw) for name,raw in self.source_bytes.items()}
+        manifest_raw=canonical(m) if scenario=='C5' else MANIFEST
         def full_value(rows):
             return {'status':'SUCCEEDED','findings':rows,'whole_project_findings':rows,
-                    'profile_sha256':M['profile_sha256']}
+                    'profile_sha256':m['profile_sha256']}
         graph=b'[\n {"target":"main.o","dependency":"main.c"}\n]\n'
-        target=full_value(M['expected_missing'])
+        target=full_value(m['expected_missing'])
         target_raw=json.dumps(target,ensure_ascii=False,indent=2).encode()+b'\n'
-        common={k:M[k] for k in ('project_id','base','target','profile','profile_sha256','candidate_sha256')}
+        common={k:m[k] for k in ('project_id','base','target','profile','profile_sha256','candidate_sha256')}
         common.update(protocol='member2-e14-1',job_id=JOB,trace_id=TRACE)
         def role_backend(role):
             def backend(method,path,data,headers):
@@ -106,8 +111,8 @@ class Loopback(unittest.TestCase):
                     self.assertEqual('/course/data/test/candidate.Dockerfile',data['candidate'])
                     self.assertNotIn('image_id',data)
                     return 200,{'status':'SUCCEEDED','image_id':IMAGE,
-                        'binding':dict(common,image_id=IMAGE,files={side:M[side+'_files'] for side in ('base','target')}),
-                        'result':{'status':'SUCCEEDED','candidate_sha256':M['candidate_sha256'],
+                        'binding':dict(common,image_id=IMAGE,files={side:m[side+'_files'] for side in ('base','target')}),
+                        'result':{'status':'SUCCEEDED','candidate_sha256':m['candidate_sha256'],
                                   'attempts':[{'image_id':IMAGE}]}},{}
                 self.assertEqual(IMAGE,data['image_id'])
                 ids={k:common[k] for k in ('job_id','trace_id','profile_sha256')}
@@ -129,13 +134,13 @@ class Loopback(unittest.TestCase):
                     self.assertEqual(('sleep',1),(data['fault'],data['timeout_seconds']))
                     return 200,dict(result,status='TIMED_OUT',operation='full',container_id=cid),{}
                 side='base' if name=='baseline-full' else 'target'
-                source=dict(M[side+'_files'])
+                source=dict(m[side+'_files'])
                 if name=='final-full':
                     source['Makefile']='9'*64
                 result['execution']={'operation':'full' if role=='buildchecker' else 'validate',
                     'image_id':IMAGE,'actual_container_image':'sha256:'+'0'*64 if wrong_image else IMAGE,
-                    'container_id':cid,'container_exit_code':0,'profile_sha256':M['profile_sha256'],
-                    'input_source_sha256':source}
+                    'container_id':cid,'container_exit_code':0,'profile_sha256':m['profile_sha256'],
+                    'input_source_sha256':source,'ownership_label':'7'*32}
                 if role=='buildchecker':
                     result['result']=result['payload']=target if name=='target-full' else full_value([])
                 else:
@@ -153,9 +158,9 @@ class Loopback(unittest.TestCase):
         session={'schema_version':'b13-sync-session-1','scenario':scenario,'service_source_sha':SOURCE,
                  'service_image_id':SERVICE,'job_id':JOB,'trace_id':TRACE,'run_root':'/course/work/test-fixture',
                  'candidate_path':'/course/data/test/candidate.Dockerfile','ports':ports,
-                 'manifest_sha256':digest(MANIFEST),'profile_raw_sha256':digest(PROFILE),
-                 'profile_canonical_sha256':M['profile_sha256'],'candidate_sha256':digest(CANDIDATE)}
-        s,m=load_inputs(canonical(session),MANIFEST,PROFILE,CANDIDATE)
+                 'manifest_sha256':digest(manifest_raw),'profile_raw_sha256':digest(PROFILE),
+                 'profile_canonical_sha256':m['profile_sha256'],'candidate_sha256':digest(CANDIDATE)}
+        s,m=load_inputs(canonical(session),manifest_raw,PROFILE,CANDIDATE)
         return Client(self.root,s,m,self.credential,10),graph,target_raw,session
 
     def test_sync_six_post_chain_and_actual_wire(self):
@@ -184,13 +189,72 @@ class Loopback(unittest.TestCase):
         self.assertFalse(s['server_originals_verified'])
         self.assert_no_credential()
 
-    def test_c5_seven_posts_bad_then_good_and_final_full(self):
+    def c5_handoff(self,client,wrong=None):
+        folder=self.root/'peer-originals'
+        folder.mkdir(exist_ok=False)
+        raw=(self.root/'wire/05-bad-repair/response.body').read_bytes()
+        witness=strict_json(raw)['execution']
+        source=client.m['target_files']
+        values={'source-before.json':canonical(source),'after-bad-source.json':canonical(source),
+                'git-before.txt':b'','after-bad-git.txt':b'',
+                'bad-repair/runtime/output/evidence/apply-check.stderr':b'error: patch does not apply\n',
+                'bad-repair/runtime/execution.json':canonical(witness),
+                'bad-repair/runtime/cleanup.json':canonical({'ownership_label':witness['ownership_label'],
+                    'removed':[witness['container_id']],'verified_no_owned_containers':True})}
+        for name,body in self.source_bytes.items():
+            for prefix in ('source-before-bytes','source-after-bad-bytes'):
+                values[prefix+'/'+name]=body
+        if wrong=='source':
+            values['source-after-bad-bytes/Makefile']+=b'changed'
+        if wrong=='cleanup':
+            values['bad-repair/runtime/cleanup.json']=canonical({'ownership_label':witness['ownership_label'],
+                'removed':[witness['container_id']],'verified_no_owned_containers':False})
+        for name,body in values.items():
+            path=folder/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(body)
+        manifest=canonical({'schema_version':'c5-handoff-1','job_id':JOB,'trace_id':TRACE,
+             'bad_response_sha256':digest(raw),'files':{n:{'bytes':len(v),'sha256':digest(v)} for n,v in values.items()}})
+        return folder,manifest
+
+    def test_c5_pauses_then_recovers_only_after_verified_originals(self):
         client,graph,target,_=self.sync('C5')
         client.start()
-        result=client.finish(graph,digest(graph),target,digest(target))
+        pause=client.finish(graph,digest(graph),target,digest(target))
+        self.assertEqual('WAITING_FOR_C5_ROLLBACK_ORIGINALS',pause['status'])
+        self.assertEqual(5,len(self.posts))
+        self.assertEqual('bad-repair',self.posts[-1][1])
+        folder,manifest=self.c5_handoff(client)
+        # A new invocation reuses saved wire responses, not in-memory state.
+        resumed=Client(self.root,client.s,client.m,self.credential,10)
+        result=resumed.recover(folder,manifest,digest(manifest))
         self.assertEqual(7,result['run_requests'])
         self.assertEqual(['bad-repair','repair','final-full'],[n for _,n,_ in self.posts][-3:])
+        self.assertTrue(result['c5_rollback_originals_verified'])
         self.assertFalse(result['formal_pair_acceptance'])
+        self.assert_no_credential()
+        with self.assertRaisesRegex(ValueError,'POST_ALREADY_ATTEMPTED'):
+            resumed.recover(folder,manifest,digest(manifest))
+        self.assertEqual(7,len(self.posts))
+
+    def test_c5_rejects_self_consistent_manifest_changed_source(self):
+        client,graph,target,_=self.sync('C5')
+        client.start()
+        client.finish(graph,digest(graph),target,digest(target))
+        folder,manifest=self.c5_handoff(client,'source')
+        with self.assertRaisesRegex(ValueError,'C5_SOURCE_BYTES_MISMATCH'):
+            client.recover(folder,manifest,digest(manifest))
+        self.assertEqual(5,len(self.posts))
+
+    def test_c5_rejects_unverified_cleanup_and_wrong_job(self):
+        client,graph,target,_=self.sync('C5')
+        client.start()
+        client.finish(graph,digest(graph),target,digest(target))
+        folder,manifest=self.c5_handoff(client,'cleanup')
+        wrong=canonical(dict(strict_json(manifest),job_id='job-'+'0'*32))
+        with self.assertRaisesRegex(ValueError,'C5_HANDOFF_IDENTITY_MISMATCH'):
+            client.recover(folder,wrong,digest(wrong))
+        with self.assertRaisesRegex(ValueError,'C5_CLEANUP_ORIGINAL_MISMATCH'):
+            client.recover(folder,manifest,digest(manifest))
+        self.assertEqual(5,len(self.posts))
 
     def test_wrong_image_and_wrong_graph_fail_closed(self):
         client,graph,target,_=self.sync(wrong_image=True)
@@ -225,9 +289,18 @@ class Loopback(unittest.TestCase):
         self.assertFalse((self.root/'wire/probe/response.body').exists())
         self.assert_no_credential()
 
-    def async_backend(self,tamper=False,bad_inspect=False):
+    def async_backend(self,tamper=False,bad_inspect=False,scoped=False,in_scope_missing=False,
+                      forged_scope=False):
         request={'mode':'e12','repo':'/course/data/project','candidate':'/course/data/candidate.Dockerfile',
                  'base':M['base'],'target':M['target'],'expected_output':'1'}
+        profile={'id':'synthetic-tomlc99','repair_targets':['toml.o']} if scoped else None
+        scope={'profile_sha256':digest(canonical(profile)),'success_scope':profile['repair_targets']} if scoped else {}
+        if scoped:
+            request.update(profile=profile,profile_sha256=scope['profile_sha256'])
+        rows=([{'type':'MISSING','target':'toml_json','dependency':'toml.h'},
+               {'type':'REDUNDANT','target':'toml.o','dependency':'unused.h'}] if scoped else [])
+        if in_scope_missing:
+            rows.append({'type':'MISSING','target':'toml.o','dependency':'toml.h'})
         raw=json.dumps(request,indent=2).encode()+b'\n'
         store_hash=digest(json.dumps(request,sort_keys=True).encode())
         files={'request.json':raw,'draft-build/result.json':canonical({'status':'SUCCEEDED'})}
@@ -239,7 +312,7 @@ class Loopback(unittest.TestCase):
             label='%032x'%i
             op={'operation':kind,'project_commit':M['base'] if i<=2 else M['target'],
                 'image_id':IMAGE,'actual_container_image':IMAGE,'container_id':cid,
-                'container_exit_code':0,'profile_sha256':None}
+                'container_exit_code':0,'profile_sha256':scope.get('profile_sha256')}
             operations.append(op)
             prefix='image-execution/%02d-%s/'%(i,kind)
             files[prefix+'execution.json']=canonical(op)
@@ -259,23 +332,30 @@ class Loopback(unittest.TestCase):
             command('09-rm',['docker','rm','-f',cid])
         stages=[]
         for name,prefix_count in zip(('draft','full-check','incremental-check','repair','recheck'),(0,2,4,4,6)):
-            data={}
+            data={};refs=[]
             if name=='draft':
                 data={'candidate_sha256':digest(CANDIDATE),'attempts':[{'image_id':IMAGE}]}
             elif name=='repair':
                 data={'input_report':entry('incremental-check.json')}
             elif name=='recheck':
-                data={'validation':{'accepted':True},'findings':[]}
+                verdict=dict(accepted=True,**scope)
+                full=dict(status='SUCCEEDED',findings=rows,**scope)
+                data={'validation':verdict,'findings':rows}
+                for fname,val in (('validation/validation.json',verdict),('final-full/findings.json',full)):
+                    files[fname]=canonical(val)
+                    refs.append(entry(fname))
             files[name+'.json']=canonical({'schema_version':'e11e12-1','kind':name,'job_id':JOB,
                  'trace_id':TRACE,'status':'SUCCEEDED','commit':M['base' if name=='full-check' else 'target'],
-                 'image_id':IMAGE,'execution_environment':'draft-image','data':data,'artifacts':[],
-                 'image_operations':operations[:prefix_count]})
+                 'image_id':IMAGE,'execution_environment':'draft-image','data':data,'artifacts':refs,
+                 'image_operations':operations[:prefix_count],**scope})
             stages.append({'name':name,'artifact':entry(name+'.json')})
         result={'schema_version':'e11e12-1','job_id':JOB,'trace_id':TRACE,'status':'SUCCEEDED',
                 'base_commit':M['base'],'target_commit':M['target'],'stages':stages,
                 'draft_image_id':IMAGE,'execution_environment':'draft-image','draft_image_reused':True,
                 'image_operations':operations,
-                'artifacts':[entry(n) for n in files]}
+                'artifacts':[entry(n) for n in files],**scope}
+        if forged_scope:
+            result['success_scope']=['toml_json']
         key='example-c8-run'
         state={'job_id':JOB,'trace_id':TRACE,'status':'SUCCEEDED',
                'request_hash':store_hash,'idempotency_key':key}
@@ -311,7 +391,8 @@ class Loopback(unittest.TestCase):
         self.assertEqual(self.posts[0],self.posts[1])
         self.assertEqual(self.posts[0],self.posts[3])
         self.assertEqual(409,s['conflict_http'])
-        self.assertEqual(103,s['http_artifacts_verified'])
+        self.assertEqual(105,s['http_artifacts_verified'])
+        self.assertTrue(s['recheck_scope']['whole_project_missing_zero'])
         self.assertEqual(12,s['downloaded_inspect_originals_verified'])
         self.assertEqual(6,s['image_operations'])
         self.assertNotEqual(s['request_raw_sha256'],s['request_canonical_sha256'])
@@ -324,6 +405,39 @@ class Loopback(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'IMAGE_INSPECT_BINDING_MISMATCH'):
             campaign(self.root,port,raw,CANDIDATE,digest(CANDIDATE),SOURCE,SERVICE,10,key)
         self.assertFalse((self.root/'summary.json').exists())
+        self.assertEqual(3,len(self.posts))
+
+    def run_scoped(self,**kwargs):
+        port,raw,key=self.async_backend(scoped=True,**kwargs)
+        profile=canonical(strict_json(raw)['profile'])
+        return campaign(self.root,port,raw,CANDIDATE,digest(CANDIDATE),SOURCE,SERVICE,10,key,
+                        profile_raw=profile,profile_raw_sha=digest(profile))
+
+    def test_async_scoped_pass_preserves_outside_missing_and_redundant(self):
+        s=self.run_scoped()
+        scope=s['recheck_scope']
+        self.assertTrue(scope['repair_scope_pass'])
+        self.assertFalse(scope['whole_project_missing_zero'])
+        self.assertEqual((0,1,1),(scope['in_scope_missing_count'],scope['out_of_scope_missing_count'],
+                                  scope['whole_project_missing_count']))
+        self.assertEqual([{'type':'MISSING','target':'toml_json','dependency':'toml.h'}],
+                         scope['out_of_scope_missing'])
+        self.assertEqual(2,len(scope['whole_project_findings']))
+        self.assertEqual('CLIENT_COMPLETED_REPLAY_PASS',s['idempotency_status'])
+        self.assertFalse(s['formal_pair_acceptance'])
+
+    def test_async_in_scope_missing_preserves_initial_idempotency_but_fails(self):
+        with self.assertRaisesRegex(ValueError,'REPAIR_SCOPE_RECHECK_NOT_CLEAN'):
+            self.run_scoped(in_scope_missing=True)
+        self.assertEqual(3,len(self.posts))
+        self.assertEqual(1,strict_json((self.root/'recheck-scope.json').read_bytes())['in_scope_missing_count'])
+        self.assertEqual('CLIENT_INITIAL_IDEMPOTENCY_PASS',
+                         strict_json((self.root/'idempotency-observation.json').read_bytes())['status'])
+        self.assertFalse((self.root/'summary.json').exists())
+
+    def test_async_rejects_scope_substitution(self):
+        with self.assertRaisesRegex(ValueError,'RESULT_PROFILE_OR_SCOPE_MISMATCH'):
+            self.run_scoped(forged_scope=True)
         self.assertEqual(3,len(self.posts))
 
     def test_async_rejects_tampered_download(self):

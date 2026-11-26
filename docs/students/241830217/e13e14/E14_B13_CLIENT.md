@@ -68,9 +68,8 @@ hashes by serializing the HTTP JSON and does not access server paths.
 
 finish verifies the original findings against the target full response,
 sends EChecker, passes its report/payload paths and raw hashes to MDFixer,
-and runs final full. C5 sends the fixed bad-repair request before the
-good repair on the approved C5 stack. It requires actual rejection and
-rollback claims, then correct repair and final MISSING=0. The normal
+and runs final full. C5 sends the fixed bad-repair request and pauses for the rollback
+handoff before correct repair on the approved C5 stack (see recover below). The normal
 path uses 6 POSTs, C4 2, C5 7. Never enable faults on normal stack.
 An attempted POST is never retried automatically; reconcile failed/lost
 responses with B13 and preserve the original folder. If finish is
@@ -87,7 +86,7 @@ they are the synchronous service pins).
 This client checks real 202 duplicate response identity, 409 with the same
 key/different target, polls only its own Job, downloads all listed original
 artifacts, checks per-file bytes/hash/header and five stage bindings,
-requires DRAFT image reuse, accepted repair and full MISSING=0, and
+requires DRAFT image reuse, accepted repair and zero in-scope MISSING, and
 replays the completed key. Distinguish raw request SHA, canonical request
 SHA and B13's Store hash (json.dumps(sort_keys=True), default spacing and
 ASCII). It does not test unrelated Job IDs or assume an empty shared Store.
