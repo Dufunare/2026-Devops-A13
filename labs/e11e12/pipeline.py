@@ -142,8 +142,8 @@ def execute(request, out, job_id=None):
         target_sha=snapshot(repo,request['target'],target,out/'logs',profile)
         result.update(base_commit=base_sha,target_commit=target_sha,profile=profile)
         if exchange is not None:
-            check_snapshot(base, exchange)
-            check_snapshot(target, exchange)
+            check_snapshot(base, exchange, base_sha)
+            check_snapshot(target, exchange, target_sha)
             (out/'exchange-profile.json').write_bytes(exchange_bytes)
         if mode == 'e11-b':
             fixed_envelope, fixed_raw = read_fixed_report(request, target_sha)
