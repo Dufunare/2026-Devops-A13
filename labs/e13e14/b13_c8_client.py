@@ -15,6 +15,7 @@ from urllib.parse import quote
 from b13_wire import (Wire,pinned_file,pin,record,canonical,digest,strict_json,need,
                       HASH,COMMIT,JOB,TRACE,IMAGE,save)
 from pair_session import artifact_index, STAGES
+from b13_sync_client import findings
 
 
 def verify_downloaded_operations(out,files,result,request,image):
@@ -78,6 +79,31 @@ def verify_downloaded_operations(out,files,result,request,image):
     return ids
 
 
+def repair_scope(request):
+    profile=request.get('profile')
+    if profile is None:
+        return None
+    targets=profile.get('repair_targets')
+    need(isinstance(targets,list) and bool(targets) and
+         all(isinstance(t,str) and bool(t.strip()) for t in targets)
+         and len(set(targets))==len(targets),'REPAIR_SCOPE_INVALID')
+    return targets
+
+
+def recheck_scope(rows,scope):
+    typed=findings(rows)
+    missing=sorted(x for x in typed if x[0]=='MISSING')
+    inside=[x for x in missing if scope is None or x[1] in scope]
+    outside=[x for x in missing if scope is not None and x[1] not in scope]
+    def objects(values):
+        return [{'type':t,'target':a,'dependency':b} for t,a,b in values]
+    return {'repair_scope':scope,'in_scope_missing_count':len(inside),
+            'out_of_scope_missing_count':len(outside),'whole_project_missing_count':len(missing),
+            'in_scope_missing':objects(inside),'out_of_scope_missing':objects(outside),
+            'whole_project_missing':objects(missing),'whole_project_findings':rows,
+            'repair_scope_pass':not inside,'whole_project_missing_zero':not missing}
+
+
 def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_image,
              wait=1500,key=None,profile_raw=None,profile_raw_sha=None):
     out=Path(out)
@@ -98,6 +124,7 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
     else:
         need(request.get('profile_sha256') is None and profile_raw is None and
              profile_raw_sha is None,'UNEXPECTED_PROFILE_ORIGINAL')
+    scope=repair_scope(request)
     need(type(wait) is int and 1<=wait<=7200,'INVALID_WAIT')
     save(out/'inputs/request.original.json',raw)
     save(out/'inputs/candidate.original.Dockerfile',candidate_raw)
@@ -124,6 +151,10 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
                      {'input':dict(request,target='0'*40),'idempotency_key':key},409)
     need(request['target']!='0'*40 and conflict.get('error')=='IDEMPOTENCY_CONFLICT',
          'CONFLICT_NOT_REJECTED')
+    record(out/'idempotency-observation.json',{'status':'CLIENT_INITIAL_IDEMPOTENCY_PASS',
+           'job_id':job,'same_key_same_job':True,'conflict_http':409,
+           'completed_replay_verified':False,'server_store_job_count_verified':False,
+           'formal_pair_acceptance':False})
     prefix='/v1/jobs/'+job
     deadline=time.monotonic()+wait
     counter=5
@@ -147,7 +178,11 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
          and result.get('execution_environment')=='draft-image' and result.get('draft_image_reused') is True,
          'RESULT_IDENTITY_OR_DRAFT_MISMATCH')
     if request.get('profile') is not None:
-        need(result.get('profile_sha256')==request['profile_sha256'],'RESULT_PROFILE_MISMATCH')
+        need(result.get('profile_sha256')==request['profile_sha256'] and
+             result.get('success_scope')==scope,'RESULT_PROFILE_OR_SCOPE_MISMATCH')
+    else:
+        need(result.get('profile_sha256') is None and result.get('success_scope') is None,
+             'UNEXPECTED_RESULT_PROFILE_OR_SCOPE')
     for name,item in files.items():
         code,data,headers=wire.call('%05d-download'%counter,'GET',prefix+'/files/'+quote(name,safe='/'))
         counter+=1
@@ -162,6 +197,7 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
     need('request.json' in files and strict_json((out/'downloads/request.json').read_bytes())==request,
          'EXECUTED_REQUEST_MISMATCH')
     incremental_ref=None
+    scope_result=None
     for stage,prefix_count in zip(result['stages'],(0,2,4,4,6)):
         name=stage['name'];env=strict_json(ref(stage['artifact']).read_bytes())
         need(env.get('schema_version')=='e11e12-1' and env.get('kind')==name and
@@ -170,7 +206,11 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
              and env.get('image_id')==image and env.get('execution_environment')=='draft-image',
              'STAGE_IDENTITY_MISMATCH')
         if request.get('profile') is not None:
-            need(env.get('profile_sha256')==request['profile_sha256'],'STAGE_PROFILE_MISMATCH')
+            need(env.get('profile_sha256')==request['profile_sha256'] and
+                 env.get('success_scope')==scope,'STAGE_PROFILE_OR_SCOPE_MISMATCH')
+        else:
+            need(env.get('profile_sha256') is None and env.get('success_scope') is None,
+                 'UNEXPECTED_STAGE_PROFILE_OR_SCOPE')
         need(env.get('image_operations')==result.get('image_operations',[])[:prefix_count],
              'STAGE_IMAGE_OPERATIONS_MISMATCH')
         for item in env['artifacts']:
@@ -185,14 +225,30 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
             need(repair_ref==incremental_ref,'REPAIR_INPUT_NOT_INCREMENTAL_ORIGINAL')
             ref(repair_ref)
         if name=='recheck':
-            need(env['data']['validation']['accepted'] is True and
-                 not any(x['type']=='MISSING' for x in env['data']['findings']),
-                 'FULL_RECHECK_NOT_CLEAN')
+            data=env['data']
+            refs_by_name={x['uri'].removeprefix('artifact://'+job+'/'):x for x in env['artifacts']}
+            need(set(('validation/validation.json','final-full/findings.json'))<=set(refs_by_name),
+                 'RECHECK_ORIGINAL_REFERENCES_MISSING')
+            verdict=strict_json(ref(refs_by_name['validation/validation.json']).read_bytes())
+            full=strict_json(ref(refs_by_name['final-full/findings.json']).read_bytes())
+            need(verdict==data['validation'] and full.get('status')=='SUCCEEDED'
+                 and full['findings']==data['findings'],'RECHECK_ORIGINAL_MISMATCH')
+            if scope is not None:
+                need(verdict.get('profile_sha256')==request['profile_sha256'] and
+                     full.get('profile_sha256')==request['profile_sha256'],
+                     'RECHECK_ORIGINAL_PROFILE_MISMATCH')
+            scope_result=recheck_scope(data['findings'],scope)
+            scope_result['validation_accepted']=verdict.get('accepted') is True
+            record(out/'recheck-scope.json',scope_result)
+            need(scope_result['validation_accepted'] and scope_result['repair_scope_pass'],
+                 'REPAIR_SCOPE_RECHECK_NOT_CLEAN')
     ids=verify_downloaded_operations(out,files,result,request,image)
     after=wire.obj('%05d-completed-replay'%counter,'POST','/v1/jobs',payload,202)
     check_state(after)
     need(after.get('status')=='SUCCEEDED' and after.get('trace_id')==trace,'COMPLETED_REPLAY_MISMATCH')
-    summary={'status':'CLIENT_C8_PASS','job_id':job,'trace_id':trace,'same_key_same_job':True,
+    need(scope_result is not None,'RECHECK_SCOPE_MISSING')
+    summary={'status':'CLIENT_C8_PASS','idempotency_status':'CLIENT_COMPLETED_REPLAY_PASS',
+             'recheck_scope':scope_result,'job_id':job,'trace_id':trace,'same_key_same_job':True,
              'conflict_http':409,'http_artifacts_verified':len(files),'image_operations':len(ids),
              'request_raw_sha256':digest(raw),'request_canonical_sha256':digest(canonical(request)),
              'store_request_hash':expected_store_hash,'candidate_sha256':candidate_sha,

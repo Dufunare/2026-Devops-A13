@@ -2,7 +2,7 @@
 
 start runs DRAFT and two full requests (C4: DRAFT and timeout only).
 finish consumes the two actual server originals and resumes the same job.
-C5 explicitly runs bad-repair then good repair in its dedicated deployment.
+C5 pauses after bad-repair; recover verifies peer rollback originals before good repair.
 This is a client receipt, not proof of server cleanup or bilateral acceptance.
 """
 import argparse
@@ -159,6 +159,24 @@ class Client:
                                              self.root+'/target-full/findings.json']
         return result
 
+    def incremental_refs(self,inc):
+        need(inc.get('status')=='SUCCEEDED' and all(inc.get(k)==self.common[k]
+             for k in ('job_id','trace_id')),'INCREMENTAL_IDENTITY_MISMATCH')
+        refs={k:inc[k] for k in ('report','report_sha256','payload','payload_sha256')}
+        need(refs['report']==self.root+'/incremental/incremental-check.json' and
+             refs['payload']==self.root+'/incremental/incremental-report.json' and
+             HASH.fullmatch(refs['report_sha256']) and HASH.fullmatch(refs['payload_sha256']),
+             'INCREMENTAL_REFERENCE_MISMATCH')
+        return refs
+
+    def bad_repair(self,bad):
+        w=self.worker(bad,'REJECTED','validate',self.m['target_files'])
+        verdict=bad['payload']
+        need(verdict.get('accepted') is False and verdict.get('rollback') is True and
+             verdict.get('source_unchanged') is True and verdict.get('error') and
+             not verdict.get('checks',{}).get('patch_applies',False),'C5_NOT_EXPECTED_PATCH_REJECTION')
+        return w
+
     def finish(self,graph_raw,graph_sha,findings_raw,findings_sha):
         need(self.s['scenario'] in ('normal','C5'),'C4_HAS_NO_FINISH')
         need(not (self.out/'wire/04-incremental').exists(),'POST_ALREADY_ATTEMPTED_RECONCILE')
@@ -183,23 +201,91 @@ class Client:
                      baseline_graph_sha256=graph_sha,
                      target_findings=self.root+'/target-full/findings.json',
                      target_findings_sha256=findings_sha)
-        need(inc.get('status')=='SUCCEEDED' and all(inc.get(k)==self.common[k]
-             for k in ('job_id','trace_id')),'INCREMENTAL_IDENTITY_MISMATCH')
-        refs={k:inc[k] for k in ('report','report_sha256','payload','payload_sha256')}
-        need(refs['report']==self.root+'/incremental/incremental-check.json' and
-             refs['payload']==self.root+'/incremental/incremental-report.json' and
-             HASH.fullmatch(refs['report_sha256']) and HASH.fullmatch(refs['payload_sha256']),
-             'INCREMENTAL_REFERENCE_MISMATCH')
-        counter=5
-        children=[]
+        refs=self.incremental_refs(inc)
         if self.s['scenario']=='C5':
             bad=self.call('05-bad-repair','mdfixer','bad-repair',fault_patch=True,**refs)
-            children.append(self.worker(bad,'REJECTED','validate',self.m['target_files'])['container_id'])
-            verdict=bad['payload']
-            need(verdict.get('accepted') is False and verdict.get('rollback') is True and
-                 verdict.get('source_unchanged') is True and verdict.get('error') and
-                 not verdict.get('checks',{}).get('patch_applies',False),'C5_NOT_EXPECTED_PATCH_REJECTION')
-            counter+=1
+            w=self.bad_repair(bad)
+            result=self.summary('WAITING_FOR_C5_ROLLBACK_ORIGINALS',image,5)
+            result.update(bad_container_id=w['container_id'],
+                          bad_response_sha256=digest((self.out/'wire/05-bad-repair/response.body').read_bytes()),
+                          required_handoff='c5-handoff-1')
+            return result
+        return self.good_and_final(image,refs,5,[])
+
+    def recover(self,handoff,manifest_raw,manifest_sha):
+        need(self.s['scenario']=='C5','RECOVERY_REQUIRES_C5')
+        need(not (self.out/'wire/06-repair').exists(),'POST_ALREADY_ATTEMPTED_RECONCILE')
+        image=self.draft(original_response(self.out,'01-draft'))
+        self.full(original_response(self.out,'02-baseline-full'),'base')
+        self.full(original_response(self.out,'03-target-full'),'target')
+        refs=self.incremental_refs(original_response(self.out,'04-incremental'))
+        bad=original_response(self.out,'05-bad-repair')
+        w=self.bad_repair(bad)
+        pin(manifest_raw,manifest_sha,'C5_HANDOFF_MANIFEST')
+        manifest=strict_json(manifest_raw)
+        need(set(manifest)=={'schema_version','job_id','trace_id','bad_response_sha256','files'}
+             and manifest['schema_version']=='c5-handoff-1'
+             and all(manifest[k]==self.s[k] for k in ('job_id','trace_id'))
+             and manifest['bad_response_sha256']==digest(
+                 (self.out/'wire/05-bad-repair/response.body').read_bytes()),
+             'C5_HANDOFF_IDENTITY_MISMATCH')
+        # Use B13's own original names, including raw source snapshots.
+        expected=self.m['target_files']
+        fixed={'source-before.json','after-bad-source.json','git-before.txt','after-bad-git.txt',
+               'bad-repair/runtime/output/evidence/apply-check.stderr',
+               'bad-repair/runtime/cleanup.json','bad-repair/runtime/execution.json'}
+        names=fixed|{prefix+'/'+name for prefix in ('source-before-bytes','source-after-bad-bytes')
+                     for name in expected}
+        need(isinstance(manifest['files'],dict) and set(manifest['files'])==names,
+             'C5_HANDOFF_FILES_MISMATCH')
+        root=Path(handoff).resolve()
+        originals={}
+        for name in sorted(names):
+            parts=name.split('/')
+            need(all(re.fullmatch(r'[A-Za-z0-9_.-]+',p) and p not in ('.','..','.git')
+                     for p in parts),'C5_HANDOFF_PATH_INVALID')
+            path=root.joinpath(*parts)
+            need(path.is_file() and path.resolve()==path and not path.is_symlink(),
+                 'C5_HANDOFF_ORIGINAL_MISSING')
+            meta=manifest['files'][name]
+            need(isinstance(meta,dict) and set(meta)=={'bytes','sha256'} and
+                 type(meta['bytes']) is int and 0<=meta['bytes']<=64*1024*1024
+                 and path.stat().st_size==meta['bytes'],'C5_HANDOFF_SIZE_MISMATCH')
+            originals[name]=pin(path.read_bytes(),meta['sha256'],'C5_HANDOFF_ORIGINAL')
+            credential=self.wires['mdfixer'].credential
+            need(credential is None or credential not in originals[name],
+                 'CREDENTIAL_IN_C5_HANDOFF')
+        need(strict_json(originals['source-before.json'])==expected==
+             strict_json(originals['after-bad-source.json']),'C5_SOURCE_FINGERPRINT_MISMATCH')
+        need(originals['git-before.txt']==originals['after-bad-git.txt']==b'',
+             'C5_GIT_NOT_UNCHANGED_PRISTINE')
+        for name,sha in expected.items():
+            before=originals['source-before-bytes/'+name]
+            after=originals['source-after-bad-bytes/'+name]
+            need(before==after and digest(before)==sha,'C5_SOURCE_BYTES_MISMATCH')
+        need(bool(originals['bad-repair/runtime/output/evidence/apply-check.stderr'].strip()),
+             'C5_APPLY_CHECK_STDERR_MISSING')
+        need(strict_json(originals['bad-repair/runtime/execution.json'])==w,
+             'C5_EXECUTION_ORIGINAL_MISMATCH')
+        cleanup=strict_json(originals['bad-repair/runtime/cleanup.json'])
+        need(re.fullmatch(r'[0-9a-f]{32}',w.get('ownership_label',''))
+             and cleanup.get('ownership_label')==w['ownership_label']
+             and cleanup.get('removed')==[w['container_id']]
+             and cleanup.get('verified_no_owned_containers') is True
+             and not cleanup.get('error'),'C5_CLEANUP_ORIGINAL_MISMATCH')
+        for name,raw in originals.items():
+            save(self.out/'c5-handoff'/name,raw)
+        save(self.out/'c5-handoff/manifest.original.json',manifest_raw)
+        record(self.out/'c5-handoff/verified.json',{'status':'PASS','job_id':self.s['job_id'],
+               'trace_id':self.s['trace_id'],'manifest_sha256':manifest_sha,
+               'bad_container_id':w['container_id'],'originals_verified':len(originals),
+               'scope':'peer supplied pre-correct-repair originals, not live daemon inspection'})
+        self.health('recover-health')
+        result=self.good_and_final(image,refs,6,[w['container_id']])
+        result.update(c5_rollback_originals_verified=True,c5_handoff_sha256=manifest_sha)
+        return result
+
+    def good_and_final(self,image,refs,counter,children):
         good=self.call('%02d-repair'%counter,'mdfixer','repair',**refs)
         children.append(self.worker(good,'SUCCEEDED','validate',self.m['target_files'])['container_id'])
         verdict=good['payload']
@@ -242,7 +328,11 @@ def main():
     finish.add_argument('--graph-sha256',required=True)
     finish.add_argument('--findings',type=Path,required=True)
     finish.add_argument('--findings-sha256',required=True)
-    for q in (start,finish):
+    recover=sub.add_parser('recover')
+    recover.add_argument('--handoff',type=Path,required=True)
+    recover.add_argument('--handoff-manifest',type=Path,required=True)
+    recover.add_argument('--handoff-sha256',required=True)
+    for q in (start,finish,recover):
         q.add_argument('--out',type=Path,required=True)
         q.add_argument('--http-timeout',type=int,default=2000)
     a=p.parse_args();out=a.out
@@ -262,14 +352,25 @@ def main():
         prior=json_file(out/'start.json')
         need(prior['status']=='WAITING_FOR_FULL_ORIGINALS' and prior['job_id']==s['job_id']
              and prior['trace_id']==s['trace_id'],'START_NOT_READY')
-        need(not (out/'finish.json').exists() and not (out/'wire/04-incremental').exists(),
-             'FINISH_ALREADY_ATTEMPTED_RECONCILE')
-    # Prompt anew on finish; never persist the credential.
+        if a.phase=='finish':
+            need(not (out/'finish.json').exists() and not (out/'wire/04-incremental').exists(),
+                 'FINISH_ALREADY_ATTEMPTED_RECONCILE')
+        else:
+            prior=json_file(out/'finish.json')
+            need(s['scenario']=='C5' and prior['status']=='WAITING_FOR_C5_ROLLBACK_ORIGINALS'
+                 and prior['job_id']==s['job_id'] and prior['trace_id']==s['trace_id']
+                 and not (out/'recover.json').exists() and not (out/'wire/06-repair').exists(),
+                 'C5_RECOVERY_NOT_READY_OR_ALREADY_ATTEMPTED')
+    # Prompt anew on each phase; never persist the credential.
     client=Client(out,s,m,read_credential(),a.http_timeout)
     try:
-        result=(client.start() if a.phase=='start' else
-                client.finish(a.graph.read_bytes(),a.graph_sha256,
-                              a.findings.read_bytes(),a.findings_sha256))
+        if a.phase=='start':
+            result=client.start()
+        elif a.phase=='finish':
+            result=client.finish(a.graph.read_bytes(),a.graph_sha256,
+                                 a.findings.read_bytes(),a.findings_sha256)
+        else:
+            result=client.recover(a.handoff,a.handoff_manifest.read_bytes(),a.handoff_sha256)
         record(out/(a.phase+'.json'),result)
         print(canonical(result).decode('utf-8'))
     except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException) as exc:

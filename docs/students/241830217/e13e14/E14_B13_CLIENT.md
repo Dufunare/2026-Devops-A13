@@ -146,3 +146,36 @@ checkout failed on the existing papers/*:Zone.Identifier path. No other
 member's files or NTFS security configuration are changed. On Windows,
 obtain the CI archive or use git archive from a fetched commit without
 checking out the full tree.
+
+
+## 2026-11-26 live-window refinements
+
+For C5, `finish` now stops after the fifth POST (bad-repair), reporting
+`WAITING_FOR_C5_ROLLBACK_ORIGINALS`. Do not run correct repair on the server
+while waiting. B13 supplies a `c5-handoff-1` manifest and the actual peer
+originals in a separate directory. The manifest has exactly schema_version,
+job_id, trace_id, bad_response_sha256 (actual raw HTTP response bytes), files
+(mapping relative path -> {bytes,sha256}). Include source-before.json,
+after-bad-source.json, git-before.txt, after-bad-git.txt,
+bad-repair/runtime/output/evidence/apply-check.stderr,
+bad-repair/runtime/cleanup.json, bad-repair/runtime/execution.json and every
+tracked file in source-before-bytes/ and source-after-bad-bytes/, following
+B13 member2_run.py. Agree the manifest raw SHA256 independently. Then run:
+
+    python labs/e13e14/b13_sync_client.py recover --out SAME_OUT --handoff HANDOFF_DIR --handoff-manifest MANIFEST_JSON --handoff-sha256 RAW_SHA
+
+The client verifies same Job/Trace, bad response digest, exact source maps
+and bytes, pristine unchanged Git status, nonempty stderr, execution and
+owned-container cleanup records BEFORE submitting POST 6 and 7. It does
+not infer daemon truth from peer files. If any check fails or POST is
+ambiguous, preserve originals and reconcile, never replay blindly.
+
+C8 now binds every envelope and result to the exact frozen profile's
+repair_targets and verifies final-full/findings.json and validation.json
+against recheck. Without a profile, all MISSING must be zero. With a profile,
+zero in-scope MISSING is mandatory; all out-of-scope and whole-project
+findings are preserved and separately counted. The initial 202/202/409
+observation is written independently; completed replay and verified
+originals are required for CLIENT_C8_PASS. This does not imply whole-project
+repair acceptance, one actual Store entry, or bilateral acceptance. Do not
+reuse the four-role service pins for the older 8081 API.
