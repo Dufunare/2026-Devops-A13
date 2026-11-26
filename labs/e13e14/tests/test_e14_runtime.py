@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 import sys
+import tempfile
 import threading
 import time
 import unittest
@@ -118,6 +119,19 @@ class Concurrency(unittest.TestCase):
             self.assertEqual('SUCCEEDED', good['status'])
 
 
+    def test_typed_timeout_preserves_identity_and_error_code(self):
+        from draft_executor import DownstreamTimeout
+        body = b'{"job_id":"bad","trace_id":"trace","profile_sha256":"profile","draft_image_id":"image"}'
+        with patch.object(self.service, 'run', side_effect=DownstreamTimeout('test timeout')):
+            status, error = self.post(body)
+        self.assertEqual(422, status)
+        self.assertEqual('TIMEOUT', error['error_code'])
+        self.assertEqual('bad', error['job_id'])
+        self.assertEqual('trace', error['trace_id'])
+        self.assertEqual('profile', error['profile_sha256'])
+        self.assertEqual('image', error['draft_image_id'])
+
+
 class HttpTimeoutContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -145,6 +159,20 @@ class HttpTimeoutContract(unittest.TestCase):
                         draft=18183, mdfixer=18184)
         self.assertEqual(expected, orch.PORTS)
         self.assertEqual(expected, gate.PORTS)
+
+    def test_real_service_unavailable_keeps_request_and_failure(self):
+        orch = self.orchestrator
+        with tempfile.TemporaryDirectory() as tmp:
+            evidence = Path(tmp) / 'incremental-response.json'
+            payload = {'profile': {'exec_image': 'draft'}, 'job_id': 'test'}
+            with patch.object(orch.urllib.request, 'urlopen',
+                              side_effect=urllib.error.URLError('connection refused')):
+                with self.assertRaises(orch.ServiceUnavailable) as ctx:
+                    orch.call('echecker', payload, evidence)
+            self.assertEqual('echecker', ctx.exception.role)
+            self.assertEqual(payload, json.loads(evidence.with_name(
+                'incremental-response-request.json').read_bytes()))
+            self.assertEqual('SERVICE_UNAVAILABLE', json.loads(evidence.read_bytes())['error_code'])
 
     def test_default_ports_preserved(self):
         self.assertEqual({'buildchecker': 18081, 'echecker': 18082,

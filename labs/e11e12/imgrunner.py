@@ -11,8 +11,10 @@
 """
 import json
 import os
+import re
 import socket
 import subprocess
+import uuid
 from pathlib import Path
 
 DRIVERS = {
@@ -68,66 +70,119 @@ def child_mount_args():
     return ['--mount', spec]
 
 
+def _text(value):
+    return value.decode('utf-8', errors='replace') if isinstance(value, bytes) else (value or '')
+
+
+def _capture(argv, timeout):
+    """Bound Docker CLI calls and retain partial output on timeout."""
+    try:
+        p = subprocess.run(argv, text=True, capture_output=True, timeout=timeout)
+        return p.returncode, _text(p.stdout), _text(p.stderr), False
+    except subprocess.TimeoutExpired as exc:
+        return 124, _text(exc.stdout), (_text(exc.stderr) +
+            '\nTIMEOUT after %ss: %s\n' % (timeout, ' '.join(argv))), True
+    except OSError as exc:
+        return 125, '', str(exc), False
+
+
 def run(image, argv, cwd=None, timeout=900, ptrace=True, evidence=None, tag='step'):
-    """在指定镜像内执行命令，返回 (exit_code, 合并输出)；evidence 非空时记录容器级原件。"""
+    """Run a command in the DRAFT image; evidence-backed runs own a named child."""
     cmd = ['docker', 'run', '--network', 'none',
            *child_mount_args(),
            '-u', '%d:%d' % (os.getuid(), os.getgid()),
            '-e', 'HOME=/tmp']
     if ptrace:
         cmd += ['--cap-add', 'SYS_PTRACE']
-
-    ev = Path(evidence) if evidence else None
-    cidfile = None
-    if ev:
-        ev.mkdir(parents=True, exist_ok=True)
-        cidfile = ev / ('%s.cid' % tag)
-        if cidfile.exists():
-            cidfile.unlink()
-        cmd += ['--cidfile', str(cidfile)]
-    else:
-        cmd += ['--rm']
-
     if cwd:
         cmd += ['-w', str(cwd)]
     cmd += [image] + [str(x) for x in argv]
 
-    try:
-        p = subprocess.run(cmd, text=True, capture_output=True, timeout=timeout)
-        code, out, err = p.returncode, (p.stdout or ''), (p.stderr or '')
-    except subprocess.TimeoutExpired:
-        code, out = 124, ''
-        err = 'TIMEOUT after %ss: %s' % (timeout, ' '.join(cmd))
+    if evidence is None:
+        # Preserve the historical no-evidence interface. The E14 broker always
+        # uses the evidence-backed path below.
+        cmd.insert(2, '--rm')
+        code, out, err, _ = _capture(cmd, timeout)
+        return code, out + err
 
-    if ev:
-        record = {'tag': tag, 'image': image, 'argv': [str(x) for x in argv],
-                  'cwd': str(cwd) if cwd else None, 'exit': code}
+    ev = Path(evidence)
+    ev.mkdir(parents=True, exist_ok=True)
+    cidfile = ev / (tag + '.cid')
+    if any((ev / (tag + suffix)).exists() for suffix in
+           ('.cid', '.exec.json', '.inspect.json', '.stdout.log', '.stderr.log', '.cleanup.log')):
+        raise ValueError('EXEC_EVIDENCE_ALREADY_EXISTS: ' + tag)
+
+    # Do not start a process until docker create has returned its actual ID.
+    # A unique name also permits bounded recovery of a stopped container if
+    # create failed before reporting an ID; never search/remove by image.
+    name = 'course-exec-' + uuid.uuid4().hex
+    create = ['docker', 'create', '--name', name] + cmd[2:]
+    record = {'tag': tag, 'image': image, 'argv': [str(x) for x in argv],
+              'cwd': str(cwd) if cwd else None, 'container_name': name,
+              'create_argv': create, 'timeout_s': timeout,
+              'container_id': None, 'timed_out': False, 'cleanup_verified': False}
+    code, out, err, create_timeout = _capture(create, 60)
+    record.update(create_exit=code, create_stdout=out, create_stderr=err,
+                  create_timed_out=create_timeout)
+    cid = out.strip() if code == 0 else None
+    valid_id = lambda x: isinstance(x, str) and re.fullmatch(r'[0-9a-f]{64}', x) is not None
+    # On a successful create, stdout is the authoritative container ID.
+    if not valid_id(cid):
         cid = None
-        if cidfile and cidfile.exists():
-            cid = cidfile.read_text().strip() or None
-        record['container_id'] = cid
-        if cid:
-            insp = subprocess.run(['docker', 'inspect', cid], text=True, capture_output=True)
-            if insp.returncode == 0:
-                (ev / ('%s.inspect.json' % tag)).write_text(insp.stdout, encoding='utf-8')
-                try:
-                    data = json.loads(insp.stdout)[0]
-                    record['inspect_image'] = data.get('Image')
-                    record['inspect_mounts'] = [m.get('Destination') for m in (data.get('Mounts') or [])]
-                    record['inspect_exit_code'] = (data.get('State') or {}).get('ExitCode')
-                except (ValueError, IndexError, KeyError):
-                    pass
-            rm = subprocess.run(['docker', 'rm', '-f', cid], capture_output=True, text=True)
-            record['cleanup_argv'] = ['docker', 'rm', '-f', cid]
-            record['cleanup_exit'] = rm.returncode
-            (ev / ('%s.cleanup.log' % tag)).write_text(
-                (rm.stdout or '') + (rm.stderr or ''), encoding='utf-8')
-        (ev / ('%s.stdout.log' % tag)).write_text(out, encoding='utf-8')
-        (ev / ('%s.stderr.log' % tag)).write_text(err, encoding='utf-8')
-        (ev / ('%s.exec.json' % tag)).write_text(
-            json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        if code == 0:
+            code, err = 125, err + '\nDocker create returned no valid container ID'
+    else:
+        cidfile.write_text(cid + '\n', encoding='utf-8')
+        record['start_argv'] = ['docker', 'start', '-a', cid]
+        code, out, err, timed_out = _capture(record['start_argv'], timeout)
+        record['timed_out'] = timed_out
 
-    return code, (out + err)
+    cleanup_log = []
+    lookup = ['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + name + '$']
+    record['cleanup_lookup_argv'] = lookup
+    if cid is None:
+        rc, found, msg, _ = _capture(lookup, 30)
+        cleanup_log.extend([found, msg])
+        ids = found.splitlines()
+        if rc == 0 and len(ids) == 1 and valid_id(ids[0]):
+            cid = ids[0]
+            cidfile.write_text(cid + '\n', encoding='utf-8')
+    record['container_id'] = cid
+    if cid is not None:
+        rc, raw, msg, _ = _capture(['docker', 'inspect', '--type', 'container', cid], 30)
+        cleanup_log.append(msg)
+        if rc == 0:
+            (ev / (tag + '.inspect.json')).write_text(raw, encoding='utf-8')
+            try:
+                data = json.loads(raw)[0]
+                record['inspect_image'] = data.get('Image')
+                record['inspect_mounts'] = [m.get('Destination') for m in (data.get('Mounts') or [])]
+                record['inspect_exit_code'] = (data.get('State') or {}).get('ExitCode')
+            except (ValueError, IndexError, KeyError, TypeError):
+                pass
+        record['cleanup_argv'] = ['docker', 'rm', '-f', cid]
+        rc, removed, msg, _ = _capture(record['cleanup_argv'], 30)
+        record['cleanup_exit'] = rc
+        cleanup_log.extend([removed, msg])
+    rc, remaining, msg, _ = _capture(lookup, 30)
+    record['cleanup_lookup_exit'] = rc
+    record['cleanup_remaining'] = remaining.splitlines()
+    cleanup_log.extend([remaining, msg])
+    # A timed-out create may still be completing in the daemon. Even if the
+    # name is currently absent, do not claim that creation was fully cleaned.
+    record['cleanup_verified'] = (not create_timeout and rc == 0 and not remaining.strip()
+                                  and (cid is None or record.get('cleanup_exit') == 0))
+    record['command_exit'] = code
+    if not record['cleanup_verified']:
+        code = 125
+        err += '\nEXEC_CLEANUP_UNCONFIRMED: ' + name
+    record['exit'] = code
+    (ev / (tag + '.cleanup.log')).write_text('\n'.join(cleanup_log), encoding='utf-8')
+    (ev / (tag + '.stdout.log')).write_text(out, encoding='utf-8')
+    (ev / (tag + '.stderr.log')).write_text(err, encoding='utf-8')
+    (ev / (tag + '.exec.json')).write_text(
+        json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return code, out + err
 
 
 def run_py(image, driver, args, cwd=None, timeout=900, evidence=None, tag='step'):

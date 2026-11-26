@@ -2,9 +2,9 @@ name: E14 member C four-service fixture and recovery gate
 
 on:
   push:
-    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121]
+    branches: [student/241830217/e14-compose, student/241830217/e14-profile-plumbing-20261121, student/241830217/e14-real-integration-20261124]
   pull_request:
-    branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120]
+    branches: [student/241830217/e13e14-c, e11-e12-integration, main, coord/e13-combined-preflight-20261120, coord/e13-e14-integration-20261124]
   workflow_dispatch:
 
 permissions:
@@ -103,11 +103,79 @@ jobs:
             --out work/ci-e14-member-c \
             --image "$E14_IMAGE" \
             --project "$E14_PROJECT"
+      - name: Real DRAFT child-container execution on an independent controlled fixture
+        run: |
+          set -euo pipefail
+          # Preserve the original fixture and candidate. Add only tool packages
+          # to a separate candidate for the draft-image regression.
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('data/integration-sample')
+          source = (root / 'candidate.Dockerfile').read_text()
+          assert source.count('build-essential &&') == 1
+          candidate = root / 'candidate-e14-child.Dockerfile'
+          candidate.write_text(source.replace('build-essential &&', 'build-essential git strace &&'))
+          request = json.loads((root / 'e12.json').read_text())
+          request['candidate'] = '/course/' + candidate.as_posix()
+          request['profile'] = {'exec_image': 'draft'}
+          (root / 'e14-child-request.json').write_text(json.dumps(request, indent=2) + '\n')
+          PY
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          REQUEST_SHA=$(sha256sum "$REQUEST" | cut -d ' ' -f 1)
+          CANDIDATE_SHA=$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)
+          # The course ECS and its Compose services run as root. Match that
+          # ownership for these newly cloned job snapshots, not a global
+          # safe.directory wildcard or a chmod of the existing workspace.
+          sudo python3 labs/e13e14/real_job_gate.py \
+            --request "$REQUEST" --request-sha256 "$REQUEST_SHA" \
+            --candidate-sha256 "$CANDIDATE_SHA" \
+            --out work/ci-e14-draft-child --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Actual DRAFT downstream timeout, cleanup, old-job rejection and recovery
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          sudo python3 labs/e13e14/real_job_fault_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --success-out work/ci-e14-draft-child \
+            --out work/ci-e14-draft-fault \
+            --project "$E14_PROJECT" --image "$E14_IMAGE"
+      - name: Isolated EChecker outage, abort, and same-container recovery
+        run: |
+          set -euo pipefail
+          REQUEST=data/integration-sample/e14-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e14-child.Dockerfile
+          sudo python3 labs/e13e14/real_job_service_gate.py \
+            --request "$REQUEST" \
+            --request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --prior-fault-out work/ci-e14-draft-fault \
+            --out work/ci-e14-service-fault \
+            --project "$E14_PROJECT" --image "$E14_IMAGE" \
+            --allow-stop-echecker
       - name: Scan image history, source and emitted runtime evidence
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image "$E14_IMAGE"
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-member-c work/ci-e14-draft-child work/ci-e14-draft-fault work/ci-e14-service-fault
+          CHILD_IMAGES=$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          paths = [Path('work/ci-e14-draft-child/job/result.json'),
+                   Path('work/ci-e14-draft-fault/fault/result.json'),
+                   Path('work/ci-e14-draft-fault/recovery/result.json'),
+                   Path('work/ci-e14-service-fault/fault/result.json'),
+                   Path('work/ci-e14-service-fault/recovery/result.json')]
+          print('\n'.join(sorted({json.loads(p.read_text())['draft_image_id'] for p in paths})))
+          PY
+          )
+          for CHILD_IMAGE in $CHILD_IMAGES; do
+            python3 scripts/secret_scan.py . --history --image "$CHILD_IMAGE"
+          done
       - name: Collect service logs on success or failure
         if: always()
         run: |
@@ -127,6 +195,11 @@ jobs:
           name: e14-member-c-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             work/ci-e14-member-c/
+            work/ci-e14-draft-child/
+            work/ci-e14-draft-fault/
+            work/ci-e14-service-fault/
+            data/integration-sample/e14-child-request.json
+            data/integration-sample/candidate-e14-child.Dockerfile
             work/ci-e14-image/
             work/ci-e14-diagnostics/
           if-no-files-found: warn

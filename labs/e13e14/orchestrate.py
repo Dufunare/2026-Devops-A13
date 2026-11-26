@@ -22,13 +22,13 @@ sys.path[:0] = [str(ROOT / 'labs/e11e12'), str(ROOT / 'labs/e8e10')]
 from lab import resolve_profile
 from pipeline import shape_ok
 from contract import checked_incremental, findings_by_scope, profile_sha256, successful_draft_image
+from draft_executor import check_profile, full_timeout, identity, verify_receipts
 
 
 def resolve_project_profile(raw):
     profile = resolve_profile(raw)
-    # B owns DRAFT-image downstream execution. Do not silently claim it here.
-    if profile['exec_image'] != 'orchestrator':
-        raise ValueError('E14 draft-image downstream execution is not yet supported; await B interface')
+    if profile['exec_image'] == 'draft':
+        check_profile(profile)
     return profile
 
 
@@ -81,25 +81,82 @@ def snapshot(repo, revision, target, logs, profile=None):
 def http_timeout(role, payload):
     # DRAFT runs up to two Docker builds, each with its own timeout.
     if role != 'draft':
-        return 720
+        return 6100 if payload.get('profile', {}).get('exec_image') == 'draft' else 720
     per_build = float(payload.get('build_timeout', 600))
     if not 0 < per_build <= 3600:
         raise ValueError('DRAFT build_timeout must be in (0, 3600] seconds')
     return max(720, int(2 * per_build + 120))
 
 
+class ServiceUnavailable(ValueError):
+    def __init__(self, role, reason):
+        self.role = role
+        super().__init__('SERVICE_UNAVAILABLE: ' + role + ': ' + str(reason))
+
+
+def abort_bound_job(result, out):
+    meta = identity(result)
+    body = {**meta, 'operation': 'abort', 'job_root': container_path(out)}
+    raw = json.dumps(body).encode()
+    (out / 'abort-request.json').write_bytes(raw)
+    req = urllib.request.Request(f'http://127.0.0.1:{PORTS["draft"]}/v1/execute',
+                                 data=raw, headers={'Content-Type': 'application/json'})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(req, timeout=30) as response:
+            status, answer = response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        status, answer = exc.code, exc.read()
+    (out / 'abort-response.json').write_bytes(answer)
+    from handoff import strict_json
+    data = strict_json(answer)
+    if (status != 200 or data.get('status') != 'SUCCEEDED'
+            or data.get('operation') != 'abort' or data.get('identity') != meta
+            or data.get('result') != {'aborted': True}
+            or any(data.get(k) != meta[k] for k in
+                   ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id'))):
+        raise ValueError('BROKER_ABORT_NOT_CONFIRMED')
+    return {'status': 'SUCCEEDED', 'operation': 'abort'}
+
+
 def call(role, payload, evidence):
+    real = payload.get('profile', {}).get('exec_image') == 'draft'
+    body = json.dumps(payload).encode()
+    if real:
+        evidence.with_name(evidence.stem + '-request.json').write_bytes(body)
     req = urllib.request.Request(f'http://127.0.0.1:{PORTS[role]}/v1/run',
-                                 data=json.dumps(payload).encode(),
-                                 headers={'Content-Type': 'application/json'})
+                                 data=body, headers={'Content-Type': 'application/json'})
     try:
         with urllib.request.urlopen(req, timeout=http_timeout(role, payload)) as resp:
-            data = json.load(resp)
+            if real:
+                from handoff import strict_json
+                raw = resp.read()
+                evidence.write_bytes(raw)
+                data = strict_json(raw)
+            else:
+                data = json.load(resp)
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode(errors='replace')
+        raw = exc.read()
+        if real:
+            evidence.with_name(evidence.stem + '-error-body.txt').write_bytes(raw)
+        body = raw.decode(errors='replace')
         save(evidence, {'role': role, 'http': exc.code, 'error': body})
+        if real and exc.code == 422:
+            from handoff import strict_json
+            error = strict_json(raw)
+            if (error.get('error_code') == 'TIMEOUT' and error.get('status') == 'FAILED'
+                    and error.get('role') == role and all(error.get(key) == payload.get(key)
+                        for key in ('job_id', 'trace_id', 'profile_sha256', 'draft_image_id'))):
+                raise TimeoutError(f'{role} HTTP {exc.code}: {body}') from exc
         raise ValueError(f'{role} HTTP {exc.code}: {body}') from exc
-    save(evidence, data)
+    except urllib.error.URLError as exc:
+        if real:
+            save(evidence, {'role': role, 'error_code': 'SERVICE_UNAVAILABLE',
+                            'error': str(exc.reason)})
+            raise ServiceUnavailable(role, exc.reason) from exc
+        raise
+    if not real:
+        save(evidence, data)
     for key in ('job_id', 'trace_id', 'profile_sha256'):
         if data.get(key) != payload.get(key):
             raise ValueError(f'{role} response {key} mismatch')
@@ -110,7 +167,7 @@ def call(role, payload, evidence):
     return data
 
 
-def execute(request, out):
+def execute(request, out, request_bytes=None):
     if out.exists():
         raise ValueError('Use a new output directory')
     if not out.resolve().is_relative_to((ROOT / 'work').resolve()):
@@ -120,6 +177,7 @@ def execute(request, out):
     if not repo.resolve().is_relative_to((ROOT / 'data').resolve()) or not candidate.resolve().is_relative_to((ROOT / 'data').resolve()):
         raise ValueError('Input project and candidate must be in data/')
     profile = resolve_project_profile(request.get('profile'))
+    full_timeout(request, profile)
     profile_hash = profile_sha256(profile)
     candidate_hash = digest(candidate)
     out.mkdir(parents=True)
@@ -130,7 +188,12 @@ def execute(request, out):
               'profile_sha256': profile_hash, 'candidate_sha256': candidate_hash,
               'downstream_execution_environment': 'orchestrator',
               'downstream_container_attested': False}
-    save(out / 'request.json', request)
+    if profile['exec_image'] == 'draft' and request_bytes is not None:
+        if json.loads(request_bytes) != request:
+            raise ValueError('Original request bytes differ from parsed request')
+        (out / 'request.json').write_bytes(request_bytes)
+    else:
+        save(out / 'request.json', request)
     result['request_sha256'] = digest(out / 'request.json')
     draft_image_id = None
 
@@ -138,10 +201,15 @@ def execute(request, out):
         return {'project': container_path(project), 'out': container_path(folder),
                 'job_id': job, 'trace_id': trace, 'profile': profile,
                 'profile_sha256': profile_hash,
+                **({k: result[k] for k in ('base_commit', 'target_commit', 'request_sha256', 'candidate_sha256')}
+                   if profile['exec_image'] == 'draft' else {}),
                 **({'draft_image_id': draft_image_id} if draft_image_id else {}), **extra}
 
     def stage(name, commit, data):
         item = {'name': name, 'commit': commit, 'job_id': job, 'trace_id': trace, 'status': 'SUCCEEDED', 'data': data}
+        if profile['exec_image'] == 'draft':
+            from draft_executor import identity
+            item['execution_identity'] = identity(result)
         path = out / (name + '.json')
         save(path, item)
         result['stages'].append({'name': name, 'artifact': {'uri': path.name, 'sha256': digest(path)}})
@@ -161,6 +229,8 @@ def execute(request, out):
                        out / 'draft-response.json')
         draft_image_id = successful_draft_image(drafted)
         result['draft_image_id'] = draft_image_id
+        if profile['exec_image'] == 'draft':
+            result['downstream_execution_environment'] = 'image:' + draft_image_id
         stage('draft', target_sha, drafted)
 
         base_full = call('buildchecker', payload(base, out / 'baseline-full'), out / 'baseline-response.json')
@@ -194,11 +264,29 @@ def execute(request, out):
         result['recheck_scope'] = scope
         if scope['remaining_missing_full']:
             raise ValueError(f"Recheck has {scope['remaining_missing_full']} full-project missing dependencies")
+        if profile['exec_image'] == 'draft':
+            if digest(report_path) != result['report_transfer']['sha256']:
+                raise ValueError('REPORT_HASH_MISMATCH: original changed after repair')
+            attestation = verify_receipts(out, result, profile, str(ROOT.resolve()),
+                                          result['report_transfer']['sha256'])
+            save(out / 'execution-attestation.json', attestation)
+            result['downstream_container_attested'] = True
         stage('recheck', target_sha, {'result': final, 'remaining_missing': 0,
                                      **scope})
         result['status'] = 'SUCCEEDED'
     except Exception as exc:
         result.update(status='FAILED', error=str(exc))
+        if isinstance(exc, TimeoutError):
+            result['error_code'] = 'TIMEOUT'
+        if isinstance(exc, ServiceUnavailable):
+            result.update(error_code='SERVICE_UNAVAILABLE', failed_role=exc.role)
+        if profile['exec_image'] == 'draft' and draft_image_id is not None:
+            try:
+                result['broker_abort'] = abort_bound_job(result, out)
+            except Exception as abort_exc:
+                # An unreachable DRAFT cannot be declared aborted. Preserve
+                # the original stage failure and the independent abort error.
+                result['broker_abort'] = {'status': 'FAILED', 'error': str(abort_exc)}
     result['artifacts'] = [{'uri': path.relative_to(out).as_posix(), 'sha256': digest(path),
                             'bytes': path.stat().st_size} for path in sorted(out.rglob('*'))
                            if path.is_file() and '.git' not in path.parts and not path.is_symlink()]
@@ -211,7 +299,9 @@ def main():
     parser.add_argument('--request', required=True, type=Path)
     parser.add_argument('--out', required=True, type=Path)
     args = parser.parse_args()
-    result = execute(json.loads(args.request.read_text(encoding='utf-8')), args.out.resolve())
+    from handoff import strict_json
+    raw = args.request.read_bytes()
+    result = execute(strict_json(raw), args.out.resolve(), request_bytes=raw)
     print(json.dumps({'status': result['status'], 'job_id': result['job_id'],
                       'stages': [x['name'] for x in result['stages']],
                       'error': result.get('error')}, ensure_ascii=False))
