@@ -290,7 +290,7 @@ class Loopback(unittest.TestCase):
         self.assert_no_credential()
 
     def async_backend(self,tamper=False,bad_inspect=False,scoped=False,in_scope_missing=False,
-                      forged_scope=False):
+                      forged_scope=False,hidden_outside=False):
         request={'mode':'e12','repo':'/course/data/project','candidate':'/course/data/candidate.Dockerfile',
                  'base':M['base'],'target':M['target'],'expected_output':'1'}
         profile={'id':'synthetic-tomlc99','repair_targets':['toml.o']} if scoped else None
@@ -340,6 +340,9 @@ class Loopback(unittest.TestCase):
             elif name=='recheck':
                 verdict=dict(accepted=True,**scope)
                 full=dict(status='SUCCEEDED',findings=rows,**scope)
+                if scoped:
+                    full.update(whole_project_findings=rows if not hidden_outside else [],
+                                scoped_findings=[f for f in rows if f['target'] in profile['repair_targets']])
                 data={'validation':verdict,'findings':rows}
                 for fname,val in (('validation/validation.json',verdict),('final-full/findings.json',full)):
                     files[fname]=canonical(val)
@@ -434,6 +437,11 @@ class Loopback(unittest.TestCase):
         self.assertEqual('CLIENT_INITIAL_IDEMPOTENCY_PASS',
                          strict_json((self.root/'idempotency-observation.json').read_bytes())['status'])
         self.assertFalse((self.root/'summary.json').exists())
+
+    def test_async_rejects_inconsistent_whole_project_view(self):
+        with self.assertRaisesRegex(ValueError,'RECHECK_FULL_SCOPE_VIEW_MISMATCH'):
+            self.run_scoped(hidden_outside=True)
+        self.assertEqual(3,len(self.posts))
 
     def test_async_rejects_scope_substitution(self):
         with self.assertRaisesRegex(ValueError,'RESULT_PROFILE_OR_SCOPE_MISMATCH'):

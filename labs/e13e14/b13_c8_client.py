@@ -235,8 +235,12 @@ def campaign(out,port,raw,candidate_raw,candidate_sha,service_source,service_ima
                  and full['findings']==data['findings'],'RECHECK_ORIGINAL_MISMATCH')
             if scope is not None:
                 need(verdict.get('profile_sha256')==request['profile_sha256'] and
-                     full.get('profile_sha256')==request['profile_sha256'],
+                     full.get('profile_sha256')==request['profile_sha256'] and
+                     full.get('success_scope')==scope and verdict.get('success_scope')==scope,
                      'RECHECK_ORIGINAL_PROFILE_MISMATCH')
+                need(full.get('whole_project_findings')==full['findings'] and
+                     full.get('scoped_findings')==[f for f in full['findings'] if f['target'] in scope],
+                     'RECHECK_FULL_SCOPE_VIEW_MISMATCH')
             scope_result=recheck_scope(data['findings'],scope)
             scope_result['validation_accepted']=verdict.get('accepted') is True
             record(out/'recheck-scope.json',scope_result)

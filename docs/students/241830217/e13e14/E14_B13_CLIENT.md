@@ -178,3 +178,8 @@ observation is written independently; completed replay and verified
 originals are required for CLIENT_C8_PASS. This does not imply whole-project
 repair acceptance, one actual Store entry, or bilateral acceptance. Do not
 reuse the four-role service pins for the older 8081 API.
+
+For a profiled full report the client additionally checks the B13 original
+whole_project_findings equals findings, and scoped_findings is exactly the
+subset selected by the frozen repair_targets, not an independently filtered
+claim. Validation and full report success_scope must equal that profile.
