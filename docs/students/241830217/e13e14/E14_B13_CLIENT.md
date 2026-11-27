@@ -1,5 +1,7 @@
 # B13 consumer-side client preparation — 241830217
 
+> 2026-11-28 收口：a5e32dd 五轮 B13 真实跨机运行和双端审计通过，B13 服务端总回签已收到，双方最终确认待登记。以下为历史准备/操作手册；A13 侧访问提案未部署，不重放旧任务。详见 [最终报告](FINAL_REPORT.md)、[证据索引](EVIDENCE_INDEX.json)、[回签状态](PAIR13_SIGNOFF.md)。
+
 B13 protocol reference: ma058/2026-Devops-B13 at
 6244f7699e8e9920e2185860542bed54afd2123b, course/e13-e14/MEMBER2_SERVICE_PROTOCOL.md,
 labs/e13e14/member2_run.py, member2_service.py, member2_runtime.py and
