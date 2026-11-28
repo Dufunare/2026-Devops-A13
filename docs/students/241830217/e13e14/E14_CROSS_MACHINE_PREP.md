@@ -1,6 +1,6 @@
 # E14 cross-machine preparation — 241830217
 
-> 2026-11-28 收口：a5e32dd 五轮 B13 真实跨机运行和双端审计通过，B13 服务端总回签已收到，双方最终确认待登记。以下为历史准备/操作手册；A13 侧访问提案未部署，不重放旧任务。详见 [最终报告](FINAL_REPORT.md)、[证据索引](EVIDENCE_INDEX.json)、[回签状态](PAIR13_SIGNOFF.md)。
+> 2026-11-28 收口：a5e32dd 五轮 B13 真实跨机运行和双端审计通过，双方总回签及 B13 2026-11-28 最终确认齐备，个人冻结版本双边联合验收正式成立（不替代组级发布）。以下为历史准备/操作手册；A13 侧访问提案未部署，不重放旧任务。详见 [最终报告](FINAL_REPORT.md)、[证据索引](EVIDENCE_INDEX.json)、[回签状态](PAIR13_SIGNOFF.md)。
 
 Status: proposed, not a deployed service and not formal bilateral acceptance.
 Baseline PR #28 84cc47fbd21948fb286e12cc4c49f527112a17ee has independent CI/ECS

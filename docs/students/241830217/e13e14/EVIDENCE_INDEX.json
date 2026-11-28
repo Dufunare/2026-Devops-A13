@@ -7,9 +7,11 @@
     "runtime": "PASS_FIVE_ROUNDS",
     "archive_audit": "PASS_ARCHIVE_AND_CROSS_END_AUDIT",
     "b13_server_signoff": "RECEIVED_2026-11-27",
-    "a13_client_signoff": "DRAFT_PENDING_MEMBER_CONFIRMATION_AND_PEER_ACK",
-    "formal_pair_acceptance": false,
-    "group_release_acceptance": false
+    "a13_client_signoff": "SENT_RECEIPT_CONFIRMED_BY_B13_2026-11-28",
+    "formal_pair_acceptance": true,
+    "group_release_acceptance": false,
+    "b13_final_ack": "RECEIVED_2026-11-28",
+    "formal_pair_acceptance_scope": "manual bilateral signoff for the five frozen personal consumer rounds only; original client summary flags unchanged"
   },
   "sources": {
     "pr28": "84cc47fbd21948fb286e12cc4c49f527112a17ee",
@@ -69,7 +71,8 @@
     "client_signoff_draft": {
       "file": "A13-client-signoff-241830217-20261128.md",
       "bytes": 6754,
-      "sha256": "cf691c46aa9c26d8d66574a39007871cc68d86d63bde71e7da0f09b3869a4080"
+      "sha256": "cf691c46aa9c26d8d66574a39007871cc68d86d63bde71e7da0f09b3869a4080",
+      "note": "Original prepared Markdown retained unchanged; actual receipt and mutual acknowledgement established by B13 final confirmation, not by editing the original"
     }
   },
   "rounds": [
@@ -303,7 +306,25 @@
         "scope": "E14 controlled recovery"
       }
     ],
-    "basis": "GitHub-reported metadata, not independently downloaded in this closeout"
+    "basis": "GitHub-reported metadata, not independently downloaded in this closeout",
+    "docs_closeout_previous": {
+      "source_sha": "1d8d9cefcb65b9dbd9893c022e10513249e9149c",
+      "success": 10,
+      "total": 10,
+      "runs": [
+        46033092986,
+        46033092963,
+        46033092975,
+        46033092993,
+        46033092974,
+        46033084428,
+        46033084623,
+        46033084595,
+        46033084629,
+        46033084617
+      ],
+      "scope": "documentation-only previous closeout commit; not a new paired run"
+    }
   },
   "ecs_controlled": {
     "source_sha": "84cc47fbd21948fb286e12cc4c49f527112a17ee",
@@ -353,11 +374,32 @@
     "Source and service pins based on frozen CI/operator records and delivered evidence, not runtime executable attestation.",
     "Targeted credential scan has limited pattern coverage.",
     "Full original packages, audit JSON and private correspondence retained privately; this index is a public derivative.",
-    "Final group release requires integrated candidate and formal acceptance."
+    "Final group release requires integrated candidate and formal acceptance.",
+    "Peer confirmed all five client subarchives and bundle independently; B13 did not independently hash the separate A13 audit JSON. This final confirmation is a written receipt, not an electronic cryptographic signature.",
+    "Only this derivative index records subsequent formal_pair_acceptance=true for the frozen personal scope; raw client summary flags remain unchanged."
   ],
   "group_remaining": [
     "A/B review PR28/29 and reconcile history without rewriting frozen source commits.",
     "Complete formal pair A->B and B->A, H1-H3, C1-C8 including C6/C7 at required scope, and E14 normal and fault/recovery evidence on group candidate.",
     "Final merged SHA CI and release approval; no previous run attributed to new SHA."
-  ]
+  ],
+  "bilateral_final_confirmation": {
+    "type": "B13 peer written final acknowledgement (not a cryptographic signature)",
+    "date": "2026-11-28",
+    "actor": "B13 member 3 / 241880115",
+    "original_filename": "私发A13_241830217_A13总归档最终确认_20261128.md",
+    "bytes": 3929,
+    "sha256": "b821ee5b8ef76088982085cc76c364071920f5f80a571d5e7a0404ffe58bbe8b",
+    "storage": "private original; public derivative summary and pin only",
+    "client_source_sha": "a5e32ddb1acb5d3ee51a19c744ec1a6fe71ab31e",
+    "confirmed_client_bundle_sha256": "3fea847de93b5482a67cc5c170dcde89595a2b10fcd5abcd9bea42615adf7f7b",
+    "confirmed_client_bundle_bytes": 2508573,
+    "confirmed_client_index_sha256": "e7335171d1eab2a5a245d296228f3e6ad1ae49539516997f8257466b8bb7c29e",
+    "client_subarchives_verified_by_peer": 5,
+    "job_trace_matches_by_peer": 5,
+    "client_signoff_received_by_peer": true,
+    "scope_confirmed": "five personal frozen-client live rounds normal/C4/recovery/C5/C8 with confirmed B13 deployments; not group RC acceptance",
+    "audit_digest_basis": "B13 registered A13 declared audit SHA; not contained in client bundle and not independently recomputed by B13",
+    "peer_interaction_remaining": false
+  }
 }
