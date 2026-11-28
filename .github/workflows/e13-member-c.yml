@@ -2,9 +2,9 @@ name: E13 member C fixture and protection gate
 
 on:
   pull_request:
-    branches: [main, e11-e12-integration]
+    branches: [main, e11-e12-integration, coord/e13-e14-integration-20261124]
   push:
-    branches: [student/241830217/e13e14-c]
+    branches: [student/241830217/e13e14-c, student/241830217/e14-cross-machine-prep-20261125, coord/e13-e14-candidate-20261128]
   workflow_dispatch:
 
 permissions:
@@ -78,11 +78,47 @@ jobs:
             --image course-e11e12:999999999 \
             --api-port 18095 \
             --out work/ci-e13-member-c
+      - name: Explicit E12 DRAFT input protection and authenticated C8 API downloads
+        env:
+          E11E12_USE_SOURCE_POLICY: '0'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('data/integration-sample')
+          source = (root / 'candidate.Dockerfile').read_text()
+          assert source.count('build-essential &&') == 1
+          candidate = root / 'candidate-e13-child.Dockerfile'
+          candidate.write_text(source.replace('build-essential &&', 'build-essential git strace &&'))
+          request = json.loads((root / 'e12.json').read_text())
+          request['candidate'] = '/course/' + candidate.as_posix()
+          request['profile'] = {'exec_image': 'draft'}
+          (root / 'e13-child-request.json').write_text(json.dumps(request, indent=2) + '\n')
+          PY
+          REQUEST=data/integration-sample/e13-child-request.json
+          CANDIDATE=data/integration-sample/candidate-e13-child.Dockerfile
+          python3 labs/e13e14/member_c_gate.py \
+            --image course-e11e12:999999999 --api-port 18096 \
+            --paired-request "$REQUEST" \
+            --paired-request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
+            --paired-candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
+            --guarded-c8 --out work/ci-e13-explicit-child
       - name: Image/history and generated evidence scans
         run: |
           set -euo pipefail
           python3 scripts/secret_scan.py . --history --image course-e11e12:999999999
-          python3 labs/e13e14/scan_runtime_logs.py work/ci-e13-member-c
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e13-member-c work/ci-e13-explicit-child
+          CHILD_IMAGES=$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          summary = json.loads(Path('work/ci-e13-explicit-child/summary.json').read_text())
+          print('\n'.join(sorted({summary['sections'][k]['draft_image_id'] for k in ('C4','C7','C8')})))
+          PY
+          )
+          for CHILD_IMAGE in $CHILD_IMAGES; do
+            python3 scripts/secret_scan.py . --history --image "$CHILD_IMAGE"
+          done
       - name: Upload full isolated CI evidence, including failures
         if: always()
         uses: actions/upload-artifact@v7.0.2
@@ -90,6 +126,7 @@ jobs:
           name: e13-member-c-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             work/ci-e13-member-c/
+            work/ci-e13-explicit-child/
             work/ci-e13-image/
           if-no-files-found: warn
           retention-days: 14

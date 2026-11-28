@@ -52,6 +52,9 @@ def verify_exec(record: dict, inspect: object, expected_image: str,
             "EXEC_REPORTED_EXIT_FAILED")
     require(record.get("cleanup_exit") == 0 and type(record.get("cleanup_exit")) is int,
             "EXEC_CLEANUP_FAILED")
+    if 'cleanup_verified' in record:
+        require(record['cleanup_verified'] is True and record.get('cleanup_remaining') == []
+                and record.get('cleanup_lookup_exit') == 0, 'EXEC_CLEANUP_UNCONFIRMED')
     declared = record.get("inspect_mounts")
     require(isinstance(declared, list) and all(isinstance(x, str) for x in declared),
             "EXEC_REPORTED_MOUNTS_MISSING")

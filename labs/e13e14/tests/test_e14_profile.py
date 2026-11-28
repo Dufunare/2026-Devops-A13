@@ -44,9 +44,11 @@ class ProjectProfileContract(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'Unsupported project profile'):
                     ORCH.snapshot(root / 'repo', COMMIT, target, root / 'logs')
 
-    def test_draft_image_mode_fails_closed_until_B_contract(self):
-        with self.assertRaisesRegex(ValueError, 'not yet supported'):
-            ORCH.resolve_project_profile(dict(PROFILE, exec_image='draft'))
+    def test_draft_image_mode_requires_explicit_executable_target(self):
+        profile = ORCH.resolve_project_profile(dict(PROFILE, exec_image='draft'))
+        self.assertEqual('draft', profile['exec_image'])
+        with self.assertRaisesRegex(ValueError, 'EXEC_RUN_TARGET_REQUIRED'):
+            ORCH.resolve_project_profile(dict(PROFILE, exec_image='draft', build_target='all'))
 
     def test_orchestration_passes_identical_profile_to_all_roles(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -172,12 +174,12 @@ class ServiceProfileContract(unittest.TestCase):
         self.assertEqual('SUCCEEDED', result['status'])
         self.assertEqual(self.profile, validate.call_args.kwargs['profile'])
 
-    def test_direct_downstream_request_rejects_unwired_draft_mode(self):
+    def test_direct_downstream_request_rejects_unbound_draft_mode(self):
         with patch.object(self.service, 'ROOT', self.root), \
                 patch.object(self.service, 'ROLE', 'buildchecker'), \
                 patch.object(self.service, 'resolve_profile',
                              return_value=dict(self.profile, exec_image='draft')):
-            with self.assertRaisesRegex(ValueError, 'not yet supported'):
+            with self.assertRaisesRegex(ValueError, 'EXEC_IDENTITY_INVALID'):
                 self.service.run({'project': str(self.project),
                                   'out': str(self.root / 'work' / 'full'),
                                   'profile': dict(PROFILE, exec_image='draft')})

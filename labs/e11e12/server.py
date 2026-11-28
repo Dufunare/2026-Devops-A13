@@ -50,8 +50,17 @@ class Store:
         with self.lock:
             state.update({k:r[k] for k in ('status','trace_id','error') if k in r});save(self.root/jid/'state.json',state)
 
-def serve(host='127.0.0.1',port=8080):
-    store=Store(ROOT/'work/api-jobs')
+def store_root(path=None):
+    """CLI-only store isolation without nested Docker mounts."""
+    work = (ROOT / 'work').resolve()
+    dest = (ROOT / 'work/api-jobs' if path is None else Path(path)).resolve()
+    if not dest.is_relative_to(work) or dest == work:
+        raise ValueError('API store must be a directory below /course/work')
+    return dest
+
+
+def serve(host='127.0.0.1',port=8080,store_path=None):
+    store=Store(store_root(store_path))
     class Handler(BaseHTTPRequestHandler):
         def reply(self,code,obj):
             data=json.dumps(obj,ensure_ascii=False).encode();self.send_response(code);self.send_header('Content-Type','application/json; charset=utf-8');self.end_headers();self.wfile.write(data)
@@ -79,4 +88,4 @@ def serve(host='127.0.0.1',port=8080):
     ThreadingHTTPServer((host,port),Handler).serve_forever()
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--host',default='127.0.0.1');p.add_argument('--port',type=int,default=8080);a=p.parse_args();serve(a.host,a.port)
+    p=argparse.ArgumentParser();p.add_argument('--host',default='127.0.0.1');p.add_argument('--port',type=int,default=8080);p.add_argument('--store',type=Path);a=p.parse_args();serve(a.host,a.port,a.store)

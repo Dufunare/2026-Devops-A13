@@ -1,0 +1,135 @@
+# E14 real DRAFT execution bridge — member C (241830217)
+
+Development baseline: d43c67860b66d5ed8ac3ff95cf016d6b839650e9.
+Review increment only; this is not a final acceptance record.
+
+- DRAFT alone retains Docker socket access. Its /v1/execute is a restricted
+  serial operation broker, registered after the current DRAFT succeeds.
+  No arbitrary argv, mount, URL, image override or output path is accepted.
+- Operation order: full-check-baseline, full-check-target, scan-baseline,
+  scan-target, validate, full-check-recheck. Existing imgrunner and lab.validate
+  provide actual child execution. BuildChecker/EChecker/MDFixer retain their roles.
+- The orchestrator saves original request bytes in draft mode, binds the
+  request and candidate hashes, resolved profile, C0/C1, Job/Trace and
+  actual DRAFT image ID. It verifies every exec/inspect pair and operation
+  receipt before admitting the final stage. Full-project MISSING=0 is still required.
+- Existing default teaching mode retains its original contract and artifact count.
+- Trusted course workspace only; not an authenticated public API or a hostile-code
+  sandbox. Keep loopback bindings. A new DRAFT invalidates the previous broker
+  context; execute jobs serially.
+
+Pending: B's full-project build/run target and repair-scope contract, official
+paired inputs, real-engine execution evidence and final ECS acceptance. The
+existing validation assumes the build target is executable, so draft mode rejects
+make all rather than invoking ./all or silently falling back to orchestrator.
+Offline synthetic evidence tests are not proof of real container execution.
+
+## Independent controlled-fixture execution gate
+
+real_job_gate.py requires expected original request and candidate hashes; checks
+all five stages, all six HTTP exchanges, raw DRAFT image inspect, report payload,
+validation output, complete findings, attestation receipts and exact artifact
+manifest coverage (nonempty, no fixed item count). It also checks the four
+services before/after the job and preserves logs. CI runs a new controlled
+fixture request with exec_image=draft and a separate candidate adding Git and
+strace. The original fixture stays unchanged. CI runs that new job as root to
+match ECS/Compose snapshot ownership; no wildcard Git trust is added.
+The new gate is a single-job success preflight, not a substitute for formal
+paired inputs or the real-project timeout/recovery campaign.
+
+
+## Controlled downstream timeout and recovery (development increment)
+
+The optional request field downstream_full_timeout is valid only in
+exec_image=draft mode, with numeric seconds in [1, 900]; omission preserves
+the prior 900s full-check child budget. The DRAFT build budget is unchanged.
+The broker reads the bound request bytes, not an arbitrary execute parameter.
+
+Evidence-backed imgrunner operations now create one uniquely named container,
+obtain its actual ID before starting it, preserve partial output on timeout,
+inspect the child, remove only that child, and check absence by exact name.
+An unconfirmed cleanup is a failure (not a successful timeout test).
+A timed-out Docker create cannot be declared cleaned merely because the name
+is momentarily absent; no start is attempted without a valid ID. This change
+does not promise a hostile-code sandbox or change the historical no-evidence
+runner interface.
+
+real_job_fault_gate.py requires a prior successful real_job_gate result from
+the same four services. It creates a new teaching repository derived from the
+normal fixture: the base clean recipe writes a marker, sleeps, and would write
+a second marker; the target tree is identical to the original target. The
+original fixture is not edited. A 20-second outer child timeout interrupts the
+50-second delay. The gate checks actual running inspect, exact image/mount/ID,
+cleanup and host absence, original HTTP error identity and TIMEOUT propagation,
+rejected replay, distinct successful recovery, no late writes after the
+original delay, unchanged evidence, and service identities before/during/after.
+A Git bundle of the derived fixture and raw requests are archived. This is a
+controlled fixture fault preflight, not formal bilateral project acceptance.
+
+Use the same request and candidate hashes, worktree, ports and Compose project
+as the fresh success gate on the CURRENT source. Invoke from the host:
+
+    python3 labs/e13e14/real_job_fault_gate.py \
+      --request "$REQUEST" --request-sha256 "$REQUEST_SHA" \
+      --candidate-sha256 "$CANDIDATE_SHA" \
+      --success-out "$SUCCESS_OUT" --out "$FRESH_FAULT_OUT" \
+      --project "$E14_PROJECT" --image "$E14_IMAGE"
+
+The historical ECS success/scan/archive is bound to
+2d8aef95f815882e1ca2439a7ba72fce51f0ecdc and is not evidence that this new
+increment ran there. Archive /root/devops-materials/e14-pr28-241830217-20261124T140118Z.tar.gz
+(144878 bytes, 492 entries, SHA256
+28e24ac62725440eb6f2cb9e931b3eff2d1bf3b9ce1ad28c009064b4ea4ee608).
+C supplied the ECS terminal record; independent archive verification by A is
+pending. The new code and CI must be verified separately.
+
+
+## Orchestrator failure closure and isolated EChecker outage
+
+The broker supports only one extra non-execution operation, abort, bound to
+the exact active identity and job root. It closes the context idempotently,
+with no Docker action. A real-mode orchestrator that fails after DRAFT success
+records its raw abort exchange; an unconfirmed abort stays explicitly failed.
+Network errors are recorded with the failing service, not mislabeled as build
+timeouts. Successful paths still use the original six broker operations.
+
+real_job_service_gate.py requires an explicit --allow-stop-echecker option
+and prior fault gate from the same isolated deployment. It stops only the
+verified EChecker container ID, proves the other three roles stay healthy,
+runs a normal request that must fail at EChecker, checks abort and rejection
+of the next pending scan operation, restores that exact container in finally,
+and runs a fresh successful five-stage job. It verifies only EChecker's
+StartedAt changes, and all historical evidence stays unchanged.
+CI uses its disposable Compose project. Do not run this fault on a shared
+deployment or without a designated outage scope on ECS.
+
+
+## E13 explicit-input protection preflight
+
+member_c_gate.py keeps its default fixture gate. An optional explicit E12
+request and independently supplied request/candidate SHA256 reuse the existing
+pipeline and B's profile resolver. C4 changes only build_timeout in a derived
+request; C7 uses an invalid base in a separate request; successful C4/C7/C8
+runs use the same original input. Complete manifests, C0/C1 and declared
+profile identity are checked; DRAFT-mode results must contain actual child
+execution originals for the current executable-target contract.
+The C8 API now uses a CLI-only private Store path below /course/work instead
+of a nested mount. The default API Store path is unchanged; the isolated
+test server mounts /course exactly once, saves actual POST/response bytes,
+and retains verified downloaded files and response hashes. CI exercises
+both the old fixture and a separate controlled E12 DRAFT request.
+
+For formal paired inputs, do not invent a profile or rewrite the original
+request. Use the agreed merged B profile contract and the original hashes:
+
+    python3 labs/e13e14/member_c_gate.py \
+      --image course-e11e12:241830217 --api-port "$FREE_PORT" \
+      --paired-request "$PAIRED_REQUEST" \
+      --paired-request-sha256 "$REQUEST_SHA" \
+      --paired-candidate-sha256 "$CANDIDATE_SHA" \
+      --out "$NEW_OUT"
+
+This remains a local preflight, not a cross-machine B13 receipt. The E13
+C4 process observation is a bounded file-stability/task-path check, not
+proof of all BuildKit internal daemon activity. The real-project build/run
+target contract and formal cross-team input still require B/A confirmation.
