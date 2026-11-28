@@ -294,7 +294,58 @@ def http_call(base: str, method: str, path: str, payload: dict | None = None,
     return status, body, response_headers
 
 
-def c8(evidence: Path, image: str, port: int, wait_seconds: int, normal=None) -> dict:
+def guarded_c8(evidence, server_work, port, wait_seconds, normal):
+    """Use the real private API through the proposed session access layer."""
+    import secrets
+    import threading
+    from pair_session import Session, make_server, upstream_for, verify_deployment
+    from pair_c8_client import Recorder, campaign
+    raw = normal.read_bytes()
+    request = load_json(normal)
+    source = command(['git','rev-parse','HEAD'])
+    candidate = ROOT / request['candidate'][len('/course/'):]
+    candidate_sha = sha_bytes(candidate.read_bytes())
+    verify_deployment(ROOT, raw, candidate_sha, source)
+    credential = secrets.token_urlsafe(32).encode()
+    session = Session(raw, sha_bytes(raw), candidate_sha, source,
+                      time.time() + min(wait_seconds + 300, 86400), credential)
+    out = evidence / 'c8-guarded-client'
+    out.mkdir(exist_ok=False)
+    with make_server(0, session, upstream_for(port)) as proxy:
+        thread = threading.Thread(target=proxy.serve_forever, daemon=True)
+        thread.start()
+        try:
+            summary = campaign(Recorder(proxy.server_port,credential,out), raw,
+                               source,candidate_sha,wait_seconds)
+        finally:
+            proxy.shutdown()
+            thread.join(5)
+    job = summary['job_id']
+    store = server_work/'api-jobs'
+    jobs = list(store.glob('job-*/state.json'))
+    require(len(jobs) == 1 and jobs[0].parent.name == job, 'Guarded C8 extra Store jobs')
+    state = load_json(jobs[0])
+    require(state['status'] == 'SUCCEEDED' and state['trace_id'] == summary['trace_id'],
+            'Guarded C8 server identity mismatch')
+    job_root = jobs[0].parent/'evidence'
+    result = load_json(job_root/'result.json')
+    count = verify_success(job_root,result,normal,True)
+    require(count == summary['http_artifacts_verified'] and
+            artifact_bytes_check(out/'downloads',result,complete=True) == count,
+            'Guarded C8 server/download mismatch')
+    for path in out.rglob('*'):
+        if path.is_file():
+            require(credential not in path.read_bytes(), 'Guarded C8 credential leaked')
+    result_summary = dict(summary, new_jobs=1, server_store_job_count_verified=True,
+                          scope='Real local Docker API through loopback gateway; not cross-machine')
+    write_json(evidence/'c8-summary.json',result_summary)
+    print('C8_GUARDED_REAL_API_GATE=PASS',flush=True)
+    print('C8_LOCAL_API_IDEMPOTENCY=PASS',flush=True)
+    return result_summary
+
+
+def c8(evidence: Path, image: str, port: int, wait_seconds: int, normal=None,
+       guarded=False) -> dict:
     # A separate CLI-selected Store below the single /course bind prevents
     # sharing the database without giving children a nested /course mount.
     server_work = evidence / "c8-api-private-work"
@@ -332,6 +383,9 @@ def c8(evidence: Path, image: str, port: int, wait_seconds: int, normal=None) ->
             time.sleep(1)
         else:
             raise GateError("C8 isolated API did not become healthy")
+        if guarded:
+            require(normal is not None, 'Guarded C8 requires explicit E12 request')
+            return guarded_c8(evidence, server_work, port, wait_seconds, normal)
         normal_request = normal or SAMPLE / "e11-a.json"
         original = load_json(normal_request)
         wire = evidence / "c8-wire"
@@ -449,6 +503,7 @@ def main() -> int:
     p.add_argument("--paired-request", type=Path)
     p.add_argument("--paired-request-sha256")
     p.add_argument("--paired-candidate-sha256")
+    p.add_argument("--guarded-c8", action="store_true", help="Exercise proposed loopback access layer")
     args = p.parse_args()
     out = (ROOT / args.out).resolve()
     work = (ROOT / "work").resolve()
@@ -461,6 +516,7 @@ def main() -> int:
     require(1 <= args.max_wait <= 12000 and 1 <= args.local_timeout <= 12000,
             "Invalid bounded timeout")
     explicit = any((args.paired_request, args.paired_request_sha256, args.paired_candidate_sha256))
+    require(not args.guarded_c8 or explicit, 'Guarded C8 requires explicit input')
     if explicit:
         require(args.paired_request is not None, "Explicit request path required")
         raw, original, candidate = validate_pair_input(args.paired_request.resolve(),
@@ -490,7 +546,7 @@ def main() -> int:
     try:
         sections["C4"] = c4(out, normal, args.local_timeout)
         sections["C7"] = c7(out, normal, args.local_timeout)
-        sections["C8"] = c8(out, args.image, args.api_port, args.max_wait, normal)
+        sections["C8"] = c8(out, args.image, args.api_port, args.max_wait, normal, args.guarded_c8)
         scan = subprocess.run([sys.executable, str(SCANNER), str(out)], cwd=ROOT,
                               capture_output=True, text=True, timeout=120)
         (out / "runtime-log-scan.txt").write_text(scan.stdout + scan.stderr, encoding="utf-8")

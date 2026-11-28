@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, e11-e12-integration, coord/e13-e14-integration-20261124]
   push:
-    branches: [student/241830217/e13e14-c]
+    branches: [student/241830217/e13e14-c, student/241830217/e14-cross-machine-prep-20261125]
   workflow_dispatch:
 
 permissions:
@@ -78,7 +78,7 @@ jobs:
             --image course-e11e12:999999999 \
             --api-port 18095 \
             --out work/ci-e13-member-c
-      - name: Explicit E12 DRAFT input protection and API downloads
+      - name: Explicit E12 DRAFT input protection and authenticated C8 API downloads
         env:
           E11E12_USE_SOURCE_POLICY: '0'
         run: |
@@ -103,7 +103,7 @@ jobs:
             --paired-request "$REQUEST" \
             --paired-request-sha256 "$(sha256sum "$REQUEST" | cut -d ' ' -f 1)" \
             --paired-candidate-sha256 "$(sha256sum "$CANDIDATE" | cut -d ' ' -f 1)" \
-            --out work/ci-e13-explicit-child
+            --guarded-c8 --out work/ci-e13-explicit-child
       - name: Image/history and generated evidence scans
         run: |
           set -euo pipefail

@@ -34,3 +34,14 @@
 2. 每位成员至少审查自己负责的 Schema/样例/论文对应部分。
 3. 与 B13 达成的决定必须链接到双方可见的 Issue/PR/会议记录。
 4. 论文复现运行证据与 E2 合成 fixtures 分开登记。
+
+## 2026-11-28 补充：成员 C（241830217 / Dufunare）E13–E14 个人交付
+
+| 工作 | PR / 固定代码 | 证据与边界 |
+|---|---|---|
+| E13 C4/C6/C7/C8、H3 与 CI | [#22](https://github.com/Dufunare/2026-Devops-A13/pull/22) 6ca6e57 | B 审查同意；受控样例、ECS 首轮，不宣称组级全覆盖 |
+| E14 Compose、健康、连续性、故障恢复 | [#23](https://github.com/Dufunare/2026-Devops-A13/pull/23) 587c533 | B 审查同意；教学样例与 CI |
+| 实际 DRAFT 执行桥、子容器证据与恢复 | [#28](https://github.com/Dufunare/2026-Devops-A13/pull/28) 84cc47f | 受控 CI/ECS PASS，待独立评审和集成 |
+| B13 消费端、Windows CI、C5/C8 原件门禁 | [#29](https://github.com/Dufunare/2026-Devops-A13/pull/29) a5e32dd | 10/10 CI、五轮跨机及双端审计 PASS；A13/B13 总回签与 B13 11-28 最终确认齐备，个人冻结版本双边联合验收成立 |
+
+详见 [个人最终报告与证据入口](docs/students/241830217/e13e14/README.md)。A 的 C1–C3 与协调、B 的真实适配及验证器、B13 部署/运行/服务端原件和现场核验归各自贡献，C 登记本人代码、测试、客户端实际运行与证据整理。AI 辅助实现和文档，不代签、不代审查。上述个人/协调分支不等于已合入 main 或发布 RC。

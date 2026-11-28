@@ -1,0 +1,1 @@
+Unmodified B13 public course exchange inputs at ma058/2026-Devops-B13 commit 6244f7699e8e9920e2185860542bed54afd2123b, course/e13-e14/projects/b13-level-v1/. Test-only, not a deployment or frozen live session. Do not reuse historical job identities. Tests check the independently recomputed original hashes.
