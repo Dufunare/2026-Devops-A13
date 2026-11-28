@@ -40,7 +40,10 @@ def mocked_service():
     modules = {'lab': lab, 'draft': draft, 'draft.autobuild': autobuild,
                'buildchecker': checker, 'buildchecker.fullcheck': fullcheck}
     with patch.dict(sys.modules, modules), patch.dict(os.environ, {'E14_ROLE': 'draft'}):
-        return load_module(ROOT / 'labs/e13e14/service.py', 'e14_isolated_service_test')
+        service = load_module(ROOT / 'labs/e13e14/service.py', 'e14_isolated_service_test')
+        # patch.dict may remove modules first imported inside the context.
+        service.draft_executor = sys.modules['draft_executor']
+        return service
 
 
 class Concurrency(unittest.TestCase):
@@ -102,11 +105,9 @@ class Concurrency(unittest.TestCase):
                 self.assertEqual('SUCCEEDED', data['status'])
 
     def test_new_draft_preserves_context_between_stage_requests(self):
-        from draft_executor import DraftExecutor, OPERATIONS
-
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
-            executor = DraftExecutor(root, str(root))
+            executor = self.service.DraftExecutor(root, str(root))
             active = {'next': 1, 'failed': False}
             executor.active = active
             data = {
@@ -125,7 +126,8 @@ class Concurrency(unittest.TestCase):
                 self.assertIs(active, executor.active)
                 build.assert_not_called()
 
-                for finished, failed in ((len(OPERATIONS), False), (1, True)):
+                completed = len(self.service.draft_executor.OPERATIONS)
+                for finished, failed in ((completed, False), (1, True)):
                     with self.subTest(finished=finished, failed=failed):
                         active.update(next=finished, failed=failed)
                         with self.assertRaisesRegex(ValueError, 'DRAFT_FAILED'):
@@ -152,9 +154,9 @@ class Concurrency(unittest.TestCase):
 
 
     def test_typed_timeout_preserves_identity_and_error_code(self):
-        from draft_executor import DownstreamTimeout
         body = b'{"job_id":"bad","trace_id":"trace","profile_sha256":"profile","draft_image_id":"image"}'
-        with patch.object(self.service, 'run', side_effect=DownstreamTimeout('test timeout')):
+        timeout = self.service.DownstreamTimeout('test timeout')
+        with patch.object(self.service, 'run', side_effect=timeout):
             status, error = self.post(body)
         self.assertEqual(422, status)
         self.assertEqual('TIMEOUT', error['error_code'])
